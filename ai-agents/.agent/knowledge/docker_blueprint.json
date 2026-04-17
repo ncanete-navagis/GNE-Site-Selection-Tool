@@ -1,0 +1,19 @@
+{
+    "base_images": {
+        "node_frontend": "node:20-slim",
+        "python_gis": "python:3.11-slim-bookworm",
+        "java_backend": "eclipse-temurin:17-jre-alpine",
+        "dot_net": "mcr.microsoft.com/dotnet/aspnet:8.0"
+    },
+    "cloud_targets": {
+        "serverless": "Google Cloud Run",
+        "orchestrated": "Google Kubernetes Engine (GKE)",
+        "registry": "Google Artifact Registry"
+    },
+    "essential_libs": [
+        "gdal-bin",
+        "libgdal-dev",
+        "libgeos-dev",
+        "proj-bin"
+    ]
+}

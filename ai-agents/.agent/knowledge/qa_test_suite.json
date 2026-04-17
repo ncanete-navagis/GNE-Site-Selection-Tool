@@ -1,0 +1,36 @@
+{
+    "test_categories": {
+        "api_layer": {
+            "tools": [
+                "Supertest",
+                "PyTest"
+            ],
+            "focus": [
+                "Status Codes",
+                "JSON Schema",
+                "Spatial Validation"
+            ]
+        },
+        "component_layer": {
+            "tools": [
+                "React Testing Library",
+                "Jest"
+            ],
+            "focus": [
+                "Prop Validation",
+                "Event Handling",
+                "Accessibility"
+            ]
+        },
+        "e2e_layer": {
+            "tools": [
+                "Playwright"
+            ],
+            "focus": [
+                "Map Gestures",
+                "User Flows",
+                "Cross-browser Support"
+            ]
+        }
+    }
+}

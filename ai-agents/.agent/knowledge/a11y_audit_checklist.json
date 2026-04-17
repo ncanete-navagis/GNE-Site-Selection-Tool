@@ -1,0 +1,11 @@
+{
+    "audit_criteria": "WCAG 2.1 AA",
+    "critical_checks": {
+        "keyboard_nav": "Can I reach every button using only the Tab key?",
+        "focus_trap_active": "Do modals prevent tabbing back into the background map?",
+        "color_contrast": "Do the primary/accent colors meet 4.5:1 against the background?",
+        "alt_text": "Do all static images and dynamic map icons have alternative text?",
+        "label_association": "Are all form inputs wrapped or linked to <label> elements?",
+        "motion_safety": "Is there a way to disable the Antigravity 'Fly-to' animation?"
+    }
+}

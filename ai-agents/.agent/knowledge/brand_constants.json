@@ -1,0 +1,27 @@
+{
+    "theme_name": "Antigravity_Obsidian",
+    "version": "1.0.0",
+    "palette": {
+        "primary": "#007AFF",
+        "accent": "#5AC8FA",
+        "background": "rgba(28, 28, 30, 0.85)",
+        "surface": "#1C1C1E",
+        "text": "#FFFFFF",
+        "danger": "#FF453A",
+        "success": "#32D74B"
+    },
+    "typography": {
+        "font_family": "'Inter', -apple-system, sans-serif",
+        "base_size": "16px",
+        "heading_weight": 700
+    },
+    "layout": {
+        "border_radius": "12px",
+        "inner_padding": "16px",
+        "sidebar_width": "320px"
+    },
+    "map_overlay": {
+        "blur_intensity": "10px",
+        "border_color": "rgba(255, 255, 255, 0.1)"
+    }
+}

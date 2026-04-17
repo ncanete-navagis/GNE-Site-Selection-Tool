@@ -1,0 +1,18 @@
+{
+    "performance_targets": {
+        "LCP": "< 3s",
+        "FID": "< 100ms",
+        "CLS": "< 0.1"
+    },
+    "seo_checklist": {
+        "semantic_markup": true,
+        "json_ld_injection": "Location/Place",
+        "canonical_urls": "Required",
+        "robots_txt": "Optimized for Map Fragments"
+    },
+    "caching_policy": {
+        "static_assets": "1 year (immutable)",
+        "api_spatial_data": "5 minutes",
+        "tile_cache": "Local IndexedDB"
+    }
+}

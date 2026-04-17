@@ -1,0 +1,29 @@
+{
+    "atomic_mapping": {
+        "atoms": [
+            "Button",
+            "Icon",
+            "Label",
+            "Checkbox",
+            "MarkerIcon"
+        ],
+        "molecules": [
+            "LayerToggle",
+            "SearchBar",
+            "ZoomControl",
+            "CoordinatePanel"
+        ],
+        "organisms": [
+            "LayerManager",
+            "AttributeTable",
+            "BasemapSwitcher",
+            "FeatureInspector"
+        ],
+        "templates": [
+            "FullMapTemplate",
+            "DashboardTemplate",
+            "MobileMapTemplate"
+        ]
+    },
+    "dependency_flow": "Atoms -> Molecules -> Organisms -> Templates -> Pages"
+}

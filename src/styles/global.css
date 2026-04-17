@@ -1,0 +1,68 @@
+:root {
+  --primary-color: #007AFF;
+  --accent-color: #5AC8FA;
+  --bg-dark: rgba(28, 28, 30, 0.85);
+  --surface-dark: #1C1C1E;
+  --text-white: #FFFFFF;
+  --blur-intensity: 12px;
+}
+
+body, html, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, sans-serif;
+  background-color: #000;
+}
+
+.glass-panel {
+  background: var(--bg-dark);
+  backdrop-filter: blur(var(--blur-intensity));
+  -webkit-backdrop-filter: blur(var(--blur-intensity));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  color: var(--text-white);
+}
+
+.map-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.overlay-container {
+  position: relative;
+  z-index: 10;
+  pointer-events: none;
+  height: 100%;
+  padding: 20px;
+}
+
+.overlay-container > * {
+  pointer-events: auto;
+}
+
+/* Bootstrap overrides */
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.form-control {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.form-control:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--accent-color);
+  color: white;
+  box-shadow: none;
+}

@@ -1,0 +1,19 @@
+{
+    "auth_framework": "OAuth2 + PKCE",
+    "token_standard": "JWT (RS256)",
+    "hashing_algorithm": "Argon2id",
+    "rbac_model": {
+        "roles": [
+            "Viewer",
+            "Editor",
+            "Analyst",
+            "Admin"
+        ],
+        "granularity": "Layer-Level"
+    },
+    "security_headers": {
+        "Content-Security-Policy": "default-src 'self'",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+        "X-Frame-Options": "DENY"
+    }
+}
