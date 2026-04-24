@@ -1,16 +1,19 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import MapViewer from '../components/organisms/MapViewer'
 import HeaderControlBar from '../components/organisms/HeaderControlBar'
 import NavigationHub from '../components/organisms/NavigationHub'
 import Sidebar from '../components/organisms/Sidebar'
+import MarkerPopup from '../components/organisms/MarkerPopup'
 import { useMappingAPI } from '../hooks/useMappingAPI'
+
 
 const SiteSelectionPage = () => {
   const [activeTab, setActiveTab] = useState('Filter')
   
-  // Use our specialized mapping hook
   const { 
+    map,
     mapState, 
+    markers,
     selectedPOI, 
     isSidebarOpen, 
     onMapLoad, 
@@ -18,8 +21,29 @@ const SiteSelectionPage = () => {
     onMapIdle, 
     onMarkerClick, 
     onMapClick,
-    setIsSidebarOpen
+    setIsSidebarOpen,
+    setSelectedPOI
   } = useMappingAPI({ lat: 10.3157, lng: 123.8854 })
+
+  // Calculate popup position (simplified for demo)
+  const [popupStyle, setPopupStyle] = useState({ display: 'none' });
+
+  useEffect(() => {
+    if (selectedPOI && map) {
+      const projection = map.getProjection();
+      if (projection) {
+        // This usually needs a custom overlay or project conversion
+        // For simplicity in this demo, we'll use a fixed position or state-driven
+        setPopupStyle({
+          display: 'block',
+          top: '20%',
+          right: '40px'
+        });
+      }
+    } else {
+      setPopupStyle({ display: 'none' });
+    }
+  }, [selectedPOI, map]);
 
   return (
     <div className="vh-100 vw-100 position-relative bg-black">
@@ -30,6 +54,7 @@ const SiteSelectionPage = () => {
         onIdle={onMapIdle}
         onMarkerClick={onMarkerClick}
         onMapClick={onMapClick}
+        markers={markers}
       />
 
       {/* Overlay Layer: Controls */}
@@ -40,17 +65,27 @@ const SiteSelectionPage = () => {
           <NavigationHub activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
 
-        {/* Global Map State Debug (Optional) */}
+        {/* Global Map State Debug */}
         <div className="position-absolute bottom-0 start-0 m-3 glass-panel p-2 small opacity-50" style={{ fontSize: '10px' }}>
           Lat: {mapState.center.lat.toFixed(4)} | Lng: {mapState.center.lng.toFixed(4)} | Zoom: {mapState.zoom}
         </div>
 
-        {/* Sidebar Component */}
+        {/* Marker Popup Panel */}
+        {selectedPOI && (
+          <MarkerPopup 
+            poi={selectedPOI} 
+            onClose={() => setSelectedPOI(null)}
+            style={popupStyle}
+          />
+        )}
+
+        {/* Sidebar Component (Existing) */}
         <Sidebar 
           isOpen={isSidebarOpen} 
           onClose={() => setIsSidebarOpen(false)} 
           selectedPOI={selectedPOI}
         />
+
         
         {/* Floating Toggle for Sidebar */}
         {!isSidebarOpen && selectedPOI && (

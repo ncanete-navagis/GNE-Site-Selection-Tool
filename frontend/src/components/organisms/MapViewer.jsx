@@ -16,19 +16,13 @@ const MapViewer = ({
   onUnmount, 
   onIdle, 
   onMarkerClick, 
-  onMapClick 
+  onMapClick,
+  markers // Dynamic markers from hook
 }) => {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ""
   })
-
-  // Sample POIs (In production, these would come from an API/Context)
-  const markers = useMemo(() => [
-    { id: 1, pos: { lat: 10.33, lng: 123.93 }, title: "Pacific Mall", type: "mall" },
-    { id: 2, pos: { lat: 10.31, lng: 123.89 }, title: "Cebu City Center", type: "city" },
-    { id: 3, pos: { lat: 10.34, lng: 123.95 }, title: "Maayo Hotel", type: "hotel" }
-  ], [])
 
   return isLoaded ? (
     <div className="map-container">
@@ -43,6 +37,7 @@ const MapViewer = ({
         options={{
           disableDefaultUI: true,
           styles: [
+
             { "elementType": "geometry", "stylers": [{ "color": "#1c1c1e" }] },
             { "elementType": "labels.text.stroke", "stylers": [{ "color": "#1c1c1e" }] },
             { "elementType": "labels.text.fill", "stylers": [{ "color": "#ffffff" }] },
