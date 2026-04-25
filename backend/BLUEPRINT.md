@@ -66,7 +66,7 @@
 
 ## 3. API Endpoint Catalog
 
-*Current Implementation State: Endpoints are defined in `openapi.yaml`. Backend implementation is pending implementation in `routers/`. Authentication method: **"Insufficient data to verify"**.*
+*Current Implementation State: Endpoints are defined in `openapi.yaml`. Backend implementation is partially complete in `routers/`. Authentication method: **Google OAuth 2.0 (Bearer Token)**.*
 
 ### 3.1 Users
 | Method | Path | Description |
@@ -258,9 +258,9 @@ backend/
 | 5 | `/analysis/` endpoint | API_SPECIALIST | Pending |
 | 6 | `/recommendations/` endpoint | API_SPECIALIST | Pending |
 | 7 | `/ai/chat` endpoint | API_SPECIALIST | Pending |
-| 8 | Logging + monitoring setup | LOGGING_SPECIALIST | Pending |
-| 9 | Security / session layer | SECURITY_SPECIALIST | Pending |
-| 10 | Docker + docker-compose | DEVOPS_ENGINEER | Pending |
+| 8 | Logging + monitoring setup | LOGGING_SPECIALIST | ✅ Completed |
+| 9 | Security / session layer | SECURITY_SPECIALIST | ✅ Completed |
+| 10 | Docker + docker-compose | DEVOPS_ENGINEER | ✅ Completed |
 | 11 | Query performance optimization | OPTIMIZATION_ENGINEER | Pending |
 | 12 | QA test suite | QA_AUDITOR | Pending |
 
@@ -284,9 +284,36 @@ backend/
 | Item | Status |
 |---|---|
 | LLM provider and model for AI assistant | **Insufficient data to verify** |
-| Authentication method (token vs session) | **Insufficient data to verify** |
+| Authentication method (token vs session) | **Google OAuth 2.0 Bearer Token (Resolved)** |
 | Restaurant type → scoring weight mapping | **Insufficient data to verify** |
 | Frontend API response format for map pins | **Insufficient data to verify** |
 | Supplier data source and schema | **Insufficient data to verify** (stretch goal) |
 | CI/CD platform (GitHub Actions, Cloud Run, etc.) | **Insufficient data to verify** |
 | Foot traffic data source (GMP vs third-party) | **Insufficient data to verify** |
+
+---
+
+## 12. Security Architecture Decisions (Phase 9)
+
+**1. Authentication Method**: The backend leverages Google OAuth 2.0. The frontend obtains the ID token and sends it as a Bearer token. The backend verifies the token using the Google Auth library. The backend does not redirect or issue its own tokens, adhering strictly to a stateless API design.
+**2. User Identification**: The `user_id` inside `RecommendationCreateRequest` and other DTOs has been intentionally removed or is overridden by the authenticated user's context. The `get_current_user` dependency automatically extracts the `user_id` (`sub` claim) to prevent privilege escalation and ID spoofing.
+**3. Missing Routers**: `users.py`, `ai.py`, and `location_history.py` were dynamically created during Phase 9 to facilitate dependency injection of the new `get_current_user` function.
+**4. Rate Limiting**: `POST /api/v1/ai/chat` is protected by a 20 requests/minute rate limit. A lightweight, in-memory implementation (`slowapi`) was chosen to avoid introducing a Redis dependency prematurely. Rate limiting keys on the extracted `sub` claim or client IP.
+
+---
+
+## 13. Logging Architecture Decisions (Phase 8)
+
+**1. JSON Structured Logging**: Standard Python `logging` was configured with a custom `JSONFormatter` in `core/logging_config.py`. All application logs are output as JSON lines to facilitate ingestion by observability platforms.
+**2. Data Privacy Constraints**: The `JSONFormatter` enforces strict privacy rules. Any field named `message_content` (e.g., raw AI chat messages) is scrubbed and replaced with `[REDACTED]`. Full geometry payloads are strictly prohibited; only Point geometries (centroids) are logged to protect proprietary location boundaries.
+**3. File Management**: Logs are written to `/var/log/gne/gne_backend.log` utilizing `RotatingFileHandler` (10 MB max, 5 backups). If the directory cannot be created due to OS permission issues (common on Windows development environments), it gracefully falls back to `./logs/gne_backend.log`.
+**4. Request & Telemetry Logging**: A global ASGI middleware in `main.py` records HTTP requests with exact `duration_ms`. Domain operations, such as scoring engine invocations in `analysis_service.py`, are explicitly timed and logged with detailed sub-score breakdowns using the helper methods in `utils/logger.py`.
+
+---
+
+## 14. Docker & Deployment Configuration (Phase 10)
+
+**1. Containerization Strategy**: The backend is containerized using `python:3.11-slim` as the base image to minimize footprint while supporting necessary system libraries. The Dockerfile explicitly installs `gdal-bin`, `libgdal-dev`, and `libgeos-dev` to ensure compatibility with GeoAlchemy2 and PostGIS spatial operations.
+**2. Local Orchestration**: A `docker-compose.yml` file defines the application stack, consisting of the FastAPI `api` service and a `db` service using `postgis/postgis:15-3.4-alpine`. It maps the `/var/log/gne` directory to a local `./logs` volume for persistent logging. 
+**3. Configuration Management**: All sensitive credentials and environment-specific settings (e.g., `DATABASE_URL`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `LLM_API_KEY`) are externalized to a `.env` file and passed into the containers via Docker Compose. A `.env.example` file is maintained as a template.
+**4. Build Optimization**: A strict `.dockerignore` file prevents virtual environments, Python caches, logs, and Git metadata from being copied into the container context, reducing build times and image bloat.

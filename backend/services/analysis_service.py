@@ -50,6 +50,8 @@ from services.scoring import (
     score_to_stars,
     generate_pros_cons,
 )
+from utils.logger import log_scoring_engine_call
+import time
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -173,7 +175,16 @@ def run_analysis(
     # ------------------------------------------------------------------
     # Step 3 — Compute sub-scores (normalised to [0.0, 1.0])
     # ------------------------------------------------------------------
+    _start_score_time = time.perf_counter()
     sub_scores = compute_scores(hazards, traffic_data, businesses)
+    _score_duration = (time.perf_counter() - _start_score_time) * 1000.0
+
+    log_scoring_engine_call(
+        lon=lon,
+        lat=lat,
+        sub_scores=sub_scores,
+        duration_ms=_score_duration
+    )
 
     # ------------------------------------------------------------------
     # Step 4 — Weighted overall score

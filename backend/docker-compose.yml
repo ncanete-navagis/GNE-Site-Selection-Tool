@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgis/postgis:15-3.4-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: always
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - LLM_PROVIDER=${LLM_PROVIDER}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - SCORING_RADIUS_M=${SCORING_RADIUS_M}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - LOG_DIR=${LOG_DIR}
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    restart: always
+
+volumes:
+  postgres_data:
+
+# CI/CD pipeline configuration
+# Insufficient data to verify - placeholder comment

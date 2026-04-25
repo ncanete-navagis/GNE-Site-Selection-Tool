@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+sqlalchemy
+geoalchemy2
+alembic
+psycopg2-binary
+google-auth>=2.0.0
+google-auth-httplib2
+slowapi
