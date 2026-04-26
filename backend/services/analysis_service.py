@@ -2,7 +2,7 @@
 services/analysis_service.py — Analysis orchestration service.
 
 Implemented by: API_SPECIALIST
-Version: 1.0 | April 2026
+Version: 1.1 | April 2026 (OPTIMIZATION_ENGINEER Phase 11 — async + parallel queries)
 
 Responsibility:
   This module is the single entry-point for the site-analysis pipeline.
@@ -27,20 +27,28 @@ Design rules (API_SPECIALIST):
   - If no barangay contains the query point, raises HTTPException(404).
   - SCORING_RADIUS_M defaults to 500 m; override via environment variable.
 
+Performance (OPTIMIZATION_ENGINEER — Phase 11):
+  - run_analysis() and get_analysis() are now async.
+  - Session type upgraded to AsyncSession.
+  - The three independent spatial proximity queries (hazards, traffic,
+    businesses) are executed concurrently via asyncio.gather(), reducing
+    total latency from ~3× single-query time to ~1× single-query time.
+
 Public surface:
-  run_analysis(session, lon, lat, name, user_id, restaurant_type) -> dict
-  get_analysis(session, analysis_id) -> dict
+  async run_analysis(session, lon, lat, name, user_id, restaurant_type) -> dict
+  async get_analysis(session, analysis_id) -> dict
 """
 
 from __future__ import annotations
 
+import asyncio
 import os
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.analysis import Analysis
 from services import geo_queries
@@ -104,8 +112,8 @@ def _build_response_dict(record: Analysis, details: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def run_analysis(
-    session: Session,
+async def run_analysis(
+    session: AsyncSession,
     lon: float,
     lat: float,
     name: Optional[str] = None,
@@ -119,7 +127,7 @@ def run_analysis(
     1. Identify the containing barangay via ST_Within.  If none is found,
        raises :class:`fastapi.HTTPException` with status 404.
     2. Run spatial proximity queries (hazards, traffic, businesses) within
-       :data:`SCORING_RADIUS_M` metres.
+       :data:`SCORING_RADIUS_M` metres **concurrently** via asyncio.gather().
     3. Normalise raw query results into sub-scores via
        :func:`~services.scoring.compute_scores`.
     4. Aggregate sub-scores into a weighted overall score via
@@ -132,8 +140,8 @@ def run_analysis(
     8. Return the full response dict without a second DB round-trip.
 
     Args:
-        session: Active SQLAlchemy database session (provided by the router
-            dependency).
+        session: Active async SQLAlchemy database session (provided by the
+            router dependency).
         lon: Longitude of the candidate site in EPSG:4326.
         lat: Latitude of the candidate site in EPSG:4326.
         name: Optional human-readable label for the location.
@@ -152,7 +160,7 @@ def run_analysis(
     # ------------------------------------------------------------------
     # Step 1 — Barangay containment check
     # ------------------------------------------------------------------
-    barangay = geo_queries.get_barangay_for_point(session, lon, lat)
+    barangay = await geo_queries.get_barangay_for_point(session, lon, lat)
     if barangay is None:
         raise HTTPException(
             status_code=404,
@@ -160,16 +168,16 @@ def run_analysis(
         )
 
     # ------------------------------------------------------------------
-    # Step 2 — Spatial proximity queries
+    # Step 2 — Spatial proximity queries (concurrent)
+    #
+    # The three queries are independent — no data dependency between them.
+    # asyncio.gather() runs them concurrently, reducing wall-clock latency
+    # from ~3× to ~1× the slowest individual query.
     # ------------------------------------------------------------------
-    hazards = geo_queries.get_hazards_near_point(
-        session, lon, lat, SCORING_RADIUS_M
-    )
-    traffic_data = geo_queries.get_traffic_near_point(
-        session, lon, lat, SCORING_RADIUS_M
-    )
-    businesses = geo_queries.get_businesses_near_point(
-        session, lon, lat, SCORING_RADIUS_M
+    hazards, traffic_data, businesses = await asyncio.gather(
+        geo_queries.get_hazards_near_point(session, lon, lat, SCORING_RADIUS_M),
+        geo_queries.get_traffic_near_point(session, lon, lat, SCORING_RADIUS_M),
+        geo_queries.get_businesses_near_point(session, lon, lat, SCORING_RADIUS_M),
     )
 
     # ------------------------------------------------------------------
@@ -233,8 +241,8 @@ def run_analysis(
     )
 
     session.add(record)
-    session.commit()
-    session.refresh(record)
+    await session.commit()
+    await session.refresh(record)
 
     # ------------------------------------------------------------------
     # Step 8 — Return response dict (no second DB round-trip needed)
@@ -242,7 +250,7 @@ def run_analysis(
     return _build_response_dict(record, details)
 
 
-def get_analysis(session: Session, analysis_id: uuid.UUID) -> dict:
+async def get_analysis(session: AsyncSession, analysis_id: uuid.UUID) -> dict:
     """Retrieve a previously persisted analysis by its primary key.
 
     Reconstructs the full API response from the Analysis ORM row and
@@ -250,7 +258,7 @@ def get_analysis(session: Session, analysis_id: uuid.UUID) -> dict:
     queries.
 
     Args:
-        session: Active SQLAlchemy database session.
+        session: Active async SQLAlchemy database session.
         analysis_id: UUID primary key of the target Analysis record.
 
     Returns:
@@ -261,7 +269,7 @@ def get_analysis(session: Session, analysis_id: uuid.UUID) -> dict:
         :class:`fastapi.HTTPException` (404): When no Analysis record
             exists for the given ``analysis_id``.
     """
-    record: Optional[Analysis] = session.get(Analysis, analysis_id)
+    record: Optional[Analysis] = await session.get(Analysis, analysis_id)
     if record is None:
         raise HTTPException(
             status_code=404,

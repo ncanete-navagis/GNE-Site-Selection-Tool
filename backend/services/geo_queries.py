@@ -12,6 +12,47 @@ Design rules (GIS_DATABASE_ENGINEER):
   - Inputs are constructed with geoalchemy2.WKTElement (SRID=4326) — never
     raw SQL strings.
   - Returns raw ORM instances; callers are responsible for serialisation.
+
+Performance (OPTIMIZATION_ENGINEER — Phase 11):
+  - All functions converted to async/await; callers must await them.
+  - Session type upgraded to AsyncSession (sqlalchemy.ext.asyncio).
+  - Legacy session.query() API replaced with SQLAlchemy 2.x select() API.
+  - Three independent proximity queries (hazards, traffic, businesses) are
+    now awaitable so analysis_service can run them concurrently via
+    asyncio.gather().
+
+# ---------------------------------------------------------------------------
+# Expected indexes (Earl applies via migration — do NOT create here)
+#
+#   Table: barangays
+#     boundary       — GiST  (ST_Within containment + implicit && pre-filter)
+#                      CREATE INDEX idx_barangays_boundary_gist
+#                        ON barangays USING GIST (boundary);
+#
+#   Table: hazards
+#     geom           — GiST  (ST_DWithin geography proximity)
+#                      CREATE INDEX idx_hazards_geom_gist
+#                        ON hazards USING GIST (geom);
+#     hazard_type    — btree (equality filter: WHERE hazard_type = '...')
+#                      CREATE INDEX idx_hazards_hazard_type
+#                        ON hazards (hazard_type);
+#
+#   Table: traffic_data
+#     geom           — GiST  (ST_DWithin geography proximity)
+#                      CREATE INDEX idx_traffic_data_geom_gist
+#                        ON traffic_data USING GIST (geom);
+#     time_window    — btree (equality filter: WHERE time_window = '...')
+#                      CREATE INDEX idx_traffic_data_time_window
+#                        ON traffic_data (time_window);
+#
+#   Table: businesses
+#     geom           — GiST  (ST_DWithin geography proximity)
+#                      CREATE INDEX idx_businesses_geom_gist
+#                        ON businesses USING GIST (geom);
+#     category       — btree (equality filter: WHERE category = '...')
+#                      CREATE INDEX idx_businesses_category
+#                        ON businesses (category);
+# ---------------------------------------------------------------------------
 """
 
 from __future__ import annotations
@@ -25,8 +66,8 @@ from geoalchemy2.functions import (
     ST_MakeEnvelope,
     ST_Within,
 )
-from sqlalchemy import cast
-from sqlalchemy.orm import Session
+from sqlalchemy import cast, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.barangay import Barangay
 from models.business import Business
@@ -53,8 +94,8 @@ def _point_wkt(lon: float, lat: float) -> WKTElement:
 # ---------------------------------------------------------------------------
 
 
-def get_barangay_for_point(
-    session: Session,
+async def get_barangay_for_point(
+    session: AsyncSession,
     lon: float,
     lat: float,
 ) -> Optional[Barangay]:
@@ -69,7 +110,7 @@ def get_barangay_for_point(
     ST_Within predicate is evaluated.
 
     Args:
-        session: Active SQLAlchemy database session.
+        session: Active async SQLAlchemy database session.
         lon: Longitude of the query point (EPSG:4326).
         lat: Latitude of the query point (EPSG:4326).
 
@@ -78,15 +119,13 @@ def get_barangay_for_point(
         barangay is found, otherwise ``None``.
     """
     point = _point_wkt(lon, lat)
-    return (
-        session.query(Barangay)
-        .filter(ST_Within(point, Barangay.boundary))
-        .first()
-    )
+    stmt = select(Barangay).where(ST_Within(point, Barangay.boundary))
+    result = await session.execute(stmt)
+    return result.scalars().first()
 
 
-def get_hazards_near_point(
-    session: Session,
+async def get_hazards_near_point(
+    session: AsyncSession,
     lon: float,
     lat: float,
     radius_m: float,
@@ -101,7 +140,7 @@ def get_hazards_near_point(
       ellipsoidal model, which is accurate regardless of latitude.
 
     Args:
-        session: Active SQLAlchemy database session.
+        session: Active async SQLAlchemy database session.
         lon: Longitude of the query point (EPSG:4326).
         lat: Latitude of the query point (EPSG:4326).
         radius_m: Search radius in **metres**.
@@ -112,23 +151,21 @@ def get_hazards_near_point(
         A list of :class:`~models.hazard.Hazard` ORM instances (may be empty).
     """
     point = _point_wkt(lon, lat)
-
-    query = session.query(Hazard).filter(
+    stmt = select(Hazard).where(
         ST_DWithin(
             cast(Hazard.geom, type_=None).cast("geography"),
             cast(point, type_=None).cast("geography"),
             radius_m,
         )
     )
-
     if hazard_type is not None:
-        query = query.filter(Hazard.hazard_type == hazard_type)
+        stmt = stmt.where(Hazard.hazard_type == hazard_type)
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
 
-    return query.all()
 
-
-def get_traffic_near_point(
-    session: Session,
+async def get_traffic_near_point(
+    session: AsyncSession,
     lon: float,
     lat: float,
     radius_m: float,
@@ -140,7 +177,7 @@ def get_traffic_near_point(
       Same metre-accurate geography approach as :func:`get_hazards_near_point`.
 
     Args:
-        session: Active SQLAlchemy database session.
+        session: Active async SQLAlchemy database session.
         lon: Longitude of the query point (EPSG:4326).
         lat: Latitude of the query point (EPSG:4326).
         radius_m: Search radius in **metres**.
@@ -152,23 +189,21 @@ def get_traffic_near_point(
         A list of :class:`~models.traffic.TrafficData` ORM instances.
     """
     point = _point_wkt(lon, lat)
-
-    query = session.query(TrafficData).filter(
+    stmt = select(TrafficData).where(
         ST_DWithin(
             cast(TrafficData.geom, type_=None).cast("geography"),
             cast(point, type_=None).cast("geography"),
             radius_m,
         )
     )
-
     if time_window is not None:
-        query = query.filter(TrafficData.time_window == time_window)
+        stmt = stmt.where(TrafficData.time_window == time_window)
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
 
-    return query.all()
 
-
-def get_businesses_near_point(
-    session: Session,
+async def get_businesses_near_point(
+    session: AsyncSession,
     lon: float,
     lat: float,
     radius_m: float,
@@ -180,7 +215,7 @@ def get_businesses_near_point(
       Same metre-accurate geography approach as :func:`get_hazards_near_point`.
 
     Args:
-        session: Active SQLAlchemy database session.
+        session: Active async SQLAlchemy database session.
         lon: Longitude of the query point (EPSG:4326).
         lat: Latitude of the query point (EPSG:4326).
         radius_m: Search radius in **metres**.
@@ -191,23 +226,21 @@ def get_businesses_near_point(
         A list of :class:`~models.business.Business` ORM instances.
     """
     point = _point_wkt(lon, lat)
-
-    query = session.query(Business).filter(
+    stmt = select(Business).where(
         ST_DWithin(
             cast(Business.geom, type_=None).cast("geography"),
             cast(point, type_=None).cast("geography"),
             radius_m,
         )
     )
-
     if category is not None:
-        query = query.filter(Business.category == category)
+        stmt = stmt.where(Business.category == category)
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
 
-    return query.all()
 
-
-def get_geometries_in_bbox(
-    session: Session,
+async def get_geometries_in_bbox(
+    session: AsyncSession,
     model_class,
     xmin: float,
     ymin: float,
@@ -230,7 +263,7 @@ def get_geometries_in_bbox(
     (``Hazard``, ``TrafficData``, ``Business``, ``Barangay``, …).
 
     Args:
-        session: Active SQLAlchemy database session.
+        session: Active async SQLAlchemy database session.
         model_class: A SQLAlchemy ORM model class that has a ``geom`` column.
         xmin: Western longitude bound (EPSG:4326).
         ymin: Southern latitude bound (EPSG:4326).
@@ -241,8 +274,6 @@ def get_geometries_in_bbox(
         A list of ORM instances whose geometry intersects the bounding box.
     """
     envelope = ST_MakeEnvelope(xmin, ymin, xmax, ymax, _SRID)
-    return (
-        session.query(model_class)
-        .filter(ST_Intersects(model_class.geom, envelope))
-        .all()
-    )
+    stmt = select(model_class).where(ST_Intersects(model_class.geom, envelope))
+    result = await session.execute(stmt)
+    return list(result.scalars().all())

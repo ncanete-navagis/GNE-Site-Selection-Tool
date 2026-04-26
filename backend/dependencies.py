@@ -1,26 +1,27 @@
 """
 dependencies.py — Shared FastAPI dependencies.
 
-This module provides the database session generator.
+OPTIMIZATION_ENGINEER — Phase 11
+  Replaced the NotImplementedError stub with a real AsyncSession generator
+  backed by the engine configured in core/database.py.
 """
 
-from typing import Generator
-from sqlalchemy.orm import Session
+from __future__ import annotations
 
-# Placeholder for database setup
-# from database import SessionLocal
+from typing import AsyncGenerator
 
-def get_db() -> Generator[Session, None, None]:
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from core.database import AsyncSessionLocal
+
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Yield an :class:`~sqlalchemy.ext.asyncio.AsyncSession` for one request.
+
+    The session is automatically closed when the request finishes (or raises).
+    All DB-touching route handlers should declare this as a FastAPI dependency::
+
+        db: AsyncSession = Depends(get_db)
     """
-    Dependency that yields a database session and ensures it is closed.
-    """
-    # Placeholder: yield SessionLocal()
-    # For now, we yield a mock or raise NotImplementedError if not initialized
-    # try:
-    #     db = SessionLocal()
-    #     yield db
-    # finally:
-    #     db.close()
-    
-    # Until database is fully configured in the backend, raise error if called directly
-    raise NotImplementedError("Database connection not yet configured in dependencies.py")
+    async with AsyncSessionLocal() as session:
+        yield session
