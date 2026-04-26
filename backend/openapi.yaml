@@ -1,0 +1,306 @@
+openapi: 3.0.0
+info:
+  title: GNE Site Selection API
+  description: "Backend APIs strictly following the GNE ERD constraints. AUTH_TBD: No authentication scheme has been implemented yet."
+  version: "1.0.0"
+servers:
+  - url: /api/v1
+    description: Base URL for all V1 routes
+paths:
+  /users/:
+    post:
+      summary: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /users/{user_id}:
+    get:
+      summary: Retrieve a user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+                
+  /businesses/:
+    get:
+      summary: List businesses
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Paginated businesses
+          
+  /hazards/:
+    get:
+      summary: List hazards
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Paginated hazards
+
+  /traffic/:
+    get:
+      summary: List traffic data
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Paginated traffic data
+
+  /users/{user_id}/history:
+    get:
+      summary: Get user location history
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated location history
+    post:
+      summary: Save location history
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationHistoryCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationHistory'
+
+  /recommendations/generate:
+    post:
+      summary: Generate a location recommendation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                geom:
+                  $ref: '#/components/schemas/GeoJSONEntity'
+      responses:
+        '201':
+          description: Valid recommendation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationRecommendation'
+
+  /barangays/:
+    get:
+      summary: List Barangays
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Paginated Barangays
+
+  /analysis/:
+    post:
+      summary: Generate site analysis (Scoring Engine output)
+      description: Endpoints accept a geometry input and return an Analysis object
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [geom]
+              properties:
+                geom:
+                  $ref: '#/components/schemas/GeoJSONEntity'
+      responses:
+        '200':
+          description: Resulting analysis attributes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analysis'
+
+components:
+  schemas:
+    GeoJSONEntity:
+      type: object
+      description: Valid EPSG:4326 GeoJSON Geometry object
+      properties:
+        type:
+          type: string
+        coordinates:
+          type: array
+          items: {}
+
+    User:
+      type: object
+      properties:
+        user_id: { type: string }
+        email: { type: string }
+        full_name: { type: string }
+        created_at: { type: string, format: date-time }
+        last_login: { type: string, format: date-time }
+
+    UserCreate:
+      type: object
+      properties:
+        email: { type: string }
+        full_name: { type: string }
+
+    Business:
+      type: object
+      properties:
+        google_places_id: { type: string }
+        name: { type: string }
+        category: { type: string }
+        geom: { $ref: '#/components/schemas/GeoJSONEntity' }
+        last_updated: { type: string, format: date-time }
+
+    Hazard:
+      type: object
+      properties:
+        hazard_id: { type: string }
+        hazard_type: { type: string }
+        severity: { type: string }
+        geom: { $ref: '#/components/schemas/GeoJSONEntity' }
+        last_updated: { type: string, format: date-time }
+
+    TrafficData:
+      type: object
+      properties:
+        traffic_id: { type: string }
+        traffic_score: { type: number, format: float }
+        traffic_type: { type: string }
+        geom: { $ref: '#/components/schemas/GeoJSONEntity' }
+        source: { type: string }
+        time_window: { type: string }
+        last_updated: { type: string, format: date-time }
+
+    LocationHistory:
+      type: object
+      properties:
+        hlocation_id: { type: string }
+        user_id: { type: string }
+        barangay_id: { type: string }
+        analysis_id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        geom: { $ref: '#/components/schemas/GeoJSONEntity' }
+        created_at: { type: string, format: date-time }
+        google_place_id: { type: string }
+
+    LocationHistoryCreate:
+      type: object
+      properties:
+        barangay_id: { type: string }
+        analysis_id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        geom: { $ref: '#/components/schemas/GeoJSONEntity' }
+        google_place_id: { type: string }
+
+    LocationRecommendation:
+      type: object
+      properties:
+        rlocation_id: { type: string }
+        user_id: { type: string }
+        barangay_id: { type: string }
+        analysis_id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        geom: { $ref: '#/components/schemas/GeoJSONEntity' }
+        created_at: { type: string, format: date-time }
+        google_place_id: { type: string }
+
+    Barangay:
+      type: object
+      properties:
+        barangay_id: { type: string }
+        name: { type: string }
+        population: { type: integer }
+        boundary: { $ref: '#/components/schemas/GeoJSONEntity' }
+        municipality: { type: string }
+        last_updated: { type: string, format: date-time }
+
+    Analysis:
+      type: object
+      properties:
+        analysis_id: { type: string }
+        overall_score: { type: number, format: float }
+        traffic_score: { type: number, format: float }
+        foot_traffic_score: { type: number, format: float }
+        competing_business_score: { type: number, format: float }
+        landslide_hazard_score: { type: number, format: float }
+        flood_hazard_score: { type: number, format: float }
+        storm_surge_score: { type: number, format: float }
+        analyzed_at: { type: string, format: date-time }
+        analysis_details: { type: string }
+        last_updated: { type: string, format: date-time }
