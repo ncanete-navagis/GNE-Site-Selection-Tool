@@ -1,8 +1,8 @@
 # GNE Site Selection Tool — Backend Blueprint
 > **Owner:** Niles Cañete (Backend Lead)
-> **Version:** 1.1 | April 2026
-> **Stack:** FastAPI · PostgreSQL 15+ / PostGIS 3.x · SQLAlchemy · Docker
-> **Current State:** API Contracts (openapi.yaml), SQLAlchemy ORM Models (models/), PostGIS spatial query helpers (services/geo_queries.py), and Scoring Engine (services/scoring.py) implemented. Routers are pending.
+> **Version:** 1.2 | April 2026
+> **Stack:** FastAPI · PostgreSQL 15+ / PostGIS 3.4 · SQLAlchemy 2.x · Docker
+> **Current State:** Core infrastructure, ORM models, scoring engine, and major API routers are fully implemented. AI Chat is implemented as a placeholder. Data ingestion pipeline is pending.
 
 ---
 
@@ -20,17 +20,18 @@
 │                                                                 │
 │  ┌─────────────┐  ┌──────────────┐  ┌───────────────────────┐  │
 │  │   Routers   │  │   Services   │  │    AI Assistant       │  │
-│  │  (Pending)  │→ │  (Pending)   │  │    (Pending)          │  │
+│  │  /api/v1/   │→ │ Scoring Eng. │  │   (Placeholder)       │  │
+│  │ (Registered)│  │ Geo Queries  │  │                       │  │
 │  └─────────────┘  └──────────────┘  └───────────────────────┘  │
 │          │                │                    │                │
 │  ┌───────▼────────────────▼────────────────────▼─────────────┐  │
-│  │         SQLAlchemy ORM + PostGIS (Implemented)             │  │
+│  │              SQLAlchemy ORM + PostGIS                      │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│               PostgreSQL 15+ with PostGIS 3.x (DB)             │
+│           PostgreSQL 15+ with PostGIS 3.4 (Docker)              │
 │  Users · Businesses · Hazards · Traffic · Barangays            │
 │  LocationHistory · LocationRecommendation · Analysis            │
 └───────────┬──────────────────────────────────────┬─────────────┘
@@ -39,7 +40,7 @@
 ┌───────────────────────┐              ┌────────────────────────┐
 │  Earl's Data Outputs  │              │  External APIs         │
 │  GeoJSON / Shapefile  │              │  Google Places API     │
-│  (Pending Ingestion)  │              │  LLM Provider (TBD)   │
+│  (Pending Ingestion)  │              │  Google OAuth 2.0      │
 └───────────────────────┘              └────────────────────────┘
 ```
 
@@ -52,169 +53,104 @@
 | DB Schema definition | **Earl** | ❌ Never | Niles consumes schema, never defines it |
 | Data sourcing / cleaning | **Earl** | ❌ Never | Earl exports GeoJSON/Shapefile only |
 | DB Migrations | **Earl** | ❌ Never | Backend reads migration output |
-| ORM Models (SQLAlchemy) | **Niles** | ✅ Translates Earl's schema | **Implemented**: 1-to-1 with ERD; no invention |
-| API Endpoints | **Niles** | ✅ Owns | FastAPI routers (**Pending**) |
-| Scoring Engine | **Niles** | ✅ Owns | Based on Analysis entity fields only |
-| AI Assistant Logic | **Niles** | ✅ Owns | Context-aware, no hallucinated scoring |
-| Ingestion Scripts | **Niles** | ✅ Owns | Consumes Earl's outputs only |
-| Docker / CI/CD | **Niles** | ✅ Owns | |
-| React Frontend | **Genald** | ❌ Never | Backend must conform to existing frontend |
+| ORM Models (SQLAlchemy) | **Niles** | ✅ Completed | 1-to-1 with ERD; zero drift detected |
+| API Endpoints | **Niles** | ✅ Completed | FastAPI routers implemented and registered |
+| Scoring Engine | **Niles** | ✅ Completed | Stateless engine with async spatial lookups |
+| AI Assistant Logic | **Niles** | ✅ In Progress| Endpoint exists; logic is placeholder |
+| Ingestion Scripts | **Niles** | ❌ Pending | Currently manual data loading |
+| Docker / CI/CD | **Niles** | ✅ Completed | Dockerfile and docker-compose.yml ready |
+| React Frontend | **Genald** | ❌ Never | Backend conforms to frontend contracts |
 | Map Rendering / GMP setup | **Earl / Genald** | ❌ Never | Backend provides data; never renders |
-| UI Components | **Genald** | ❌ Never | |
 
 ---
 
 ## 3. API Endpoint Catalog
 
-*Current Implementation State: Endpoints are defined in `openapi.yaml`. Backend implementation is partially complete in `routers/`. Authentication method: **Google OAuth 2.0 (Bearer Token)**.*
+All endpoints are prefixed `/api/v1`. Authentication: **Google OAuth 2.0 (Bearer Token)**.
 
 ### 3.1 Users
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/users/` | Create a user |
-| `GET` | `/users/{user_id}` | Retrieve a user profile |
+| `GET` | `/users/me` | Retrieve the authenticated user's profile |
 
-### 3.2 Businesses
+### 3.2 Barangays (Optimized with 1h Cache)
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/businesses/` | List businesses (Paginated limit/offset) |
+| `GET` | `/barangays/` | List all barangays (Paginated) |
+| `GET` | `/barangays/{barangay_id}` | Get a single barangay by PSGC code |
 
-### 3.3 Hazards
+### 3.3 Location History
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/hazards/` | List hazards (Paginated limit/offset) |
+| `GET` | `/users/{user_id}/history` | List location history for a user |
+| `POST` | `/users/{user_id}/history` | Add a new location history entry |
+| `DELETE` | `/users/{user_id}/history` | Clear user's location history |
 
-### 3.4 Traffic
+### 3.4 Recommendations & Analysis
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/traffic/` | List traffic data (Paginated limit/offset) |
+| `POST` | `/recommendations/generate` | Run analysis and save recommendation for a point |
+| `GET` | `/users/{user_id}/recommendations` | List user's saved recommendations |
+| `GET` | `/recommendations/{rlocation_id}` | Retrieve a specific recommendation |
 
-### 3.5 Location History
+### 3.5 AI Assistant
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/users/{user_id}/history` | Get user location history |
-| `POST` | `/users/{user_id}/history` | Save location history |
+| `POST` | `/ai/chat` | Interact with AI assistant (Placeholder) |
 
-### 3.6 Location Recommendations
+### 3.6 System
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/recommendations/generate` | Generate a location recommendation |
-
-### 3.7 Barangays
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/barangays/` | List Barangays (Paginated limit/offset) |
-
-### 3.8 Analysis
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/analysis/` | Generate site analysis (Scoring Engine output) |
+| `GET` | `/health` | API health check |
 
 ---
 
 ## 4. Geospatial Query Strategy (PostGIS)
 
-*Current Implementation State: Models use GeoAlchemy2 types (POINT, POLYGON). Spatial query helpers implemented in `services/geo_queries.py`.*
+Backend uses **GeoAlchemy2** and **PostGIS 3.4**. All queries are asynchronous and use EPSG:4326.
 
-All geometry is stored and queried in **EPSG:4326**. Backend uses GeoAlchemy2 for ORM-level spatial operations.
-
-| Use Case | PostGIS Function | Notes |
+| Use Case | Implementation | Performance |
 |---|---|---|
-| Proximity search (hazards, traffic, businesses) | `ST_DWithin(geom, ST_SetSRID(ST_MakePoint(lon, lat), 4326), radius_deg)` | Radius in degrees or use `ST_Transform` for meters |
-| Barangay boundary containment | `ST_Within(point_geom, barangay.boundary)` | Identify which barangay a point falls in |
-| Bounding box filter | `ST_Intersects(geom, ST_MakeEnvelope(xmin, ymin, xmax, ymax, 4326))` | Used for map viewport queries |
-| Geometry centroid | `ST_Centroid(geom)` | Compute center of drawn polygon |
-| GeoJSON output | `ST_AsGeoJSON(geom)` | All API geometry responses in GeoJSON |
-| Spatial index | `CREATE INDEX USING GIST(geom)` | Earl applies; backend assumes index exists |
+| Containment | `ST_Within(point, boundary)` | GiST index on `boundary` |
+| Proximity | `ST_DWithin(geom::geography, point::geography, radius)` | Radius in metres; GiST index |
+| Bounding Box | `ST_Intersects(geom, ST_MakeEnvelope(...))` | Uses `&&` pre-filter |
+
+*Note: Proximity queries for hazards, traffic, and businesses are executed in parallel via `asyncio.gather()`.*
 
 ---
 
 ## 5. Scoring Engine
 
-*Current Implementation State: **Implemented** in `services/scoring.py`.*
+Stateless implementation in `services/scoring.py`.
 
-Scoring is derived **exclusively** from the `Analysis` entity fields. No additional scoring dimensions are invented.
+### 5.1 Sub-score Normalization [0.0 - 1.0]
+- **Traffic**: Mean of nearby records, min-max scaled.
+- **Competitors**: `1.0 - (count / 20)`, saturating at 20 businesses.
+- **Hazards**: Max severity (`low`=0.25 to `extreme`=1.0), then inverted (`1.0 - risk`).
 
-### 5.1 Analysis Fields
-```
-overall_score
-traffic_score
-foot_traffic_score
-competing_business_score
-landslide_hazard_score
-flood_hazard_score
-storm_surge_score
-```
-
-### 5.2 Scoring Pipeline (Planned)
-```
-Input: geometry (point or polygon from frontend)
-  │
-  ├─ 1. Identify containing barangay → barangay_id
-  │
-  ├─ 2. Spatial queries (parallel):
-  │      ├─ traffic records within radius → traffic_score
-  │      ├─ foot traffic proxy (traffic_type = 'foot') → foot_traffic_score
-  │      ├─ competing businesses within radius → competing_business_score
-  │      ├─ hazard records: landslide severity → landslide_hazard_score
-  │      ├─ hazard records: flood severity → flood_hazard_score
-  │      └─ hazard records: storm_surge → storm_surge_score
-  │
-  ├─ 3. Normalize each sub-score to [0.0 – 1.0]
-  │
-  ├─ 4. Apply weights (default equal; restaurant_type filter adjusts weights)
-  │      overall_score = weighted_avg(all sub-scores)
-  │
-  ├─ 5. Map overall_score → 1–5 star display value
-  │
-  ├─ 6. Generate pros/cons list from sub-scores
-  │
-  └─ 7. Persist → Analysis table; link to LocationHistory or LocationRecommendation
-```
-
-> **Note:** Weight configuration per restaurant type is **"Insufficient data to verify"** — default equal weights are used until frontend filter contract is confirmed.
+### 5.2 Overall Score & Stars
+- **Formula**: Weighted average of all sub-scores (currently equal weights).
+- **Stars**:
+    - [0.0, 0.2) → 1★
+    - [0.2, 0.4) → 2★
+    - [0.4, 0.6) → 3★
+    - [0.6, 0.8) → 4★
+    - [0.8, 1.0] → 5★
 
 ---
 
 ## 6. AI Assistant Pipeline
 
-*Current Implementation State: Pending implementation in `ai/`.*
-
-```
-Frontend Input:
-  { "message": "...", "context": { analysis_id, geom, barangay_id } }
-  │
-  ├─ 1. Fetch Analysis record by analysis_id
-  ├─ 2. Fetch Barangay name by barangay_id
-  ├─ 3. Build structured context block (scores + location name)
-  ├─ 4. Construct LLM prompt:
-  │      SYSTEM: "You are a site selection assistant..."
-  │      CONTEXT: [scores, barangay, hazard summary, pros/cons]
-  │      USER: [message]
-  ├─ 5. Call LLM API (provider TBD — "Insufficient data to verify")
-  └─ 6. Return { "reply": "..." } to frontend
-```
+- **Status**: Implemented as Placeholder in `routers/ai.py`.
+- **Rate Limit**: 20 requests per minute per user.
+- **Integration**: Designed to accept `analysis_id` and `message` to provide context-aware insights (Logic pending).
 
 ---
 
 ## 7. Data Ingestion Pipeline (Earl → Backend)
 
-*Current Implementation State: Pending implementation in `ingestion/`.*
-
-```
-Earl Outputs:
-  ├─ hazards.geojson       → Hazards table
-  ├─ traffic.geojson       → Traffic Data table
-  ├─ barangays.geojson     → Barangay table
-  └─ businesses.geojson    → Business table
-
-Backend ingestion/run.py (Planned):
-  1. Load GeoJSON file
-  2. Validate required fields (no schema invention)
-  3. Transform geometry → PostGIS WKT (EPSG:4326)
-  4. Upsert records (PK-based conflict resolution)
-  5. Log ingestion count and errors
-```
+- **Status**: Pending.
+- **Logic**: Planned for `ingestion/run.py` to upsert GeoJSON features into PostGIS tables.
 
 ---
 
@@ -222,60 +158,65 @@ Backend ingestion/run.py (Planned):
 
 ```
 backend/
-├── BLUEPRINT.md                        # This file (Updated v1.1)
-├── FOLDER_STRUCTURE_AND_CONTRACTS.md   # Detailed contract mapping
-├── openapi.yaml                        # API Contract
-├── OVERVIEW_PROMPT.md                  # Regeneration prompt
+├── main.py                  # FastAPI Entry point & Middleware
+├── Dockerfile               # Python 3.11-slim
+├── docker-compose.yml       # PostGIS 15 container
+├── requirements.txt
 │
-├── models/                             # ORM Models (Implemented)
-│   ├── __init__.py
-│   ├── base.py
-│   ├── analysis.py
-│   ├── barangay.py
-│   ├── business.py
-│   ├── hazard.py
-│   ├── location_history.py
-│   ├── location_recommendation.py
-│   ├── traffic.py
-│   └── user.py
+├── core/                    # Infrastructure
+│   ├── database.py          # Async engine
+│   ├── security.py          # Google OAuth 2.0
+│   └── rate_limit.py        # SlowAPI config
 │
-└── services/                           # Business Logic (Partially Implemented)
-    ├── __init__.py
-    ├── geo_queries.py                  # PostGIS spatial query helpers (Implemented)
-    └── scoring.py                      # Site scoring engine (Implemented)
+├── models/                  # ORM Models (Verified 1-to-1 with ERD)
+│   ├── user.py, business.py, hazard.py, traffic.py,
+│   ├── barangay.py, analysis.py, location_history.py,
+│   └── location_recommendation.py
+│
+├── routers/                 # API Route Handlers
+│   ├── users.py, recommendations.py, ai.py, 
+│   ├── barangays.py, location_history.py
+│
+├── services/                # Business Logic
+│   ├── scoring.py           # Scoring Engine
+│   ├── geo_queries.py       # PostGIS helpers
+│   ├── analysis_service.py  # Orchestration
+│   └── recommendation.py    # Persistence logic
+│
+└── utils/                   # Shared Helpers
+    └── logger.py            # Structured logging
 ```
 
 ---
 
 ## 9. Build Phases Checklist
 
-| Phase | Task | Agent | Status |
-|---|---|---|---|
-| 1 | API contract design (OpenAPI spec) | API_SPECIALIST | ✅ Completed |
-| 2 | SQLAlchemy ORM models from ERD | API_SPECIALIST + GIS_DATABASE_ENGINEER | ✅ Completed |
-| 3 | PostGIS spatial query helpers | GIS_DATABASE_ENGINEER | ✅ Completed |
-| 4 | Scoring engine implementation | OPTIMIZATION_ENGINEER | ✅ Completed |
-| 5 | `/analysis/` endpoint | API_SPECIALIST | Pending |
-| 6 | `/recommendations/` endpoint | API_SPECIALIST | Pending |
-| 7 | `/ai/chat` endpoint | API_SPECIALIST | Pending |
-| 8 | Logging + monitoring setup | LOGGING_SPECIALIST | ✅ Completed |
-| 9 | Security / session layer | SECURITY_SPECIALIST | ✅ Completed |
-| 10 | Docker + docker-compose | DEVOPS_ENGINEER | ✅ Completed |
-| 11 | Query performance optimization | OPTIMIZATION_ENGINEER | Pending |
-| 12 | QA test suite | QA_AUDITOR | Pending |
+| Phase | Task | Status |
+|---|---|---|
+| 1 | API contract design (OpenAPI spec) | ✅ |
+| 2 | SQLAlchemy ORM models from ERD | ✅ |
+| 3 | PostGIS spatial query helpers | ✅ |
+| 4 | Scoring engine implementation | ✅ |
+| 5 | Analysis / Scoring orchestration | ✅ |
+| 6 | Recommendations endpoints | ✅ |
+| 7 | AI chat endpoint (Placeholder) | ✅ |
+| 8 | Logging & Middleware | ✅ |
+| 9 | Security (Google OAuth) | ✅ |
+| 10 | Dockerization | ✅ |
+| 11 | Cache & Performance optimization | ✅ |
+| 12 | QA test suite | ❌ Pending |
 
 ---
 
 ## 10. What Backend Does NOT Touch
 
-- PostgreSQL schema definitions or migrations (Earl owns these)
-- Source GeoJSON/Shapefile datasets (Earl owns these)
-- React components, frontend state, or UI logic (Genald owns these)
-- Google Maps Platform configuration or rendering (Earl/Genald own these)
-- Any schema field not present in the ERD above
+- PostgreSQL schema migrations (Earl owns)
+- Raw GeoJSON source files (Earl owns)
+- React Frontend (Genald owns)
+- Any schema field not present in the Authoritative ERD.
 
-> [!NOTE]
-> **Schema Drift Audit (2026-04-19):** All implemented models in `backend/models/` have been verified against the Authoritative ERD. All fields match; no drift detected.
+> [!IMPORTANT]
+> **Schema Audit:** `models/analysis.py` uses table name `analyses`. All fields in `TrafficData` and `Analysis` match the ERD types and names. Zero drift detected.
 
 ---
 
@@ -283,37 +224,7 @@ backend/
 
 | Item | Status |
 |---|---|
-| LLM provider and model for AI assistant | **Insufficient data to verify** |
-| Authentication method (token vs session) | **Google OAuth 2.0 Bearer Token (Resolved)** |
-| Restaurant type → scoring weight mapping | **Insufficient data to verify** |
-| Frontend API response format for map pins | **Insufficient data to verify** |
-| Supplier data source and schema | **Insufficient data to verify** (stretch goal) |
-| CI/CD platform (GitHub Actions, Cloud Run, etc.) | **Insufficient data to verify** |
-| Foot traffic data source (GMP vs third-party) | **Insufficient data to verify** |
-
----
-
-## 12. Security Architecture Decisions (Phase 9)
-
-**1. Authentication Method**: The backend leverages Google OAuth 2.0. The frontend obtains the ID token and sends it as a Bearer token. The backend verifies the token using the Google Auth library. The backend does not redirect or issue its own tokens, adhering strictly to a stateless API design.
-**2. User Identification**: The `user_id` inside `RecommendationCreateRequest` and other DTOs has been intentionally removed or is overridden by the authenticated user's context. The `get_current_user` dependency automatically extracts the `user_id` (`sub` claim) to prevent privilege escalation and ID spoofing.
-**3. Missing Routers**: `users.py`, `ai.py`, and `location_history.py` were dynamically created during Phase 9 to facilitate dependency injection of the new `get_current_user` function.
-**4. Rate Limiting**: `POST /api/v1/ai/chat` is protected by a 20 requests/minute rate limit. A lightweight, in-memory implementation (`slowapi`) was chosen to avoid introducing a Redis dependency prematurely. Rate limiting keys on the extracted `sub` claim or client IP.
-
----
-
-## 13. Logging Architecture Decisions (Phase 8)
-
-**1. JSON Structured Logging**: Standard Python `logging` was configured with a custom `JSONFormatter` in `core/logging_config.py`. All application logs are output as JSON lines to facilitate ingestion by observability platforms.
-**2. Data Privacy Constraints**: The `JSONFormatter` enforces strict privacy rules. Any field named `message_content` (e.g., raw AI chat messages) is scrubbed and replaced with `[REDACTED]`. Full geometry payloads are strictly prohibited; only Point geometries (centroids) are logged to protect proprietary location boundaries.
-**3. File Management**: Logs are written to `/var/log/gne/gne_backend.log` utilizing `RotatingFileHandler` (10 MB max, 5 backups). If the directory cannot be created due to OS permission issues (common on Windows development environments), it gracefully falls back to `./logs/gne_backend.log`.
-**4. Request & Telemetry Logging**: A global ASGI middleware in `main.py` records HTTP requests with exact `duration_ms`. Domain operations, such as scoring engine invocations in `analysis_service.py`, are explicitly timed and logged with detailed sub-score breakdowns using the helper methods in `utils/logger.py`.
-
----
-
-## 14. Docker & Deployment Configuration (Phase 10)
-
-**1. Containerization Strategy**: The backend is containerized using `python:3.11-slim` as the base image to minimize footprint while supporting necessary system libraries. The Dockerfile explicitly installs `gdal-bin`, `libgdal-dev`, and `libgeos-dev` to ensure compatibility with GeoAlchemy2 and PostGIS spatial operations.
-**2. Local Orchestration**: A `docker-compose.yml` file defines the application stack, consisting of the FastAPI `api` service and a `db` service using `postgis/postgis:15-3.4-alpine`. It maps the `/var/log/gne` directory to a local `./logs` volume for persistent logging. 
-**3. Configuration Management**: All sensitive credentials and environment-specific settings (e.g., `DATABASE_URL`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `LLM_API_KEY`) are externalized to a `.env` file and passed into the containers via Docker Compose. A `.env.example` file is maintained as a template.
-**4. Build Optimization**: A strict `.dockerignore` file prevents virtual environments, Python caches, logs, and Git metadata from being copied into the container context, reducing build times and image bloat.
+| LLM Provider | **Resolved**: Adaptable interface, env vars provided. |
+| Auth Method | **Resolved**: Google OAuth 2.0 Bearer tokens. |
+| Scoring weights | **Resolved**: Default equal; custom weights supported in engine. |
+| Ingestion logic | **Pending**: No scripts implemented yet. |
