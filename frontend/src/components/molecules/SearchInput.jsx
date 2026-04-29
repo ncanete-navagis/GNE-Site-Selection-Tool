@@ -18,30 +18,30 @@ const SearchInput = ({ placeholder, onSend }) => {
   };
 
   return (
-    <div 
-      className="d-flex align-items-center p-2" 
-      style={{ 
-        background: '#404249', 
+    <div
+      className="d-flex align-items-center p-2"
+      style={{
+        background: '#404249',
         borderRadius: '8px',
-        width: '100%' 
+        width: '100%'
       }}
     >
-      <input 
-        type="text" 
+      <input
+        type="text"
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder} 
-        style={{ 
-          background: 'none', 
-          border: 'none', 
-          color: 'white', 
-          outline: 'none', 
+        placeholder={placeholder}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: 'white',
+          outline: 'none',
           width: '100%',
           fontSize: '14px'
         }}
       />
-      <button 
+      <button
         style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
         onClick={handleSend}
       >
