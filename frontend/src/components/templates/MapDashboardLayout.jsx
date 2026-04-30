@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const MapDashboardLayout = ({ mapComponent, hudComponent }) => {
+export const MapDashboardLayout = ({ mapComponent, hudComponent, popupComponent }) => {
   const layoutStyle = {
     position: 'relative',
     width: '100vw',
@@ -12,6 +12,7 @@ export const MapDashboardLayout = ({ mapComponent, hudComponent }) => {
     <div style={layoutStyle}>
       {mapComponent}
       {hudComponent}
+      {popupComponent}
     </div>
   );
 };

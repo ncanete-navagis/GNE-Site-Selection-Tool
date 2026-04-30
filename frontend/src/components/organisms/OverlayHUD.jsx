@@ -12,7 +12,8 @@ export const OverlayHUD = ({
   onSearchChange,
   isAIMode,
   onToggleMode,
-  onFabClick
+  onFabClick,
+  isPlacingMarker
 }) => {
 
   const containerStyle = {
@@ -69,8 +70,9 @@ export const OverlayHUD = ({
         <div style={modeToggleStyle}>
           <ModeToggle isAIMode={isAIMode} onToggle={onToggleMode} />
         </div>
+
         <div style={rightBottomGroupStyle}>
-          <FloatingActionButton onClick={onFabClick} />
+          <FloatingActionButton onClick={onFabClick} isActive={isPlacingMarker} />
           <BrandLogo src={logoImg} />
         </div>
       </div>
