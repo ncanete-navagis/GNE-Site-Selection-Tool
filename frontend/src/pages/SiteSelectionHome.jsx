@@ -13,9 +13,9 @@ const MOCK_SITES = [
 
 export const SiteSelectionHome = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAIMode, setIsAIMode] = useState(true);
+  const [isAIMode, setIsAIMode] = useState(false);
   const [selectedSiteId, setSelectedSiteId] = useState('3'); // Default selected to show pink pin
-  
+
   // New state for map interaction
   const [isPlacingMarker, setIsPlacingMarker] = useState(false);
   const [geminiMarker, setGeminiMarker] = useState(null);
@@ -39,9 +39,9 @@ export const SiteSelectionHome = () => {
   };
 
   const mapComponent = (
-    <MapCanvas 
-      sites={MOCK_SITES} 
-      selectedSiteId={selectedSiteId} 
+    <MapCanvas
+      sites={MOCK_SITES}
+      selectedSiteId={selectedSiteId}
       onSiteSelect={setSelectedSiteId}
       isPlacingMarker={isPlacingMarker}
       setIsPlacingMarker={setIsPlacingMarker}
@@ -51,7 +51,7 @@ export const SiteSelectionHome = () => {
   );
 
   const hudComponent = (
-    <OverlayHUD 
+    <OverlayHUD
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
       isAIMode={isAIMode}
@@ -63,22 +63,22 @@ export const SiteSelectionHome = () => {
 
   // We always render the side panel, but control its visibility via isOpen prop for CSS transitions
   const sidePanelComponent = (
-    <GeminiSidePanel 
+    <GeminiSidePanel
       isOpen={isChatOpen}
       poi={geminiMarker ? {
         id: 'new-site',
         title: 'New Target Location',
         type: 'Selected Site',
         rating: 4.5
-      } : null} 
-      onClose={() => setIsChatOpen(false)} 
+      } : null}
+      onClose={() => setIsChatOpen(false)}
     />
   );
 
   return (
-    <MapDashboardLayout 
-      mapComponent={mapComponent} 
-      hudComponent={hudComponent} 
+    <MapDashboardLayout
+      mapComponent={mapComponent}
+      hudComponent={hudComponent}
       sidePanelComponent={sidePanelComponent}
     />
   );
