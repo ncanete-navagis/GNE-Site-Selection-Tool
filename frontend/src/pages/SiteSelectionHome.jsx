@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { MapDashboardLayout } from '../components/templates/MapDashboardLayout';
 import { MapCanvas } from '../components/organisms/MapCanvas';
 import { OverlayHUD } from '../components/organisms/OverlayHUD';
-import { GeminiChatPopup } from '../components/organisms/GeminiChatPopup';
+import { GeminiSidePanel } from '../components/organisms/GeminiSidePanel';
 
 // Mock data for demonstration
 const MOCK_SITES = [
@@ -19,7 +19,7 @@ export const SiteSelectionHome = () => {
   // New state for map interaction
   const [isPlacingMarker, setIsPlacingMarker] = useState(false);
   const [geminiMarker, setGeminiMarker] = useState(null);
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const handleToggleMode = () => {
     setIsAIMode(!isAIMode);
@@ -28,14 +28,14 @@ export const SiteSelectionHome = () => {
   const handleFabClick = () => {
     console.log("FAB clicked! Enabling marker placement mode...");
     setIsPlacingMarker(true);
-    // Hide popup while placing a new marker
-    setIsPopupOpen(false);
+    // Hide chat while placing a new marker
+    setIsChatOpen(false);
   };
 
   const handleMarkerPlaced = (coords) => {
     console.log("Marker placed at", coords);
     setGeminiMarker(coords);
-    setIsPopupOpen(true);
+    setIsChatOpen(true);
   };
 
   const mapComponent = (
@@ -61,23 +61,25 @@ export const SiteSelectionHome = () => {
     />
   );
 
-  const popupComponent = isPopupOpen && geminiMarker ? (
-    <GeminiChatPopup 
-      poi={{
+  // We always render the side panel, but control its visibility via isOpen prop for CSS transitions
+  const sidePanelComponent = (
+    <GeminiSidePanel 
+      isOpen={isChatOpen}
+      poi={geminiMarker ? {
         id: 'new-site',
         title: 'New Target Location',
         type: 'Selected Site',
         rating: 4.5
-      }} 
-      onClose={() => setIsPopupOpen(false)} 
+      } : null} 
+      onClose={() => setIsChatOpen(false)} 
     />
-  ) : null;
+  );
 
   return (
     <MapDashboardLayout 
       mapComponent={mapComponent} 
       hudComponent={hudComponent} 
-      popupComponent={popupComponent}
+      sidePanelComponent={sidePanelComponent}
     />
   );
 };

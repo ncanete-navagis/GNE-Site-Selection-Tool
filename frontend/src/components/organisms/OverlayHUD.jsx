@@ -68,7 +68,7 @@ export const OverlayHUD = ({
       {/* Bottom Section */}
       <div style={bottomSectionStyle}>
         <div style={modeToggleStyle}>
-          <ModeToggle isAIMode={isAIMode} onToggle={onToggleMode} />
+          <ModeToggle isAIMode={!isAIMode} onToggle={onToggleMode} />
         </div>
 
         <div style={rightBottomGroupStyle}>
