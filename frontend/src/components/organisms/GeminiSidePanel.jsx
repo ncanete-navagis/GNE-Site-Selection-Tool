@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGeminiChat } from '../../hooks/useGeminiChat';
+import { ChatMessage } from '../molecules/ChatMessage';
 
 export const GeminiSidePanel = ({ isOpen, onClose, poi }) => {
   const { messages, isTyping, error, sendMessage } = useGeminiChat(poi);
@@ -150,9 +151,7 @@ export const GeminiSidePanel = ({ isOpen, onClose, poi }) => {
           </div>
         )}
         {messages.map((msg, idx) => (
-          <div key={idx} style={getMessageStyle(msg.role)}>
-            {msg.content}
-          </div>
+          <ChatMessage key={idx} role={msg.role} content={msg.content} />
         ))}
         {isTyping && (
           <div style={getMessageStyle('model')}>
