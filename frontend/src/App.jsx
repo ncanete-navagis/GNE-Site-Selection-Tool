@@ -1,12 +1,13 @@
-import React from 'react'
-import SiteSelectionPage from './pages/SiteSelectionPage'
+import React from 'react';
+import './styles/global.css';
+import { SiteSelectionHome } from './pages/SiteSelectionHome';
 
 function App() {
   return (
     <div className="App">
-      <SiteSelectionPage />
+      <SiteSelectionHome />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

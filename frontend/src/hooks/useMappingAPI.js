@@ -11,6 +11,11 @@ export const useMappingAPI = (initialCenter) => {
     zoom: 12,
     bounds: null,
   });
+  const [markers, setMarkers] = useState([
+    { id: '1', pos: { lat: 10.33, lng: 123.93 }, title: "Pacific Mall", type: "mall", rating: 4.2, reviews: 1200 },
+    { id: '2', pos: { lat: 10.31, lng: 123.89 }, title: "Cebu City Center", type: "city", rating: 4.8, reviews: 8500 },
+    { id: '3', pos: { lat: 10.34, lng: 123.95 }, title: "Maayo Hotel", type: "hotel", rating: 4.5, reviews: 3200 }
+  ]);
   const [selectedPOI, setSelectedPOI] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -53,23 +58,36 @@ export const useMappingAPI = (initialCenter) => {
    */
   const onMarkerClick = useCallback((poi) => {
     setSelectedPOI(poi);
-    setIsSidebarOpen(true);
-    
-    if (map) {
-      map.panTo(poi.pos);
-    }
-  }, [map]);
+    // Open sidebar only for existing POIs, or use popup for others
+    // For this task, we want the marker popup
+  }, []);
 
   /**
-   * General Map Click Handler (e.g., to close panels)
+   * General Map Click Handler (drops a new marker)
    */
-  const onMapClick = useCallback(() => {
-    setIsSidebarOpen(false);
-  }, []);
+  const onMapClick = useCallback((e) => {
+    const newPos = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+    const newMarker = {
+      id: Date.now().toString(),
+      pos: newPos,
+      title: "New Location",
+      type: "new",
+      rating: 0,
+      reviews: 0
+    };
+    
+    setMarkers(prev => [...prev, newMarker]);
+    setSelectedPOI(newMarker);
+    
+    if (map) {
+      map.panTo(newPos);
+    }
+  }, [map]);
 
   return {
     map,
     mapState,
+    markers,
     selectedPOI,
     isSidebarOpen,
     onMapLoad,
@@ -81,3 +99,4 @@ export const useMappingAPI = (initialCenter) => {
     setSelectedPOI
   };
 };
+
