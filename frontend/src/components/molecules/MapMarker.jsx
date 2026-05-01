@@ -25,7 +25,15 @@ export const MapMarker = ({ isSelected, onClick }) => {
   };
 
   return (
-    <div style={{ position: 'relative', top: '-20px', left: '-20px' }} onClick={onClick}>
+    <div 
+      style={{ position: 'relative', top: '-20px', left: '-20px', pointerEvents: 'auto' }} 
+      onClick={(e) => {
+        if (onClick) {
+          e.stopPropagation();
+          onClick(e);
+        }
+      }}
+    >
       <div style={pinStyle}>
         <div style={iconContainerStyle}>
            <Icon name="mapPin" color="#fff" />

@@ -37,9 +37,16 @@ export const TopNavigationPanel = ({ searchQuery, onSearchChange }) => {
     minWidth: '720px'
   };
 
+  const regionOptions = [
+    { label: 'Cebu' },
+    { label: 'Manila' },
+  ];
+
   return (
     <PillBase style={containerStyle}>
       <DropdownButton iconName="filter" label="Filter" options={filterOptions} />
+      <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
+      <DropdownButton iconName="public" label="Region" options={regionOptions} />
       <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
       <DropdownButton iconName="layers" label="Layers" options={layerOptions} />
       <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }}></div>

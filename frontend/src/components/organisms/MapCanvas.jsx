@@ -128,7 +128,7 @@ export const MapCanvas = ({
           mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
           getPixelPositionOffset={getPixelPositionOffset}
         >
-          <MapMarker isSelected />
+          <MapMarker isSelected onClick={() => onMarkerPlaced(geminiMarker)} />
         </OverlayView>
       )}
 
