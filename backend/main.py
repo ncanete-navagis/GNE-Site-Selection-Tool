@@ -2,22 +2,21 @@
 main.py — FastAPI application entry point.
 
 Implemented by: LOGGING_SPECIALIST / API_SPECIALIST
+Version: 2.0 | May 2026 (Prompt C — CORS from settings, barangays router added)
 """
 
 import time
-import os
-import json
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError, DBAPIError
-from starlette.middleware.base import BaseHTTPMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
+from core.config import settings
 from utils.logger import log_request
 from core.rate_limit import limiter
-from routers import recommendations, users, ai, location_history
+from routers import recommendations, users, ai, location_history, barangays
 
 app = FastAPI(
     title="GNE Site Selection Tool API",
@@ -25,15 +24,9 @@ app = FastAPI(
     description="Backend API for the GNE platform."
 )
 
-ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", '["*"]')
-try:
-    origins = json.loads(ALLOWED_ORIGINS)
-except Exception:
-    origins = ["*"]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=settings.ALLOWED_ORIGINS,  # from core/config.py → ALLOWED_ORIGINS env var
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -95,6 +88,7 @@ app.include_router(users.router)
 app.include_router(recommendations.router)
 app.include_router(ai.router)
 app.include_router(location_history.router)
+app.include_router(barangays.router)
 
 @app.get("/health")
 def health_check():

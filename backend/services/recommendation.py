@@ -2,25 +2,27 @@
 services/recommendation.py — Business logic for Location Recommendations.
 
 Implemented by: API_SPECIALIST
+Version: 2.0 | May 2026 (Prompt C — async rewrite)
 """
 
 import uuid
 from typing import List, Optional
 
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy import select
 from sqlalchemy.orm import joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.location_recommendation import LocationRecommendation
 from models.analysis import Analysis
 from services.analysis_service import run_analysis, _build_response_dict
 
 
-def create_recommendation(
-    session: Session,
+async def create_recommendation(
+    session: AsyncSession,
     lon: float,
     lat: float,
-    user_id: str,
+    user_id: int,
     name: Optional[str] = None,
     description: Optional[str] = None,
 ) -> dict:
@@ -28,12 +30,12 @@ def create_recommendation(
     Generate a new recommendation by running an analysis and persisting it.
     """
     # 1. Run the analysis (this persists the Analysis record)
-    analysis_res = run_analysis(
+    analysis_res = await run_analysis(
         session=session,
         lon=lon,
         lat=lat,
         name=name,
-        user_id=user_id,
+        user_id=str(user_id) if user_id else None,
         restaurant_type=None,
     )
 
@@ -45,7 +47,7 @@ def create_recommendation(
     record = LocationRecommendation(
         rlocation_id=rlocation_id,
         user_id=user_id,
-        barangay_id=analysis_res.get("barangay_id"),
+        barangay_pcode=analysis_res.get("barangay_pcode"),
         analysis_id=uuid.UUID(analysis_res["analysis_id"]),
         name=name,
         description=description,
@@ -54,8 +56,8 @@ def create_recommendation(
     )
 
     session.add(record)
-    session.commit()
-    session.refresh(record)
+    await session.commit()
+    await session.refresh(record)
 
     # 3. Construct response dict
     return {
@@ -67,16 +69,17 @@ def create_recommendation(
     }
 
 
-def get_user_recommendations(session: Session, user_id: str) -> List[dict]:
+async def get_user_recommendations(session: AsyncSession, user_id: int) -> List[dict]:
     """
     Retrieve all location recommendations for a given user.
     """
-    records = (
-        session.query(LocationRecommendation)
+    stmt = (
+        select(LocationRecommendation)
         .options(joinedload(LocationRecommendation.analysis))
         .filter(LocationRecommendation.user_id == user_id)
-        .all()
     )
+    result = await session.execute(stmt)
+    records = result.scalars().all()
 
     results = []
     for rec in records:
@@ -98,16 +101,17 @@ def get_user_recommendations(session: Session, user_id: str) -> List[dict]:
     return results
 
 
-def get_recommendation(session: Session, rlocation_id: uuid.UUID) -> dict:
+async def get_recommendation(session: AsyncSession, rlocation_id: uuid.UUID) -> dict:
     """
     Retrieve a single location recommendation by its ID.
     """
-    rec = (
-        session.query(LocationRecommendation)
+    stmt = (
+        select(LocationRecommendation)
         .options(joinedload(LocationRecommendation.analysis))
         .filter(LocationRecommendation.rlocation_id == rlocation_id)
-        .first()
     )
+    result = await session.execute(stmt)
+    rec = result.scalars().first()
 
     if not rec:
         raise HTTPException(

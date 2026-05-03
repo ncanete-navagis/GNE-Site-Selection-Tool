@@ -20,7 +20,7 @@ Design rules (API_SPECIALIST):
   - analyzed_at is set server-side (datetime.utcnow()); the DB default is
     a fallback to guard against clock-skew on multi-instance deployments.
   - Extra response fields that are NOT physical Analysis columns (stars,
-    pros, cons, barangay_id, barangay_name, name, user_id,
+    pros, cons, barangay_pcode, barangay_name, name, user_id,
     restaurant_type) are persisted inside the analysis_details JSON column
     so that the GET endpoint can reconstruct the full response without
     re-running the spatial pipeline.
@@ -102,7 +102,7 @@ def _build_response_dict(record: Analysis, details: dict) -> dict:
             if record.analyzed_at
             else None
         ),
-        "barangay_id": details.get("barangay_id"),
+        "barangay_pcode": details.get("barangay_pcode"),
         "barangay_name": details.get("barangay_name"),
     }
 
@@ -220,8 +220,8 @@ async def run_analysis(
         "stars": stars,
         "pros": pros_cons["pros"],
         "cons": pros_cons["cons"],
-        "barangay_id": barangay.barangay_id,
-        "barangay_name": barangay.name,
+        "barangay_pcode": barangay.ADM4_PCODE,   # actual PK column in ph_barangays
+        "barangay_name": barangay.ADM4_EN,        # English barangay name column
         "name": name,
         "user_id": str(user_id) if user_id else None,
         "restaurant_type": restaurant_type,

@@ -2,6 +2,7 @@
 routers/location_history.py — FastAPI router for user location history.
 
 Implemented by: API_SPECIALIST / SECURITY_SPECIALIST
+Version: 2.0 | May 2026 (Prompt C — User.id integer fix, async handlers)
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -15,10 +16,12 @@ router = APIRouter(
     tags=["Location History"]
 )
 
+
 class LocationHistoryCreate(BaseModel):
     longitude: float = Field(..., ge=-180, le=180)
     latitude: float = Field(..., ge=-90, le=90)
     name: str = Field(None)
+
 
 class LocationHistoryResponse(BaseModel):
     id: str
@@ -26,33 +29,37 @@ class LocationHistoryResponse(BaseModel):
     latitude: float
     name: str
 
+
 @router.get("/{user_id}/history", response_model=List[LocationHistoryResponse])
-def get_location_history(
-    user_id: str,
+async def get_location_history(
+    user_id: int,
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Retrieve location history for a user.
-    """
-    if current_user.user_id != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this user's history")
-    
-    # Placeholder
+    """Retrieve location history for a user."""
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this user's history"
+        )
+
+    # Placeholder — DB implementation pending
     return []
 
+
 @router.post("/{user_id}/history", response_model=LocationHistoryResponse)
-def add_location_history(
-    user_id: str,
+async def add_location_history(
+    user_id: int,
     payload: LocationHistoryCreate,
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Add a new location history entry.
-    """
-    if current_user.user_id != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to modify this user's history")
-    
-    # Placeholder
+    """Add a new location history entry."""
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to modify this user's history"
+        )
+
+    # Placeholder — DB implementation pending
     return {
         "id": "dummy-uuid",
         "longitude": payload.longitude,
@@ -60,16 +67,18 @@ def add_location_history(
         "name": payload.name or "Unnamed Location"
     }
 
+
 @router.delete("/{user_id}/history", status_code=status.HTTP_204_NO_CONTENT)
-def clear_location_history(
-    user_id: str,
+async def clear_location_history(
+    user_id: int,
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Clear all location history for a user.
-    """
-    if current_user.user_id != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to modify this user's history")
-    
+    """Clear all location history for a user."""
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to modify this user's history"
+        )
+
     # Placeholder for DB delete
     return None

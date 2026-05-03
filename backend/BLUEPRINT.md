@@ -1,8 +1,8 @@
 # GNE Site Selection Tool — Backend Blueprint
 > **Owner:** Niles Cañete (Backend Lead)
-> **Version:** 1.2 | April 2026
+> **Version:** 2.0 | May 2026
 > **Stack:** FastAPI · PostgreSQL 15+ / PostGIS 3.4 · SQLAlchemy 2.x · Docker
-> **Current State:** Core infrastructure, ORM models, scoring engine, and major API routers are fully implemented. AI Chat is implemented as a placeholder. Data ingestion pipeline is pending.
+> **Current State:** Core infrastructure, ORM models, scoring engine, test suites, and major API routers are fully implemented. AI Chat is implemented as a placeholder. Data ingestion pipeline is pending.
 
 ---
 
@@ -32,7 +32,7 @@
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │           PostgreSQL 15+ with PostGIS 3.4 (Docker)              │
-│  Users · Businesses · Hazards · Traffic · Barangays            │
+│  Users · Buildings · Hazards · Traffic · Barangays             │
 │  LocationHistory · LocationRecommendation · Analysis            │
 └───────────┬──────────────────────────────────────┬─────────────┘
             │                                      │
@@ -53,7 +53,7 @@
 | DB Schema definition | **Earl** | ❌ Never | Niles consumes schema, never defines it |
 | Data sourcing / cleaning | **Earl** | ❌ Never | Earl exports GeoJSON/Shapefile only |
 | DB Migrations | **Earl** | ❌ Never | Backend reads migration output |
-| ORM Models (SQLAlchemy) | **Niles** | ✅ Completed | 1-to-1 with ERD; zero drift detected |
+| ORM Models (SQLAlchemy) | **Niles** | ✅ Completed | Fully aligned with updated schema from Earl |
 | API Endpoints | **Niles** | ✅ Completed | FastAPI routers implemented and registered |
 | Scoring Engine | **Niles** | ✅ Completed | Stateless engine with async spatial lookups |
 | AI Assistant Logic | **Niles** | ✅ In Progress| Endpoint exists; logic is placeholder |
@@ -111,22 +111,22 @@ Backend uses **GeoAlchemy2** and **PostGIS 3.4**. All queries are asynchronous a
 
 | Use Case | Implementation | Performance |
 |---|---|---|
-| Containment | `ST_Within(point, boundary)` | GiST index on `boundary` |
+| Containment | `ST_Within(point, boundary)` | GiST index on `boundary`/`geometry` |
 | Proximity | `ST_DWithin(geom::geography, point::geography, radius)` | Radius in metres; GiST index |
 | Bounding Box | `ST_Intersects(geom, ST_MakeEnvelope(...))` | Uses `&&` pre-filter |
 
-*Note: Proximity queries for hazards, traffic, and businesses are executed in parallel via `asyncio.gather()`.*
+*Note: Proximity queries for hazards, traffic, and buildings are executed in parallel via `asyncio.gather()`.*
 
 ---
 
 ## 5. Scoring Engine
 
-Stateless implementation in `services/scoring.py`.
+Stateless implementation in `services/scoring.py` (v2.0).
 
 ### 5.1 Sub-score Normalization [0.0 - 1.0]
-- **Traffic**: Mean of nearby records, min-max scaled.
-- **Competitors**: `1.0 - (count / 20)`, saturating at 20 businesses.
-- **Hazards**: Max severity (`low`=0.25 to `extreme`=1.0), then inverted (`1.0 - risk`).
+- **Hazards** (Flood, Landslide, Storm Surge): Count of specific hazard records, saturating at 5, then inverted (`1.0 - (count / 5)`).
+- **Competitors**: Count of `CebuBuilding` / `ManilaBuilding` records, saturating at 20, then inverted (`1.0 - (count / 20)`).
+- **Traffic / Foot Traffic**: STUBBED. `traffic_data` table not present in current schema. Defaults to neutral `0.5`.
 
 ### 5.2 Overall Score & Stars
 - **Formula**: Weighted average of all sub-scores (currently equal weights).
@@ -150,7 +150,7 @@ Stateless implementation in `services/scoring.py`.
 ## 7. Data Ingestion Pipeline (Earl → Backend)
 
 - **Status**: Pending.
-- **Logic**: Planned for `ingestion/run.py` to upsert GeoJSON features into PostGIS tables.
+- **Logic**: Planned for `ingestion/run.py` to upsert GeoJSON features into PostGIS tables. Test files exist in `tests/test_ingestion.py`.
 
 ---
 
@@ -166,10 +166,11 @@ backend/
 ├── core/                    # Infrastructure
 │   ├── database.py          # Async engine
 │   ├── security.py          # Google OAuth 2.0
+│   ├── logging_config.py    # Logging
 │   └── rate_limit.py        # SlowAPI config
 │
-├── models/                  # ORM Models (Verified 1-to-1 with ERD)
-│   ├── user.py, business.py, hazard.py, traffic.py,
+├── models/                  # ORM Models
+│   ├── user.py, business.py, building.py, hazard.py, traffic.py,
 │   ├── barangay.py, analysis.py, location_history.py,
 │   └── location_recommendation.py
 │
@@ -177,11 +178,19 @@ backend/
 │   ├── users.py, recommendations.py, ai.py, 
 │   ├── barangays.py, location_history.py
 │
+├── schemas/                 # Pydantic validation schemas
+│   └── user.py
+│
 ├── services/                # Business Logic
-│   ├── scoring.py           # Scoring Engine
+│   ├── scoring.py           # Scoring Engine (v2.0)
 │   ├── geo_queries.py       # PostGIS helpers
 │   ├── analysis_service.py  # Orchestration
 │   └── recommendation.py    # Persistence logic
+│
+├── tests/                   # QA test suite
+│   ├── conftest.py, test_ai_chat.py, test_analysis.py,
+│   ├── test_geo_queries.py, test_ingestion.py, 
+│   ├── test_recommendations.py, test_scoring.py
 │
 └── utils/                   # Shared Helpers
     └── logger.py            # Structured logging
@@ -194,7 +203,7 @@ backend/
 | Phase | Task | Status |
 |---|---|---|
 | 1 | API contract design (OpenAPI spec) | ✅ |
-| 2 | SQLAlchemy ORM models from ERD | ✅ |
+| 2 | SQLAlchemy ORM models from updated schema | ✅ |
 | 3 | PostGIS spatial query helpers | ✅ |
 | 4 | Scoring engine implementation | ✅ |
 | 5 | Analysis / Scoring orchestration | ✅ |
@@ -204,7 +213,7 @@ backend/
 | 9 | Security (Google OAuth) | ✅ |
 | 10 | Dockerization | ✅ |
 | 11 | Cache & Performance optimization | ✅ |
-| 12 | QA test suite | ❌ Pending |
+| 12 | QA test suite | ✅ |
 
 ---
 
@@ -215,8 +224,9 @@ backend/
 - React Frontend (Genald owns)
 - Any schema field not present in the Authoritative ERD.
 
-> [!IMPORTANT]
-> **Schema Audit:** `models/analysis.py` uses table name `analyses`. All fields in `TrafficData` and `Analysis` match the ERD types and names. Zero drift detected.
+> [!NOTE]
+> **SCHEMA ALIGNED**:
+> The ORM models have been successfully aligned with the updated schema provided by Earl (GIS & Data Lead), completely replacing older ERD definitions. This includes specific implementations for buildings (`cebu_buildings`, `manila_buildings`), barangays, and hazards (`FloodHazard`, `LandslideHazard`, `StormSurgeHazard`).
 
 ---
 
@@ -227,4 +237,5 @@ backend/
 | LLM Provider | **Resolved**: Adaptable interface, env vars provided. |
 | Auth Method | **Resolved**: Google OAuth 2.0 Bearer tokens. |
 | Scoring weights | **Resolved**: Default equal; custom weights supported in engine. |
-| Ingestion logic | **Pending**: No scripts implemented yet. |
+| Ingestion logic | **Pending**: No scripts implemented yet, but tests mapped out. |
+| Database Schema | **Resolved**: ORMs have been successfully aligned with Earl's updated database schema. |

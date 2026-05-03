@@ -1,8 +1,9 @@
 """
 routers/barangays.py — FastAPI router for barangay reference data.
 
-Implemented by: OPTIMIZATION_ENGINEER
+Implemented by: OPTIMIZATION_ENGINEER / API_SPECIALIST
 Phase 11 — Query Performance & Response Speed Optimization
+Prompt C   — BarangayResponse schema aligned with ADM* column names
 
 Endpoints
 ---------
@@ -20,6 +21,11 @@ Pagination
 ----------
 - ?page=1&page_size=50  (defaults)
 - page_size is capped at 200.
+
+Schema note (Prompt C):
+  The ph_barangays table uses ADM* column names (Earl's schema).
+  BarangayResponse uses Field(alias=...) so DB column names do NOT leak
+  into the API response.  Callers receive clean camelCase-friendly keys.
 """
 
 from __future__ import annotations
@@ -28,7 +34,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi_cache.decorator import cache
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -46,14 +52,21 @@ router = APIRouter(
 
 
 class BarangayResponse(BaseModel):
-    """Public-facing barangay representation (geometry excluded — payload size)."""
+    """Public-facing barangay representation.
 
-    barangay_id: str
-    name: str
-    municipality: Optional[str] = None
-    population: Optional[int] = None
+    Uses Python aliases so DB ADM* column names do not leak into the API.
+    Geometry is excluded — payload size.
+    """
 
-    model_config = {"from_attributes": True}
+    barangay_pcode: str = Field(alias="ADM4_PCODE")
+    barangay_name:  str = Field(alias="ADM4_EN")
+    municipality:   str = Field(alias="ADM3_EN")
+    city:           str = Field(alias="ADM2_EN")
+    region:         str = Field(alias="ADM1_EN")
+
+    class Config:
+        populate_by_name = True
+        from_attributes = True
 
 
 class BarangayListResponse(BaseModel):
@@ -88,19 +101,16 @@ async def list_barangays(
         db: Injected async database session.
 
     Returns:
-        :class:`BarangayListResponse` with pagination metadata and the current
-        page of :class:`BarangayResponse` items.
+        BarangayListResponse with pagination metadata and the current page of items.
     """
     offset = (page - 1) * page_size
 
-    # Total row count (for pagination metadata)
     count_result = await db.execute(select(func.count()).select_from(Barangay))
     total: int = count_result.scalar_one()
 
-    # Paginated rows ordered deterministically by PK
     stmt = (
         select(Barangay)
-        .order_by(Barangay.barangay_id)
+        .order_by(Barangay.ADM4_PCODE)
         .offset(offset)
         .limit(page_size)
     )
@@ -111,34 +121,37 @@ async def list_barangays(
         page=page,
         page_size=page_size,
         total=total,
-        items=[BarangayResponse.model_validate(b) for b in barangays],
+        items=[
+            BarangayResponse.model_validate(b, from_attributes=True)
+            for b in barangays
+        ],
     )
 
 
-@router.get("/barangays/{barangay_id}", response_model=BarangayResponse)
+@router.get("/barangays/{barangay_pcode}", response_model=BarangayResponse)
 @cache(expire=3600)
 async def get_barangay(
-    barangay_id: str,
+    barangay_pcode: str,
     db: AsyncSession = Depends(get_db),
 ) -> BarangayResponse:
-    """Return a single barangay by its PSGC code.
+    """Return a single barangay by its ADM4_PCODE (primary key).
 
     Results are cached for **1 hour**.
 
     Args:
-        barangay_id: PSGC code string (e.g. ``"063001001"``).
+        barangay_pcode: ADM4_PCODE string (e.g. "063001001").
         db: Injected async database session.
 
     Returns:
-        A :class:`BarangayResponse` for the matching barangay.
+        A BarangayResponse for the matching barangay.
 
     Raises:
-        HTTPException(404): When no barangay with the given ID exists.
+        HTTPException(404): When no barangay with the given pcode exists.
     """
-    record: Optional[Barangay] = await db.get(Barangay, barangay_id)
+    record: Optional[Barangay] = await db.get(Barangay, barangay_pcode)
     if record is None:
         raise HTTPException(
             status_code=404,
-            detail=f"Barangay '{barangay_id}' not found",
+            detail=f"Barangay '{barangay_pcode}' not found",
         )
-    return BarangayResponse.model_validate(record)
+    return BarangayResponse.model_validate(record, from_attributes=True)

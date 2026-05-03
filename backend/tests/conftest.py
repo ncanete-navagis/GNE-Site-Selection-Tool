@@ -30,7 +30,7 @@ async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def override_get_current_user():
     """Mock the authenticated user."""
-    return User(user_id="test_user_123", email="test@example.com", name="Test User")
+    return User(id=123, email="test@example.com", name="Test User")
 
 # Override the FastAPI dependency
 app.dependency_overrides[get_db] = override_get_db

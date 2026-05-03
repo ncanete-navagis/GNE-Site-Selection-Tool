@@ -16,7 +16,7 @@ from .base import Base
 
 
 class Analysis(Base):
-    __tablename__ = "analyses"
+    __tablename__ = "analysis"
 
     analysis_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
     overall_score = Column(Float, nullable=True)
