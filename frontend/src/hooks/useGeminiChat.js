@@ -5,18 +5,48 @@ export const useGeminiChat = (selectedPOI) => {
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState(null);
 
+  const buildFAQPrompts = (poi) => [
+    {
+      label: "What is the foot traffic here?",
+      prompt: `Analyze the pedestrian and vehicle foot traffic at ${poi.title}.
+        Explain peak hours, nearby establishments contributing to traffic, and whether this is favorable for a restaurant business.`,
+    },
+    {
+      label: "Is it located in a floodzone?",
+      prompt: `Check if ${poi.title} is within a flood-prone area.
+        Explain historical flood data, risk level, and how this may affect a restaurant operation.`,
+    },
+    {
+      label: "Is the community good?",
+      prompt: `Analyze the surrounding community of ${poi.title}.
+        Describe demographics, safety, nearby residential and commercial zones, and if the community is suitable for a restaurant.`,
+    },
+    {
+      label: "What is the total lot area?",
+      prompt: `Provide details about the total lot area of ${poi.title}.
+        Explain if the space is sufficient for a restaurant, parking, and future expansion.`,
+    },
+  ];
+
   // Endpoint for the backend proxy
   const BACKEND_URL = 'http://localhost:5000/chat';
 
   // Reset chat when POI changes
   useEffect(() => {
     if (selectedPOI) {
+      const faqs = buildFAQPrompts(selectedPOI);
+
       setMessages([
         {
           id: 'initial',
           role: 'model',
-          content: `Hi! I'm analyzing ${selectedPOI.title} (${selectedPOI.type}). This location has a rating of ${selectedPOI.rating}/5. Based on my initial look, it seems interesting for a restaurant. What type of cuisine are you planning for this location?`,
-          timestamp: Date.now()
+          content: `Hi! I'm analyzing ${selectedPOI.title}.
+
+  This location has a rating of ${selectedPOI.rating}/5. Based on my initial look, it seems interesting for a restaurant.
+
+  What type of cuisine are you planning for this location?`,
+          timestamp: Date.now(),
+          faqs, // 👈 attach FAQs to this message
         }
       ]);
     }
@@ -79,10 +109,16 @@ export const useGeminiChat = (selectedPOI) => {
     }
   }, [messages, selectedPOI]);
 
+  const sendFAQPrompt = useCallback((prompt, label) => {
+    // show only the label as user's message
+    sendMessage(prompt);
+  }, [sendMessage]);
+
   return {
     messages,
     isTyping,
     error,
-    sendMessage
+    sendMessage,
+    sendFAQPrompt
   };
 };

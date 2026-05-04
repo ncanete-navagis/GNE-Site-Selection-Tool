@@ -4,19 +4,23 @@ import { AccordionItem } from '../atoms/AccordionItem';
 
 export const ChatMessage = ({ role, content }) => {
   const getMessageStyle = (msgRole) => ({
-    padding: '14px 18px',
-    borderRadius: '20px',
-    maxWidth: '88%',
+    padding: '16px 20px',
+    borderRadius: msgRole === 'user' ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
+    maxWidth: '90%',
     alignSelf: msgRole === 'user' ? 'flex-end' : 'flex-start',
-    background: msgRole === 'user' ? 'linear-gradient(135deg, #FF3366 0%, #FF5588 100%)' : '#222222',
+    background: msgRole === 'user' 
+      ? 'linear-gradient(135deg, #ff2a85 0%, #ff6b6b 100%)' 
+      : 'rgba(255, 255, 255, 0.05)',
     color: '#FFF',
     fontSize: '15px',
     lineHeight: '1.6',
-    boxShadow: msgRole === 'user' ? '0 4px 12px rgba(255, 51, 102, 0.25)' : '0 2px 10px rgba(0,0,0,0.15)',
-    borderBottomRightRadius: msgRole === 'user' ? '4px' : '20px',
-    borderBottomLeftRadius: msgRole === 'model' ? '4px' : '20px',
-    border: msgRole === 'model' ? '1px solid rgba(255,255,255,0.05)' : 'none',
-    letterSpacing: '0.2px',
+    boxShadow: msgRole === 'user' 
+      ? '0 8px 20px rgba(255, 42, 133, 0.2)' 
+      : 'none',
+    border: msgRole === 'model' ? '1px solid rgba(255,255,255,0.08)' : 'none',
+    letterSpacing: '0.1px',
+    position: 'relative',
+    transition: 'all 0.3s ease',
   });
 
   const parseMessage = (text) => {

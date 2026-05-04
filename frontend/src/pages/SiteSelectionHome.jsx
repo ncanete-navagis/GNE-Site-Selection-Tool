@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapDashboardLayout } from '../components/templates/MapDashboardLayout';
 import { MapCanvas } from '../components/organisms/MapCanvas';
 import { OverlayHUD } from '../components/organisms/OverlayHUD';
-import { GeminiSidePanel } from '../components/organisms/GeminiSidePanel';
+import { SidePanel } from '../components/organisms/SidePanel';
 
 // Mock data for demonstration
 const MOCK_SITES = [
@@ -14,12 +14,16 @@ const MOCK_SITES = [
 export const SiteSelectionHome = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAIMode, setIsAIMode] = useState(false);
-  const [selectedSiteId, setSelectedSiteId] = useState('3'); // Default selected to show pink pin
+  const [selectedSiteId, setSelectedSiteId] = useState('3');
 
-  // New state for map interaction
+  // Side Panel State
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [panelMode, setPanelMode] = useState('features'); // 'features' | 'ai'
+  const [hasAIAccess, setHasAIAccess] = useState(true); // PIN system integration point
+
+  // Map interaction state
   const [isPlacingMarker, setIsPlacingMarker] = useState(false);
   const [geminiMarker, setGeminiMarker] = useState(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const handleToggleMode = () => {
     setIsAIMode(!isAIMode);
@@ -30,27 +34,34 @@ export const SiteSelectionHome = () => {
     setIsPlacingMarker((prev) => {
       const nextState = !prev;
       if (nextState) {
-        setIsChatOpen(false);
+        setIsPanelOpen(false);
       }
       return nextState;
     });
   };
 
+  const handleOpenFeatures = () => {
+    setPanelMode('features');
+    setIsPanelOpen(true);
+  };
+
   // Allow exiting placement mode via Escape key
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isPlacingMarker) {
-        setIsPlacingMarker(false);
+      if (e.key === 'Escape') {
+        if (isPlacingMarker) setIsPlacingMarker(false);
+        if (isPanelOpen) setIsPanelOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isPlacingMarker]);
+  }, [isPlacingMarker, isPanelOpen]);
 
   const handleMarkerPlaced = (coords) => {
     console.log("Marker placed at", coords);
     setGeminiMarker(coords);
-    setIsChatOpen(true);
+    setPanelMode('ai');
+    setIsPanelOpen(true);
   };
 
   const mapComponent = (
@@ -73,20 +84,23 @@ export const SiteSelectionHome = () => {
       onToggleMode={handleToggleMode}
       onFabClick={handleFabClick}
       isPlacingMarker={isPlacingMarker}
+      onOpenFeatures={handleOpenFeatures} // New handler
     />
   );
 
-  // We always render the side panel, but control its visibility via isOpen prop for CSS transitions
   const sidePanelComponent = (
-    <GeminiSidePanel
-      isOpen={isChatOpen}
+    <SidePanel
+      isOpen={isPanelOpen}
+      mode={panelMode}
+      setMode={setPanelMode}
+      hasAIAccess={hasAIAccess}
       poi={geminiMarker ? {
         id: `new-site-${geminiMarker.lat}-${geminiMarker.lng}`,
         title: 'New Target Location',
         type: 'Selected Site',
         rating: 4.5
       } : null}
-      onClose={() => setIsChatOpen(false)}
+      onClose={() => setIsPanelOpen(false)}
     />
   );
 
