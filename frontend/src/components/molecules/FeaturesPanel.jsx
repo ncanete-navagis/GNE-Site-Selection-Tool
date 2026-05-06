@@ -62,6 +62,16 @@ const CollapsibleSection = ({ title, items = [], type = 'list', value, onChange,
         ? currentValues.filter(item => item !== label)
         : [...currentValues, label]
     );
+    setSelectedItems(prev => {
+      const next = prev.includes(label)
+        ? prev.filter(item => item !== label)
+        : [...prev, label];
+
+      if (title === 'Layers' && typeof window.onLayerToggleGlobal === 'function') {
+        window.onLayerToggleGlobal(next);
+      }
+      return next;
+    });
   };
 
   return (

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapDashboardLayout } from '../components/templates/MapDashboardLayout';
 import { MapCanvas } from '../components/organisms/MapCanvas';
 import { OverlayHUD } from '../components/organisms/OverlayHUD';
-import { SidePanel } from '../components/organisms/SidePanel';
+import { SidePanel } from '../components/organisms/SidePanel';\nimport { useBackendAPI } from '../hooks/useBackendAPI';
 
 // Mock data for demonstration
 const MOCK_SITES = [
@@ -24,6 +24,28 @@ export const SiteSelectionHome = () => {
   // Map interaction state
   const [isPlacingMarker, setIsPlacingMarker] = useState(false);
   const [geminiMarker, setGeminiMarker] = useState(null);
+  const [hazardData, setHazardData] = useState(null);
+  const [trafficData, setTrafficData] = useState(null);
+  const { generateRecommendation, getHazards, getTraffic } = useBackendAPI();
+
+  useEffect(() => {
+    window.onLayerToggleGlobal = async (layers) => {
+      const bounds = { xmin: 123.8, ymin: 10.2, xmax: 124.0, ymax: 10.4 };
+      if (layers.includes('Flood Hazard') || layers.includes('Earthquake Risk')) {
+        const data = await getHazards(bounds);
+        setHazardData(data);
+      } else {
+        setHazardData(null);
+      }
+      if (layers.includes('Traffic Layer')) {
+        const data = await getTraffic(bounds);
+        setTrafficData(data);
+      } else {
+        setTrafficData(null);
+      }
+    };
+    return () => { delete window.onLayerToggleGlobal; };
+  }, [getHazards, getTraffic]);
 
   const handleToggleMode = () => {
     setIsAIMode(!isAIMode);
@@ -57,7 +79,7 @@ export const SiteSelectionHome = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlacingMarker, isPanelOpen]);
 
-  const handleMarkerPlaced = (coords) => {
+  const handleMarkerPlaced = async (coords) => {\n    try { await generateRecommendation(coords.lat, coords.lng, 'New Site'); } catch(e) {}
     console.log("Marker placed at", coords);
     setGeminiMarker(coords);
     setPanelMode('ai');
@@ -72,7 +94,7 @@ export const SiteSelectionHome = () => {
       isPlacingMarker={isPlacingMarker}
       setIsPlacingMarker={setIsPlacingMarker}
       onMarkerPlaced={handleMarkerPlaced}
-      geminiMarker={geminiMarker}
+      geminiMarker={geminiMarker}\n      hazardData={hazardData}\n      trafficData={trafficData}
     />
   );
 
