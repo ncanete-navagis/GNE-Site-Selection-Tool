@@ -1,5 +1,5 @@
 # GNE Site Selection Tool — Backend Blueprint
-> **Owner:** Niles Cañete (Backend Lead)
+> **Team:** Niles Cañete · Genald de Guia · Earl Gabriel Rondina
 > **Version:** 2.0 | May 2026
 > **Stack:** FastAPI · PostgreSQL 15+ / PostGIS 3.4 · SQLAlchemy 2.x · Docker
 > **Current State:** Core infrastructure, ORM models, scoring engine, test suites, and major API routers are fully implemented. AI Chat is implemented as a placeholder. Data ingestion pipeline is pending.
@@ -10,13 +10,13 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (Genald)                        │
+│                            FRONTEND                             │
 │              React 18+ · Google Maps Platform · UI              │
 └────────────────────────────┬────────────────────────────────────┘
                              │ HTTP/REST (JSON)
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     BACKEND (Niles) — FastAPI                   │
+│                        BACKEND — FastAPI                        │
 │                                                                 │
 │  ┌─────────────┐  ┌──────────────┐  ┌───────────────────────┐  │
 │  │   Routers   │  │   Services   │  │    AI Assistant       │  │
@@ -46,66 +46,49 @@
 
 ---
 
-## 2. Role Boundary Table
 
-| Domain | Owner | Backend Touches? | Notes |
-|---|---|---|---|
-| DB Schema definition | **Earl** | ❌ Never | Niles consumes schema, never defines it |
-| Data sourcing / cleaning | **Earl** | ❌ Never | Earl exports GeoJSON/Shapefile only |
-| DB Migrations | **Earl** | ❌ Never | Backend reads migration output |
-| ORM Models (SQLAlchemy) | **Niles** | ✅ Completed | Fully aligned with updated schema from Earl |
-| API Endpoints | **Niles** | ✅ Completed | FastAPI routers implemented and registered |
-| Scoring Engine | **Niles** | ✅ Completed | Stateless engine with async spatial lookups |
-| AI Assistant Logic | **Niles** | ✅ In Progress| Endpoint exists; logic is placeholder |
-| Ingestion Scripts | **Niles** | ❌ Pending | Currently manual data loading |
-| Docker / CI/CD | **Niles** | ✅ Completed | Dockerfile and docker-compose.yml ready |
-| React Frontend | **Genald** | ❌ Never | Backend conforms to frontend contracts |
-| Map Rendering / GMP setup | **Earl / Genald** | ❌ Never | Backend provides data; never renders |
-
----
-
-## 3. API Endpoint Catalog
+## 2. API Endpoint Catalog
 
 All endpoints are prefixed `/api/v1`. Authentication: **Google OAuth 2.0 (Bearer Token)**.
 
-### 3.1 Users
+### 2.1 Users
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/users/me` | Retrieve the authenticated user's profile |
 
-### 3.2 Barangays (Optimized with 1h Cache)
+### 2.2 Barangays (Optimized with 1h Cache)
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/barangays/` | List all barangays (Paginated) |
 | `GET` | `/barangays/{barangay_id}` | Get a single barangay by PSGC code |
 
-### 3.3 Location History
+### 2.3 Location History
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/users/{user_id}/history` | List location history for a user |
 | `POST` | `/users/{user_id}/history` | Add a new location history entry |
 | `DELETE` | `/users/{user_id}/history` | Clear user's location history |
 
-### 3.4 Recommendations & Analysis
+### 2.4 Recommendations & Analysis
 | Method | Path | Description |
 |---|---|---|
 | `POST` | `/recommendations/generate` | Run analysis and save recommendation for a point |
 | `GET` | `/users/{user_id}/recommendations` | List user's saved recommendations |
 | `GET` | `/recommendations/{rlocation_id}` | Retrieve a specific recommendation |
 
-### 3.5 AI Assistant
+### 2.5 AI Assistant
 | Method | Path | Description |
 |---|---|---|
 | `POST` | `/ai/chat` | Interact with AI assistant (Placeholder) |
 
-### 3.6 System
+### 2.6 System
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/health` | API health check |
 
 ---
 
-## 4. Geospatial Query Strategy (PostGIS)
+## 3. Geospatial Query Strategy (PostGIS)
 
 Backend uses **GeoAlchemy2** and **PostGIS 3.4**. All queries are asynchronous and use EPSG:4326.
 
@@ -119,16 +102,16 @@ Backend uses **GeoAlchemy2** and **PostGIS 3.4**. All queries are asynchronous a
 
 ---
 
-## 5. Scoring Engine
+## 4. Scoring Engine
 
 Stateless implementation in `services/scoring.py` (v2.0).
 
-### 5.1 Sub-score Normalization [0.0 - 1.0]
+### 4.1 Sub-score Normalization [0.0 - 1.0]
 - **Hazards** (Flood, Landslide, Storm Surge): Count of specific hazard records, saturating at 5, then inverted (`1.0 - (count / 5)`).
 - **Competitors**: Count of `CebuBuilding` / `ManilaBuilding` records, saturating at 20, then inverted (`1.0 - (count / 20)`).
 - **Traffic / Foot Traffic**: STUBBED. `traffic_data` table not present in current schema. Defaults to neutral `0.5`.
 
-### 5.2 Overall Score & Stars
+### 4.2 Overall Score & Stars
 - **Formula**: Weighted average of all sub-scores (currently equal weights).
 - **Stars**:
     - [0.0, 0.2) → 1★
@@ -139,7 +122,7 @@ Stateless implementation in `services/scoring.py` (v2.0).
 
 ---
 
-## 6. AI Assistant Pipeline
+## 5. AI Assistant Pipeline
 
 - **Status**: Implemented as Placeholder in `routers/ai.py`.
 - **Rate Limit**: 20 requests per minute per user.
@@ -147,14 +130,14 @@ Stateless implementation in `services/scoring.py` (v2.0).
 
 ---
 
-## 7. Data Ingestion Pipeline (Earl → Backend)
+## 6. Data Ingestion Pipeline
 
 - **Status**: Pending.
 - **Logic**: Planned for `ingestion/run.py` to upsert GeoJSON features into PostGIS tables. Test files exist in `tests/test_ingestion.py`.
 
 ---
 
-## 8. Backend Folder Structure (Actual)
+## 7. Backend Folder Structure (Actual)
 
 ```
 backend/
@@ -198,7 +181,7 @@ backend/
 
 ---
 
-## 9. Build Phases Checklist
+## 8. Build Phases Checklist
 
 | Phase | Task | Status |
 |---|---|---|
@@ -217,20 +200,7 @@ backend/
 
 ---
 
-## 10. What Backend Does NOT Touch
-
-- PostgreSQL schema migrations (Earl owns)
-- Raw GeoJSON source files (Earl owns)
-- React Frontend (Genald owns)
-- Any schema field not present in the Authoritative ERD.
-
-> [!NOTE]
-> **SCHEMA ALIGNED**:
-> The ORM models have been successfully aligned with the updated schema provided by Earl (GIS & Data Lead), completely replacing older ERD definitions. This includes specific implementations for buildings (`cebu_buildings`, `manila_buildings`), barangays, and hazards (`FloodHazard`, `LandslideHazard`, `StormSurgeHazard`).
-
----
-
-## 11. Assumptions and Uncertainties
+## 9. Assumptions and Uncertainties
 
 | Item | Status |
 |---|---|
