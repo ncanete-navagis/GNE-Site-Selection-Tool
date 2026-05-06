@@ -31,8 +31,8 @@
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│           PostgreSQL 15+ with PostGIS 3.4 (Docker)              │
-│  Users · Buildings · Hazards · Traffic · Barangays             │
+│           PostgreSQL 15+ with PostGIS 3.4                       │
+│  Users · Buildings · Hazards · Traffic · Barangays              │
 │  LocationHistory · LocationRecommendation · Analysis            │
 └───────────┬──────────────────────────────────────┬─────────────┘
             │                                      │

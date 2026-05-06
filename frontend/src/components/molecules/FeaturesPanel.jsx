@@ -60,11 +60,16 @@ const CollapsibleSection = ({ title, items = [], type = 'list' }) => {
   const [selectedItems, setSelectedItems] = useState([]);
 
   const toggleItem = (label) => {
-    setSelectedItems(prev =>
-      prev.includes(label)
+    setSelectedItems(prev => {
+      const next = prev.includes(label)
         ? prev.filter(item => item !== label)
-        : [...prev, label]
-    );
+        : [...prev, label];
+        
+      if (title === 'Layers' && typeof window.onLayerToggleGlobal === 'function') {
+        window.onLayerToggleGlobal(next);
+      }
+      return next;
+    });
   };
 
   return (

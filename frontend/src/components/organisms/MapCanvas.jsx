@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useMemo, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, OverlayView } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, OverlayView, Data } from '@react-google-maps/api';
 import { MapMarker } from '../molecules/MapMarker';
 
 const containerStyle = {
@@ -34,7 +34,7 @@ const darkMapStyle = [
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#3d3d3d" }] }
 ];
 
-export const MapCanvas = ({
+export const MapCanvas = ({\n  hazardData,\n  trafficData,
   sites = [],
   selectedSiteId,
   onSiteSelect,
@@ -106,7 +106,18 @@ export const MapCanvas = ({
       onClick={handleMapClick}
       options={mapOptions}
     >
-      {/* Existing markers */}
+            {hazardData && (
+        <Data
+          options={{ fillColor: "red", strokeColor: "red", strokeWeight: 2, fillOpacity: 0.3 }}
+          onLoad={data => data.addGeoJson(hazardData)}
+        />
+      )}
+      {trafficData && (
+        <Data
+          options={{ fillColor: "orange", strokeColor: "orange", strokeWeight: 3, fillOpacity: 0.5 }}
+          onLoad={data => data.addGeoJson(trafficData)}
+        />
+      )}\n\n      {/* Existing markers */}
       {sites.map(site => (
         <OverlayView
           key={site.id}
