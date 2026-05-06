@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { GoogleGenAI } from '@google/genai';
+import placesRoutes from "../routers/places.js";
 
 dotenv.config();
 
@@ -21,6 +22,9 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 app.use(express.json());
+
+// Routes
+app.use("/api", placesRoutes);
 
 // Gemini Initialization
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
