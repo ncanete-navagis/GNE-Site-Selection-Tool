@@ -29,7 +29,7 @@ export const useGeminiChat = (selectedPOI) => {
   ];
 
   // Endpoint for the backend proxy
-  const BACKEND_URL = 'http://localhost:5000/chat';
+  const BACKEND_URL = 'http://localhost:8000/api/v1/ai/chat';
 
   // Reset chat when POI changes
   useEffect(() => {

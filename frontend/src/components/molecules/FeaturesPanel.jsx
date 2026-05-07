@@ -177,7 +177,7 @@ export const FeaturesPanel = () => {
   /* Fetch restaurant types whenever region changes */
   useEffect(() => {
     setIsLoadingTypes(true);
-    fetch(`http://localhost:5000/api/restaurant-types?region=${region}`)
+    fetch(`http://localhost:8000/api/v1/places/restaurant-types?region=${region}`)
       .then(res => res.json())
       .then(data => {
         const typesList = data.types || [];
