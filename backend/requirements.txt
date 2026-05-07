@@ -4,6 +4,12 @@ sqlalchemy
 geoalchemy2
 alembic
 psycopg2-binary
+fastapi
+uvicorn
+sqlalchemy
+geoalchemy2
+alembic
+psycopg2-binary
 google-auth>=2.0.0
 google-auth-httplib2
 slowapi
@@ -11,3 +17,6 @@ slowapi
 fastapi-cache2>=0.2.0
 asyncpg
 pydantic
+google-genai
+httpx
+python-dotenv

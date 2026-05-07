@@ -24,6 +24,12 @@ import json
 import os
 
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 class Settings:
     """Lightweight settings container backed by os.environ.
 
@@ -33,6 +39,8 @@ class Settings:
 
     def __init__(self) -> None:
         self.GOOGLE_CLIENT_ID: str = os.environ.get("GOOGLE_CLIENT_ID", "")
+        self.GOOGLE_API_KEY: str = os.environ.get("GOOGLE_API_KEY", "")
+        self.GEMINI_API_KEY: str = os.environ.get("GEMINI_API_KEY", "")
         self.ASYNC_DATABASE_URL: str = os.environ.get(
             "ASYNC_DATABASE_URL",
             os.environ.get("DATABASE_URL", "postgresql+asyncpg://postgres:postgres_password@localhost:5432/gne_db")
