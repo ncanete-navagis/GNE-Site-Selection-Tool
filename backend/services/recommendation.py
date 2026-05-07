@@ -22,12 +22,17 @@ async def create_recommendation(
     session: AsyncSession,
     lon: float,
     lat: float,
-    user_id: int,
+    user_id: Optional[int] = None,
     name: Optional[str] = None,
     description: Optional[str] = None,
 ) -> dict:
     """
-    Generate a new recommendation by running an analysis and persisting it.
+    Generate a new recommendation by running an analysis.
+
+    When user_id is provided (authenticated), the result is persisted to
+    LocationRecommendation and linked to the user account.
+    When user_id is None (unauthenticated), the analysis still runs and
+    the result is returned without any DB persistence.
     """
     # 1. Run the analysis (this persists the Analysis record)
     analysis_res = await run_analysis(
@@ -39,33 +44,40 @@ async def create_recommendation(
         restaurant_type=None,
     )
 
-    # 2. Persist to LocationRecommendation table
-    geom_wkt = f"SRID=4326;POINT({lon} {lat})"
-    
-    rlocation_id = uuid.uuid4()
-    
-    record = LocationRecommendation(
-        rlocation_id=rlocation_id,
-        user_id=user_id,
-        barangay_pcode=analysis_res.get("barangay_pcode"),
-        analysis_id=uuid.UUID(analysis_res["analysis_id"]),
-        name=name,
-        description=description,
-        geom=geom_wkt,
-        google_place_id=None
-    )
+    # 2. Persist to LocationRecommendation only for authenticated users
+    if user_id is not None:
+        geom_wkt = f"SRID=4326;POINT({lon} {lat})"
+        rlocation_id = uuid.uuid4()
 
-    session.add(record)
-    await session.commit()
-    await session.refresh(record)
+        record = LocationRecommendation(
+            rlocation_id=rlocation_id,
+            user_id=user_id,
+            barangay_pcode=analysis_res.get("barangay_pcode"),
+            analysis_id=uuid.UUID(analysis_res["analysis_id"]),
+            name=name,
+            description=description,
+            geom=geom_wkt,
+            google_place_id=None
+        )
+        session.add(record)
+        await session.commit()
+        await session.refresh(record)
 
-    # 3. Construct response dict
+        return {
+            "rlocation_id": str(record.rlocation_id),
+            "name": record.name,
+            "analysis": analysis_res,
+            "barangay_name": analysis_res.get("barangay_name"),
+            "created_at": record.created_at.isoformat() if record.created_at else None,
+        }
+
+    # Unauthenticated path — return analysis without persisting
     return {
-        "rlocation_id": str(record.rlocation_id),
-        "name": record.name,
+        "rlocation_id": str(uuid.uuid4()),  # ephemeral ID, not in DB
+        "name": name,
         "analysis": analysis_res,
         "barangay_name": analysis_res.get("barangay_name"),
-        "created_at": record.created_at.isoformat() if record.created_at else None,
+        "created_at": None,
     }
 
 

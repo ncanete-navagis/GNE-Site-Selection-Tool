@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
 const API_BASE = 'http://localhost:8000/api/v1';
 
@@ -6,15 +7,24 @@ export const useBackendAPI = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Pull idToken from AuthContext — null when the user is not signed in
+  const auth = useContext(AuthContext);
+  const idToken = auth?.idToken ?? null;
+
   const fetchWithState = useCallback(async (url, options = {}) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Mock auth headers for now, since we're testing integration
       const headers = {
         'Content-Type': 'application/json',
         ...options.headers,
       };
+
+      // Attach the Google ID token only when the user is signed in
+      if (idToken) {
+        headers['Authorization'] = `Bearer ${idToken}`;
+      }
+
       const response = await fetch(url, { ...options, headers });
       if (!response.ok) throw new Error(`API Error: ${response.status} ${response.statusText}`);
       const data = await response.json();
@@ -25,7 +35,7 @@ export const useBackendAPI = () => {
       setIsLoading(false);
       throw err;
     }
-  }, []);
+  }, [idToken]);
 
   const generateRecommendation = useCallback(async (lat, lng, name) => {
     return fetchWithState(`${API_BASE}/recommendations/generate`, {
@@ -55,6 +65,7 @@ export const useBackendAPI = () => {
     getTraffic,
     getRegions,
     isLoading,
-    error
+    error,
+    isAuthenticated: !!idToken,
   };
 };
