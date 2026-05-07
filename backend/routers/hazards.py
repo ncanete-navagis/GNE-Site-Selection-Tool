@@ -1,5 +1,5 @@
 """
-routers/hazards.py — FastAPI router for Hazard Data API.
+routers/hazards.py â€” FastAPI router for Hazard Data API.
 """
 
 from typing import Optional, Dict, Any

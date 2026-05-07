@@ -34,7 +34,9 @@ const darkMapStyle = [
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#3d3d3d" }] }
 ];
 
-export const MapCanvas = ({\n  hazardData,\n  trafficData,
+export const MapCanvas = ({
+  hazardData,
+  trafficData,
   sites = [],
   selectedSiteId,
   onSiteSelect,
@@ -50,7 +52,7 @@ export const MapCanvas = ({\n  hazardData,\n  trafficData,
   });
 
   const [map, setMap] = useState(null);
-  
+
   // Guard against race conditions for double clicks
   const isProcessingClick = useRef(false);
 
@@ -73,7 +75,7 @@ export const MapCanvas = ({\n  hazardData,\n  trafficData,
 
     onMarkerPlaced({ lat, lng });
     setIsPlacingMarker(false);
-    
+
     // Release guard after a short delay to prevent double-click zooms acting as second clicks
     setTimeout(() => {
       isProcessingClick.current = false;
@@ -86,7 +88,7 @@ export const MapCanvas = ({\n  hazardData,\n  trafficData,
     disableDefaultUI: true,
     draggableCursor: isPlacingMarker ? "crosshair" : "grab",
     // Prevent double clicking from zooming while we are trying to place a marker
-    disableDoubleClickZoom: isPlacingMarker 
+    disableDoubleClickZoom: isPlacingMarker
   }), [isPlacingMarker]);
 
   // Optional: A helper function to properly center custom DOM elements over the coordinate.
@@ -106,7 +108,7 @@ export const MapCanvas = ({\n  hazardData,\n  trafficData,
       onClick={handleMapClick}
       options={mapOptions}
     >
-            {hazardData && (
+      {hazardData && (
         <Data
           options={{ fillColor: "red", strokeColor: "red", strokeWeight: 2, fillOpacity: 0.3 }}
           onLoad={data => data.addGeoJson(hazardData)}
@@ -117,7 +119,8 @@ export const MapCanvas = ({\n  hazardData,\n  trafficData,
           options={{ fillColor: "orange", strokeColor: "orange", strokeWeight: 3, fillOpacity: 0.5 }}
           onLoad={data => data.addGeoJson(trafficData)}
         />
-      )}\n\n      {/* Existing markers */}
+      )}
+      {/* Existing markers */}
       {sites.map(site => (
         <OverlayView
           key={site.id}

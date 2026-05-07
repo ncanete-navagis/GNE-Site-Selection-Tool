@@ -1,5 +1,5 @@
 """
-routers/location_history.py — FastAPI router for user location history.
+routers/location_history.py â€” FastAPI router for user location history.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -88,4 +88,4 @@ async def clear_location_history(
     stmt = delete(LocationHistory).where(LocationHistory.user_id == user_id)
     await db.execute(stmt)
     await db.commit()
-    return None
+    return None

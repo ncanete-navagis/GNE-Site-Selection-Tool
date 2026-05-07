@@ -16,7 +16,7 @@ export const useBackendAPI = () => {
         ...options.headers,
       };
       const response = await fetch(url, { ...options, headers });
-      if (!response.ok) throw new Error(\API Error: \\);
+      if (!response.ok) throw new Error(`API Error: ${response.status} ${response.statusText}`);
       const data = await response.json();
       setIsLoading(false);
       return data;
@@ -28,25 +28,25 @@ export const useBackendAPI = () => {
   }, []);
 
   const generateRecommendation = useCallback(async (lat, lng, name) => {
-    return fetchWithState(\\/recommendations/generate\, {
+    return fetchWithState(`${API_BASE}/recommendations/generate`, {
       method: 'POST',
       body: JSON.stringify({ latitude: lat, longitude: lng, name })
     });
   }, [fetchWithState]);
 
   const getHazards = useCallback(async (bounds, hazardType = null) => {
-    let url = \\/hazards/?xmin=\&ymin=\&xmax=\&ymax=\\;
-    if (hazardType) url += \&hazard_type=\\;
+    let url = `${API_BASE}/hazards/?xmin=${bounds.xmin}&ymin=${bounds.ymin}&xmax=${bounds.xmax}&ymax=${bounds.ymax}`;
+    if (hazardType) url += `&hazard_type=${hazardType}`;
     return fetchWithState(url);
   }, [fetchWithState]);
 
   const getTraffic = useCallback(async (bounds) => {
-    const url = \\/traffic/?xmin=\&ymin=\&xmax=\&ymax=\\;
+    const url = `${API_BASE}/traffic/?xmin=${bounds.xmin}&ymin=${bounds.ymin}&xmax=${bounds.xmax}&ymax=${bounds.ymax}`;
     return fetchWithState(url);
   }, [fetchWithState]);
 
   const getRegions = useCallback(async () => {
-    return fetchWithState(\\/regions/\);
+    return fetchWithState(`${API_BASE}/regions/`);
   }, [fetchWithState]);
 
   return {

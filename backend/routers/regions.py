@@ -1,5 +1,5 @@
 """
-routers/regions.py — FastAPI router for Region Selection API.
+routers/regions.py FastAPI router for Region Selection API.
 """
 
 from fastapi import APIRouter

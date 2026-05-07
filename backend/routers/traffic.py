@@ -1,5 +1,5 @@
 """
-routers/traffic.py — FastAPI router for Traffic Data API.
+routers/traffic.py FastAPI router for Traffic Data API.
 """
 
 from typing import Dict, Any

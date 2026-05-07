@@ -16,7 +16,7 @@ from slowapi import _rate_limit_exceeded_handler
 from core.config import settings
 from utils.logger import log_request
 from core.rate_limit import limiter
-from routers import recommendations, users, ai, location_history, barangays, hazards, traffic, regions, hazards, traffic, regions
+from routers import recommendations, users, ai, location_history, barangays, hazards, traffic, regions
 
 app = FastAPI(
     title="GNE Site Selection Tool API",
@@ -89,9 +89,6 @@ app.include_router(recommendations.router)
 app.include_router(ai.router)
 app.include_router(location_history.router)
 app.include_router(barangays.router)
-app.include_router(hazards.router)
-app.include_router(traffic.router)
-app.include_router(regions.router)
 app.include_router(hazards.router)
 app.include_router(traffic.router)
 app.include_router(regions.router)

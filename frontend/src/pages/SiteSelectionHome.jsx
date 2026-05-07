@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { MapDashboardLayout } from '../components/templates/MapDashboardLayout';
 import { MapCanvas } from '../components/organisms/MapCanvas';
 import { OverlayHUD } from '../components/organisms/OverlayHUD';
-import { SidePanel } from '../components/organisms/SidePanel';\nimport { useBackendAPI } from '../hooks/useBackendAPI';
+import { SidePanel } from '../components/organisms/SidePanel';
+import { useBackendAPI } from '../hooks/useBackendAPI';
 
 // Mock data for demonstration
 const MOCK_SITES = [
@@ -79,7 +80,8 @@ export const SiteSelectionHome = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlacingMarker, isPanelOpen]);
 
-  const handleMarkerPlaced = async (coords) => {\n    try { await generateRecommendation(coords.lat, coords.lng, 'New Site'); } catch(e) {}
+  const handleMarkerPlaced = async (coords) => {
+    try { await generateRecommendation(coords.lat, coords.lng, 'New Site'); } catch (e) { }
     console.log("Marker placed at", coords);
     setGeminiMarker(coords);
     setPanelMode('ai');
@@ -94,7 +96,9 @@ export const SiteSelectionHome = () => {
       isPlacingMarker={isPlacingMarker}
       setIsPlacingMarker={setIsPlacingMarker}
       onMarkerPlaced={handleMarkerPlaced}
-      geminiMarker={geminiMarker}\n      hazardData={hazardData}\n      trafficData={trafficData}
+      geminiMarker={geminiMarker}
+      hazardData={hazardData}
+      trafficData={trafficData}
     />
   );
 
