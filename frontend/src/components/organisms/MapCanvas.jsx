@@ -34,7 +34,7 @@ const darkMapStyle = [
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#3d3d3d" }] }
 ];
 
-export const MapCanvas = ({
+export const MapCanvas = React.memo(({
   hazardData,
   trafficData,
   sites = [],
@@ -45,7 +45,6 @@ export const MapCanvas = ({
   onMarkerPlaced,
   geminiMarker
 }) => {
-
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
@@ -92,8 +91,6 @@ export const MapCanvas = ({
   }), [isPlacingMarker]);
 
   // Optional: A helper function to properly center custom DOM elements over the coordinate.
-  // Note: Your MapMarker already has a top/left -20px offset, so we return 0 here to prevent double-offsetting.
-  // But if you ever remove the -20px from MapMarker, change this to return { x: -20, y: -20 }.
   const getPixelPositionOffset = useCallback((offsetWidth, offsetHeight) => {
     return { x: 0, y: 0 };
   }, []);
@@ -150,4 +147,4 @@ export const MapCanvas = ({
   ) : (
     <div style={{ ...containerStyle, backgroundColor: '#121212' }} />
   );
-};
+});

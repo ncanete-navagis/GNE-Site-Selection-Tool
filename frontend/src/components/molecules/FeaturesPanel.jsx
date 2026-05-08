@@ -165,7 +165,7 @@ const ToggleSwitch = ({ label, isOn, onToggle }) => (
 
 /* ---------- MAIN COMPONENT ---------- */
 
-export const FeaturesPanel = () => {
+export const FeaturesPanel = ({ poi }) => {
   const [restaurantTypes, setRestaurantTypes] = useState([]);
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [selectedLayers, setSelectedLayers] = useState([]);
@@ -194,13 +194,93 @@ export const FeaturesPanel = () => {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
       <div style={{ padding: '24px 20px' }}>
-        <h3 style={{ color: '#FFF', marginBottom: '24px' }}>
-          Criteria Options
+        <h3 style={{ color: '#FFF', marginBottom: '24px', fontSize: '18px', fontWeight: '700' }}>
+          {poi?.title || 'Criteria Options'}
         </h3>
 
-        <InputField label="Radius" value="500" unit="m" />
-        <InputField label="Traffic" value="2,400" unit="vph" />
-        <InputField label="Lot area" value="1,200" unit="sq. m" />
+        {poi && !poi.analysis ? (
+          <div style={{ padding: '40px 0', textAlign: 'center' }}>
+            <div className="loading-spinner" style={{ 
+              width: '40px', 
+              height: '40px', 
+              border: '3px solid rgba(255,255,255,0.1)', 
+              borderTopColor: '#ff2a85', 
+              borderRadius: '50%', 
+              margin: '0 auto 16px',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <div style={{ color: '#FFF', fontSize: '14px', fontWeight: '500' }}>Analyzing location...</div>
+            <div style={{ color: '#888', fontSize: '12px', marginTop: '8px' }}>Fetching foot traffic and hazard data</div>
+            <style>{`
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
+          </div>
+        ) : poi?.analysis ? (
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ fontSize: '12px', color: '#888', marginBottom: '12px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Scoring Breakdown
+            </div>
+            <div style={{ display: 'grid', gap: '12px' }}>
+              {[
+                { label: 'Overall Score', score: poi.analysis.overall_score, color: '#ff2a85' },
+                { label: 'Foot Traffic', score: poi.analysis.foot_traffic_score, color: '#3291ff' },
+                { label: 'Competition', score: poi.analysis.competing_business_score, color: '#00dc82' },
+                { label: 'Flood Safety', score: poi.analysis.flood_hazard_score, color: '#f39c12' },
+                { label: 'Landslide Safety', score: poi.analysis.landslide_hazard_score, color: '#e74c3c' },
+              ].map((item, idx) => (
+                <div key={idx} style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
+                    <span style={{ color: '#AAA' }}>{item.label}</span>
+                    <span style={{ color: '#FFF', fontWeight: '600' }}>{(item.score * 100).toFixed(0)}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div style={{ width: `${item.score * 100}%`, height: '100%', background: item.color, transition: 'width 1s ease-out' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pros & Cons */}
+            <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {poi.analysis.pros?.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '11px', color: '#00dc82', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>✓</span> Pros
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {poi.analysis.pros.map((pro, i) => (
+                      <span key={i} style={{ fontSize: '12px', padding: '4px 10px', background: 'rgba(0, 220, 130, 0.1)', color: '#00dc82', borderRadius: '6px', border: '1px solid rgba(0, 220, 130, 0.2)' }}>
+                        {pro}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {poi.analysis.cons?.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '11px', color: '#ff4d4d', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>!</span> Cons
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {poi.analysis.cons.map((con, i) => (
+                      <span key={i} style={{ fontSize: '12px', padding: '4px 10px', background: 'rgba(255, 77, 77, 0.1)', color: '#ff4d4d', borderRadius: '6px', border: '1px solid rgba(255, 77, 77, 0.2)' }}>
+                        {con}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            <InputField label="Radius" value="500" unit="m" />
+            <InputField label="Traffic" value="2,400" unit="vph" />
+            <InputField label="Lot area" value="1,200" unit="sq. m" />
+          </>
+        )}
       </div>
 
       <div style={{ flex: 1 }}>

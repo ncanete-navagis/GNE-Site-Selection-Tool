@@ -68,6 +68,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null); // DB profile + picture
   const [isSyncing, setIsSyncing] = useState(false);
   const googleRef = useRef(null); // reference to window.google
+  const initializedRef = useRef(false);
 
   // Load the GIS script once
   useEffect(() => {
@@ -124,6 +125,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   function initGSI() {
+    if (initializedRef.current) return;
     const g = window.google;
     googleRef.current = g;
     g.accounts.id.initialize({
@@ -132,6 +134,7 @@ export const AuthProvider = ({ children }) => {
       auto_select: false,
       cancel_on_tap_outside: true,
     });
+    initializedRef.current = true;
     setIsLoaded(true);
   }
 

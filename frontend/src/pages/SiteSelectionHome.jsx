@@ -27,6 +27,7 @@ export const SiteSelectionHome = () => {
   const [geminiMarker, setGeminiMarker] = useState(null);
   const [hazardData, setHazardData] = useState(null);
   const [trafficData, setTrafficData] = useState(null);
+  const [analysisResult, setAnalysisResult] = useState(null);
   const { generateRecommendation, getHazards, getTraffic } = useBackendAPI();
 
   useEffect(() => {
@@ -81,11 +82,18 @@ export const SiteSelectionHome = () => {
   }, [isPlacingMarker, isPanelOpen]);
 
   const handleMarkerPlaced = async (coords) => {
-    try { await generateRecommendation(coords.lat, coords.lng, 'New Site'); } catch (e) { }
-    console.log("Marker placed at", coords);
     setGeminiMarker(coords);
-    setPanelMode('ai');
+    setAnalysisResult(null); // Reset previous analysis
+    setPanelMode('features');
     setIsPanelOpen(true);
+
+    try {
+      const result = await generateRecommendation(coords.lat, coords.lng, 'New Site');
+      setAnalysisResult(result);
+    } catch (e) {
+      console.error("Failed to generate recommendation:", e);
+    }
+    console.log("Marker placed at", coords);
   };
 
   const mapComponent = (
@@ -122,9 +130,10 @@ export const SiteSelectionHome = () => {
       hasAIAccess={hasAIAccess}
       poi={geminiMarker ? {
         id: `new-site-${geminiMarker.lat}-${geminiMarker.lng}`,
-        title: 'New Target Location',
+        title: analysisResult?.barangay_name || 'New Target Location',
         type: 'Selected Site',
-        rating: 4.5
+        rating: analysisResult?.analysis?.stars || 4.5,
+        analysis: analysisResult?.analysis
       } : null}
       onClose={() => setIsPanelOpen(false)}
     />
