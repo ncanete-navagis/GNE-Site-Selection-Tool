@@ -103,6 +103,7 @@ export const AuthProvider = ({ children }) => {
 
     // Optimistically set token so the rest of the app can use it immediately
     setIdToken(token);
+    localStorage.setItem('gne_id_token', token);
 
     // Sync with backend — creates the user row on first login, updates last_login otherwise
     setIsSyncing(true);
@@ -131,9 +132,27 @@ export const AuthProvider = ({ children }) => {
     g.accounts.id.initialize({
       client_id: CLIENT_ID,
       callback: handleCredentialResponse,
-      auto_select: false,
+      auto_select: true, // Enable automatic sign-in for returning users
       cancel_on_tap_outside: true,
     });
+
+    // Try to restore session from localStorage first
+    const savedToken = localStorage.getItem('gne_id_token');
+    if (savedToken) {
+      const payload = decodeToken(savedToken);
+      setIdToken(savedToken);
+      syncUserWithBackend(savedToken, payload.picture).then(dbUser => {
+        if (dbUser) setUser(dbUser);
+        else {
+          localStorage.removeItem('gne_id_token');
+          setIdToken(null);
+        }
+      });
+    } else {
+      // If no saved token, show the One Tap prompt
+      g.accounts.id.prompt();
+    }
+
     initializedRef.current = true;
     setIsLoaded(true);
   }
@@ -167,6 +186,7 @@ export const AuthProvider = ({ children }) => {
     if (g && user?.email) {
       g.accounts.id.revoke(user.email, () => {});
     }
+    localStorage.removeItem('gne_id_token');
     setIdToken(null);
     setUser(null);
   }, [user]);
