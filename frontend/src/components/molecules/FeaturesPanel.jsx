@@ -276,7 +276,7 @@ export const FeaturesPanel = ({ poi }) => {
           </div>
         ) : (
           <>
-            <InputField label="Radius" value="500" unit="m" />
+            <InputField label="Radius" value="250" unit="m" />
             <InputField label="Traffic" value="2,400" unit="vph" />
             <InputField label="Lot area" value="1,200" unit="sq. m" />
           </>

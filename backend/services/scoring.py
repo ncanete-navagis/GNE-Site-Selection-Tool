@@ -41,13 +41,13 @@ from typing import Any, Optional
 # ---------------------------------------------------------------------------
 
 #: Count of nearby hazard records at which the risk saturates at 1.0 → score 0.0
-HAZARD_SATURATION: int = 5
+HAZARD_SATURATION: int = 3
 
 #: Count of nearby competing businesses at which the density saturates → score 0.0
-COMPETING_BUSINESS_SATURATION: int = 20
+COMPETING_BUSINESS_SATURATION: int = 15
 
 #: Aggregated user review count at which foot traffic saturates → score 1.0
-FOOT_TRAFFIC_SATURATION: int = 10000
+FOOT_TRAFFIC_SATURATION: int = 15000
 
 #: Sub-score at-or-above which a dimension is promoted to "pro".
 PRO_THRESHOLD: float = 0.65
@@ -217,27 +217,21 @@ def compute_overall_score(
 def score_to_stars(overall_score: float) -> int:
     """Map a normalised overall score to a 1–5 star rating.
 
-    Thresholds (inclusive lower bound):
-        [0.00, 0.20) → 1 ★
-        [0.20, 0.40) → 2 ★
-        [0.40, 0.60) → 3 ★
-        [0.60, 0.80) → 4 ★
-        [0.80, 1.00] → 5 ★
-
-    Args:
-        overall_score: A float in [0.0, 1.0].
-
-    Returns:
-        An integer in [1, 5].
+    Thresholds (inclusive lower bound) — ADJUSTED TO BE MORE CRITICAL:
+        [0.00, 0.30) → 1 ★
+        [0.30, 0.50) → 2 ★
+        [0.50, 0.70) → 3 ★
+        [0.70, 0.85) → 4 ★
+        [0.85, 1.00] → 5 ★
     """
     clamped = _clamp(overall_score)
-    if clamped >= 0.80:
+    if clamped >= 0.85:
         return 5
-    if clamped >= 0.60:
+    if clamped >= 0.70:
         return 4
-    if clamped >= 0.40:
+    if clamped >= 0.50:
         return 3
-    if clamped >= 0.20:
+    if clamped >= 0.30:
         return 2
     return 1
 
