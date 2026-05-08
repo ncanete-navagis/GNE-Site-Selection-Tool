@@ -51,7 +51,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.analysis import Analysis
-from services import geo_queries
+from services import geo_queries, external_places
 from services.scoring import (
     compute_scores,
     compute_overall_score,
@@ -170,21 +170,21 @@ async def run_analysis(
     # ------------------------------------------------------------------
     # Step 2 — Spatial proximity queries (concurrent)
     #
-    # The three queries are independent — no data dependency between them.
-    # asyncio.gather() runs them concurrently, reducing wall-clock latency
-    # from ~3× to ~1× the slowest individual query.
+    # The queries are independent — no data dependency between them.
+    # asyncio.gather() runs them concurrently, reducing wall-clock latency.
     # ------------------------------------------------------------------
-    hazards, traffic_data, businesses = await asyncio.gather(
+    hazards, traffic_data, businesses, foot_traffic_data = await asyncio.gather(
         geo_queries.get_hazards_near_point(session, lon, lat, SCORING_RADIUS_M),
         geo_queries.get_traffic_near_point(session, lon, lat, SCORING_RADIUS_M),
-        geo_queries.get_businesses_near_point(session, lon, lat, SCORING_RADIUS_M),
+        geo_queries.get_buildings_near_point(session, lon, lat, SCORING_RADIUS_M),
+        external_places.get_foot_traffic_proxy(lat, lon, SCORING_RADIUS_M),
     )
 
     # ------------------------------------------------------------------
     # Step 3 — Compute sub-scores (normalised to [0.0, 1.0])
     # ------------------------------------------------------------------
     _start_score_time = time.perf_counter()
-    sub_scores = compute_scores(hazards, traffic_data, businesses)
+    sub_scores = compute_scores(hazards, businesses, traffic_data, foot_traffic_data)
     _score_duration = (time.perf_counter() - _start_score_time) * 1000.0
 
     log_scoring_engine_call(

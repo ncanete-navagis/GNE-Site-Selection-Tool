@@ -46,6 +46,9 @@ HAZARD_SATURATION: int = 5
 #: Count of nearby competing businesses at which the density saturates → score 0.0
 COMPETING_BUSINESS_SATURATION: int = 20
 
+#: Aggregated user review count at which foot traffic saturates → score 1.0
+FOOT_TRAFFIC_SATURATION: int = 10000
+
 #: Sub-score at-or-above which a dimension is promoted to "pro".
 PRO_THRESHOLD: float = 0.65
 
@@ -91,6 +94,7 @@ def compute_scores(
     hazards: list[Any],
     buildings: list[Any],
     traffic_data: list[Any],
+    foot_traffic_data: Optional[dict[str, Any]] = None,
 ) -> dict[str, float]:
     """Compute all Analysis-entity sub-scores for a candidate site location.
 
@@ -102,6 +106,7 @@ def compute_scores(
                    get_buildings_near_point().  Only the count is used.
         traffic_data: Result of get_traffic_near_point() — currently always [].
                       Ignored; scores default to 0.5 neutral stub.
+        foot_traffic_data: Optional dict with "total_user_ratings" and "place_count".
 
     Returns:
         A dict[str, float] with keys:
@@ -151,11 +156,16 @@ def compute_scores(
     traffic_score: float = 0.5
 
     # ------------------------------------------------------------------
-    # 6. foot_traffic_score — STUB
-    #    No foot traffic data source available. Returns 0.5 neutral.
+    # 6. foot_traffic_score
+    #    Uses aggregated review count from Google Places API as a proxy.
+    #    Normalised against a saturation of 2000 reviews.
     # ------------------------------------------------------------------
-    # STUB: no foot traffic data source available.
-    foot_traffic_score: float = 0.5
+    if foot_traffic_data:
+        total_reviews = foot_traffic_data.get("total_user_ratings", 0)
+        foot_traffic_score = total_reviews / FOOT_TRAFFIC_SATURATION
+    else:
+        # Default to 0.5 neutral stub if no data provided
+        foot_traffic_score = 0.5
 
     return {
         "flood_hazard_score":       _clamp(flood_hazard_score),
@@ -163,7 +173,7 @@ def compute_scores(
         "storm_surge_score":        _clamp(storm_surge_score),
         "competing_business_score": _clamp(competing_business_score),
         "traffic_score":            traffic_score,
-        "foot_traffic_score":       foot_traffic_score,
+        "foot_traffic_score":       _clamp(foot_traffic_score),
     }
 
 
