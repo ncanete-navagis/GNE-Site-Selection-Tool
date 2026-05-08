@@ -1,48 +1,63 @@
-from flask import Blueprint, request, jsonify
-from ..services.placesService import fetchRestaurantTypesForRegion
-from ..services.restaurantService import discoverRestaurants
+from fastapi import APIRouter, Query
+from services.placesService import (
+    fetchRestaurantTypesForRegion,
+    discoverRestaurants,
+)
 
-router = Blueprint("places", __name__)
+router = APIRouter(prefix="/api", tags=["places"])
 
-@router.route("/restaurant-types", methods=["GET"])
-def get_restaurant_types():
-    region = request.args.get("region")
-    
-    if not region:
-        region = "Cebu"
 
+@router.get("/restaurant-types")
+def get_restaurant_types(region: str = "Cebu"):
     normalizedRegion = region.lower()
 
-    if normalizedRegion != "cebu" and normalizedRegion != "manila":
-        return jsonify({"error": "Invalid region. Only 'Cebu' or 'Manila' are accepted."}), 400
+    if normalizedRegion not in ["cebu", "manila"]:
+        return {
+            "error": "Invalid region. Only 'Cebu' or 'Manila' are accepted."
+        }
 
     try:
         types = fetchRestaurantTypesForRegion(normalizedRegion)
-        return jsonify({
+
+        return {
             "region": normalizedRegion.capitalize(),
             "types": types
-        })
+        }
+
     except Exception as err:
-        return jsonify({"error": str(err)}), 500
+        return {
+            "error": str(err)
+        }
 
-@router.route("/restaurants", methods=["GET"])
-def get_restaurants():
-    region = request.args.get("region")
-    filters = request.args.get("filters")
-    
-    if not region:
-        region = "Cebu"
 
-    normalizedRegion = region[0].upper() + region[1:].lower()
+@router.get("/restaurants")
+def get_restaurants(
+    region: str = "Cebu",
+    filters: str = ""
+):
+    normalizedRegion = region.capitalize()
 
-    if normalizedRegion != "Cebu" and normalizedRegion != "Manila":
-        return jsonify({"error": "Invalid region. Only 'Cebu' or 'Manila' are accepted."}), 400
+    if normalizedRegion not in ["Cebu", "Manila"]:
+        return {
+            "error": "Invalid region. Only 'Cebu' or 'Manila' are accepted."
+        }
 
     try:
-        restaurants = discoverRestaurants(normalizedRegion, filters)
-        return jsonify({
+        # Pass filters as-is; the service will handle splitting and normalization
+        restaurants = discoverRestaurants(
+            normalizedRegion,
+            filters
+        )
+
+        return {
             "region": normalizedRegion,
-            "restaurants": restaurants
-        })
+            "restaurants": restaurants,
+            "count": len(restaurants)
+        }
+
     except Exception as err:
-        return jsonify({"error": str(err)}), 500
+        print(f"API ERROR in /restaurants: {str(err)}")
+        return {
+            "error": str(err),
+            "restaurants": []
+        }

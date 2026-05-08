@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError, DBAPIError
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
+from routers import places
 
 from core.config import settings
 from utils.logger import log_request
@@ -92,9 +93,12 @@ app.include_router(barangays.router)
 app.include_router(hazards.router)
 app.include_router(traffic.router)
 app.include_router(regions.router)
+app.include_router(places.router)
 app.include_router(hazards.router)
 app.include_router(traffic.router)
 app.include_router(regions.router)
+app.include_router(places.router)
+
 
 @app.get("/health")
 def health_check():

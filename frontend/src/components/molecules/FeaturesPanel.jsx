@@ -1,90 +1,199 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 const layerOptions = [
-  { label: 'Traffic Layer' },
-  { label: 'Flood Hazard' },
-  { label: 'Earthquake Risk' }
+  { label: 'Traffic Layer', value: 'traffic' },
+  { label: 'Flood Hazard', value: 'flood' },
+  { label: 'Earthquake Risk', value: 'earthquake' }
 ];
 
 const regionOptions = [
-  { label: 'Cebu' },
-  { label: 'Manila' }
+  { label: 'Cebu', value: 'cebu' },
+  { label: 'Manila', value: 'manila' }
 ];
 
 const InputField = React.memo(({ label, unit, value }) => (
   <div style={{ marginBottom: '20px' }}>
-    <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '8px', fontWeight: '500' }}>
+    <label
+      style={{
+        display: 'block',
+        fontSize: '12px',
+        color: '#888',
+        marginBottom: '8px'
+      }}
+    >
       {label}
     </label>
-    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+
+    <div style={{ position: 'relative' }}>
       <input
         type="text"
         defaultValue={value}
         style={{
-          width: '100%', backgroundColor: '#2A2A2A', border: 'none',
-          borderRadius: '8px', padding: '12px 40px 12px 16px', color: '#FFF',
-          fontSize: '14px', outline: 'none'
+          width: '100%',
+          backgroundColor: '#2A2A2A',
+          border: 'none',
+          borderRadius: '8px',
+          padding: '12px 40px 12px 16px',
+          color: '#FFF',
+          fontSize: '14px',
+          outline: 'none'
         }}
       />
-      <span style={{ position: 'absolute', right: '16px', color: '#666', fontSize: '12px' }}>
+
+      <span
+        style={{
+          position: 'absolute',
+          right: '16px',
+          top: '12px',
+          color: '#666'
+        }}
+      >
         {unit}
       </span>
     </div>
   </div>
 ));
 
-const CollapsibleSection = React.memo(({ title, items = [], type = 'list', value = [], onChange = () => {}, isLoading, emptyText = "No items" }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const CollapsibleSection = React.memo(({
+  title,
+  items = [],
+  type = 'checkbox',
+  value = [],
+  onChange = () => { },
+  isLoading = false,
+  emptyText = "No items"
+}) => {
 
-  const toggleItem = useCallback((label) => {
+  const [isOpen, setIsOpen] = useState(true);
+
+  const toggleItem = useCallback((itemValue) => {
+
     if (type === 'chip') {
-      onChange(label.toLowerCase());
+      onChange(itemValue);
       return;
     }
 
-    const currentValues = value || [];
-    const nextValues = currentValues.includes(label)
-      ? currentValues.filter(item => item !== label)
-      : [...currentValues, label];
-      
-    onChange(nextValues);
+    const current = value || [];
+
+    const next = current.includes(itemValue)
+      ? current.filter(v => v !== itemValue)
+      : [...current, itemValue];
+
+    onChange(next);
+
   }, [type, value, onChange]);
 
   return (
-    <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-      <div onClick={() => setIsOpen(!isOpen)} style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }}>
-        <span style={{ fontSize: '14px', fontWeight: '600', color: '#DDD' }}>{title}</span>
-        <span style={{ color: '#666' }}>{isOpen ? '▲' : '▼'}</span>
+    <div
+      style={{
+        borderBottom: '1px solid rgba(255,255,255,0.05)'
+      }}
+    >
+
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          padding: '16px 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          cursor: 'pointer'
+        }}
+      >
+        <span
+          style={{
+            color: '#DDD',
+            fontWeight: '600'
+          }}
+        >
+          {title}
+        </span>
+
+        <span style={{ color: '#666' }}>
+          {isOpen ? '▲' : '▼'}
+        </span>
       </div>
 
       {isOpen && (
         <div style={{ padding: '12px 20px 20px 20px' }}>
+
           {isLoading ? (
-            <div style={{ color: '#888', fontStyle: 'italic', fontSize: '12px' }}>Loading...</div>
+            <div style={{ color: '#888' }}>
+              Loading...
+            </div>
           ) : items.length === 0 ? (
-            <div style={{ color: '#888', fontStyle: 'italic', fontSize: '12px' }}>{emptyText}</div>
+            <div style={{ color: '#888' }}>
+              {emptyText}
+            </div>
           ) : (
             <>
-              {type === 'checkbox' && items.map((item, i) => {
-                const isSelected = (value || []).includes(item.label);
-                return (
-                  <label key={i} style={{ display: 'flex', gap: '8px', padding: '6px 0', color: isSelected ? '#FFF' : '#BBB', fontWeight: isSelected ? '600' : '400', cursor: 'pointer', transition: 'all 0.2s' }}>
-                    <input type="checkbox" checked={isSelected} onChange={() => toggleItem(item.label)} style={{ cursor: 'pointer' }} />
-                    {item.label}
-                  </label>
-                );
-              })}
+              {type === 'checkbox' && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}
+                >
+                  {items.map((item, i) => {
+
+                    const isSelected = (value || []).includes(item.value);
+
+                    return (
+                      <label
+                        key={i}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          color: isSelected ? '#fff' : '#bbb',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleItem(item.value)}
+                        />
+
+                        {item.label}
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
 
               {type === 'chip' && (
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '8px',
+                    flexWrap: 'wrap'
+                  }}
+                >
                   {items.map((item, i) => {
-                    const isSelected = value === item.label.toLowerCase();
+
+                    const isSelected = value === item.value;
+
                     return (
-                      <button key={i} onClick={() => toggleItem(item.label)} style={{
-                          padding: '8px 12px', borderRadius: '16px', border: isSelected ? '1px solid #3291ff' : '1px solid #444',
-                          backgroundColor: isSelected ? 'rgba(50,145,255,0.2)' : 'transparent', color: isSelected ? '#3291ff' : '#BBB',
-                          fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s'
-                        }}>
+                      <button
+                        key={i}
+                        onClick={() => toggleItem(item.value)}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '16px',
+                          border: isSelected
+                            ? '1px solid #3291ff'
+                            : '1px solid #444',
+                          background: isSelected
+                            ? 'rgba(50,145,255,0.2)'
+                            : 'transparent',
+                          color: isSelected
+                            ? '#3291ff'
+                            : '#bbb',
+                          cursor: 'pointer'
+                        }}
+                      >
                         {item.label}
                       </button>
                     );
@@ -99,120 +208,202 @@ const CollapsibleSection = React.memo(({ title, items = [], type = 'list', value
   );
 });
 
-const ToggleSwitch = React.memo(({ label, isOn, onToggle = () => {} }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-    <span style={{ color: '#DDD' }}>{label}</span>
-    <div onClick={onToggle} style={{ width: '40px', height: '20px', borderRadius: '20px', backgroundColor: isOn ? '#3291ff' : '#444', cursor: 'pointer', transition: 'background-color 0.3s' }}>
-      <div style={{ width: '16px', height: '16px', backgroundColor: '#FFF', borderRadius: '50%', margin: '2px', transform: isOn ? 'translateX(20px)' : 'translateX(0)', transition: 'transform 0.3s' }} />
-    </div>
-  </div>
-));
-
-export const FeaturesPanel = React.memo(({ 
-  poi = null, 
-  region = 'cebu', 
-  onRegionChange = () => {}, 
-  selectedTypes = [], 
-  onTypesChange = () => {}, 
-  onRestaurantsUpdate = () => {} 
+export const FeaturesPanel = ({
+  region = 'cebu',
+  onRegionChange = () => { },
+  selectedTypes = [],
+  onTypesChange = () => { },
+  onRestaurantsUpdate = () => { }
 }) => {
+
   const [restaurantTypes, setRestaurantTypes] = useState([]);
-  const [selectedLayers, setSelectedLayers] = useState([]);
-  
   const [restaurants, setRestaurants] = useState([]);
-  const [isLoadingRestaurants, setIsLoadingRestaurants] = useState(false);
+
   const [isLoadingTypes, setIsLoadingTypes] = useState(false);
+  const [isLoadingRestaurants, setIsLoadingRestaurants] = useState(false);
 
-  const [isChoroplethOn, setIsChoroplethOn] = useState(false);
-  const [isHeatMapOn, setIsHeatMapOn] = useState(false);
+  const [selectedLayers, setSelectedLayers] = useState([]);
 
-  const toggleChoropleth = useCallback(() => setIsChoroplethOn(prev => !prev), []);
-  const toggleHeatMap = useCallback(() => setIsHeatMapOn(prev => !prev), []);
-
-  const handleLayerToggle = useCallback((nextLayers) => {
-    setSelectedLayers(nextLayers);
-    if (typeof window.onLayerToggleGlobal === 'function') {
-        window.onLayerToggleGlobal(nextLayers);
-    }
+  const handleLayerToggle = useCallback((layers) => {
+    setSelectedLayers(layers);
   }, []);
 
-  /* Fetch restaurant types whenever region changes */
+  // FETCH RESTAURANT TYPES
   useEffect(() => {
-    let isMounted = true;
+
+    let active = true;
+
     setIsLoadingTypes(true);
-    
-    fetch(`http://localhost:5000/api/restaurant-types?region=${region}`)
+
+    fetch(`http://localhost:8000/api/restaurant-types?region=${region}`)
       .then(res => res.json())
       .then(data => {
-        if (!isMounted) return;
-        const typesList = data.types || [];
-        setRestaurantTypes(typesList.map(type => ({ label: (type || '').replaceAll('_', ' ') })));
-      })
-      .catch(err => console.error(err))
-      .finally(() => { if (isMounted) setIsLoadingTypes(false); });
 
-    return () => { isMounted = false; };
+        if (!active) return;
+
+        const types = Array.isArray(data.types)
+          ? data.types
+          : [];
+
+        const formattedTypes = types.map(type => ({
+          label: String(type).replaceAll('_', ' '),
+          value: String(type)
+        }));
+
+        console.log(`[FeaturesPanel] Loaded ${formattedTypes.length} restaurant types for ${region}`);
+        setRestaurantTypes(formattedTypes);
+      })
+      .catch(err => {
+        console.error("Restaurant Types Error:", err);
+        setRestaurantTypes([]);
+      })
+      .finally(() => {
+        if (active) {
+          setIsLoadingTypes(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+
   }, [region]);
 
-  /* Fetch restaurants whenever region or filters change */
+  // FETCH RESTAURANTS
   useEffect(() => {
-    let isMounted = true;
+
+    let active = true;
+
     setIsLoadingRestaurants(true);
-    
-    // Map UI labels back to API filter format (e.g. "fast food" -> "fast_food")
-    const filters = (selectedTypes || []).map(t => (t || '').replaceAll(' ', '_')).join(',');
-    
-    fetch(`http://localhost:5000/api/restaurants?region=${region}&filters=${filters}`)
+
+    const filters = (selectedTypes || []).join(',');
+
+    fetch(
+      `http://localhost:8000/api/restaurants?region=${region}&filters=${filters}`
+    )
       .then(res => res.json())
       .then(data => {
-        if (!isMounted) return;
-        const fetchedRestaurants = data.restaurants || [];
-        setRestaurants(fetchedRestaurants);
-        onRestaurantsUpdate(fetchedRestaurants);
-      })
-      .catch(err => console.error(err))
-      .finally(() => { if (isMounted) setIsLoadingRestaurants(false); });
 
-    return () => { isMounted = false; };
+        if (!active) return;
+
+        const list = Array.isArray(data.restaurants)
+          ? data.restaurants
+          : [];
+
+        console.log(`[FeaturesPanel] Fetched ${list.length} restaurants for ${region}. Filters: [${filters}]`);
+
+        if (data.error) {
+          console.warn("[FeaturesPanel] API returned an error:", data.error);
+        }
+
+        setRestaurants(list);
+
+        // UPDATE MAP MARKERS
+        onRestaurantsUpdate(list);
+
+      })
+      .catch(err => {
+
+        console.error("Restaurants Error:", err);
+
+        setRestaurants([]);
+
+        onRestaurantsUpdate([]);
+
+      })
+      .finally(() => {
+
+        if (active) {
+          setIsLoadingRestaurants(false);
+        }
+
+      });
+
+    return () => {
+      active = false;
+    };
+
   }, [region, selectedTypes, onRestaurantsUpdate]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ padding: '24px 20px' }}>
-        <h3 style={{ color: '#FFF', marginBottom: '24px' }}>Criteria Options</h3>
-        <InputField label="Radius" value="500" unit="m" />
-        <InputField label="Traffic" value="2,400" unit="vph" />
-        <InputField label="Lot area" value="1,200" unit="sq. m" />
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%'
+      }}
+    >
+
+      <div style={{ padding: '20px' }}>
+
+        <h3 style={{ color: '#fff' }}>
+          Criteria Options
+        </h3>
+
+        <InputField
+          label="Radius"
+          value="500"
+          unit="m"
+        />
+
+        <InputField
+          label="Traffic"
+          value="2400"
+          unit="vph"
+        />
+
+        <InputField
+          label="Lot area"
+          value="1200"
+          unit="sq. m"
+        />
+
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        <CollapsibleSection title="Filter" items={restaurantTypes} type="checkbox" value={selectedTypes} onChange={onTypesChange} isLoading={isLoadingTypes} emptyText="No filters found" />
-        
-        {/* Restaurant Loading / Empty State Indicator */}
-        <div style={{ padding: '12px 20px', fontSize: '13px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          {isLoadingRestaurants ? (
-            <div style={{ color: '#3291ff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="spinner" style={{ display: 'inline-block', width: '12px', height: '12px', border: '2px solid #3291ff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></span>
-              Updating map...
-            </div>
-          ) : restaurants.length === 0 && (selectedTypes || []).length > 0 ? (
-            <div style={{ color: '#ffcc00' }}>No restaurants match your active filters.</div>
-          ) : (
-            <div style={{ color: '#888' }}>
-              <strong style={{ color: '#FFF' }}>{restaurants.length}</strong> location{restaurants.length !== 1 ? 's' : ''} found in {(region || 'cebu').charAt(0).toUpperCase() + (region || 'cebu').slice(1)}.
-            </div>
-          )}
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto'
+        }}
+      >
+
+        <CollapsibleSection
+          title="Restaurant Types"
+          items={restaurantTypes}
+          value={selectedTypes}
+          onChange={onTypesChange}
+          isLoading={isLoadingTypes}
+          emptyText="No restaurant types found"
+        />
+
+        <div
+          style={{
+            padding: '16px 20px',
+            color: '#888',
+            fontSize: '14px'
+          }}
+        >
+          {isLoadingRestaurants
+            ? 'Loading restaurants...'
+            : `${restaurants.length} locations found in ${region}.`}
         </div>
 
-        <CollapsibleSection title="Layers" items={layerOptions} type="checkbox" value={selectedLayers} onChange={handleLayerToggle} />
-        <CollapsibleSection title="Region" items={regionOptions} type="chip" value={region} onChange={onRegionChange} />
-      </div>
+        <CollapsibleSection
+          title="Layers"
+          items={layerOptions}
+          value={selectedLayers}
+          onChange={handleLayerToggle}
+        />
 
-      <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-        <ToggleSwitch label="Choropleth Map" isOn={isChoroplethOn} onToggle={toggleChoropleth} />
-        <ToggleSwitch label="Heat Map" isOn={isHeatMapOn} onToggle={toggleHeatMap} />
+        <CollapsibleSection
+          title="Region"
+          items={regionOptions}
+          type="chip"
+          value={region}
+          onChange={onRegionChange}
+        />
+
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
-});
+};

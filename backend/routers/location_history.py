@@ -1,5 +1,5 @@
 """
-routers/location_history.py — FastAPI router for user location history.
+routers/location_history.py # FastAPI router for user location history.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
