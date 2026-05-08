@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { AIChatPanel } from '../molecules/AIChatPanel';
 import { FeaturesPanel } from '../molecules/FeaturesPanel';
 
@@ -8,8 +8,20 @@ export const SidePanel = ({
   mode, 
   setMode, 
   hasAIAccess, 
-  poi 
+  poi,
+  onRestaurantsUpdate,
+  region,
+  onRegionChange
 }) => {
+  // Centralized state management for the filters
+  const [selectedTypes, setSelectedTypes] = useState([]);
+
+  // Automatically clear filters when region switches
+  const handleRegionChange = useCallback((newRegion) => {
+    if (onRegionChange) onRegionChange(newRegion);
+    setSelectedTypes([]);
+  }, [onRegionChange]);
+
   const panelStyle = {
     position: 'fixed',
     top: 0,
@@ -63,12 +75,11 @@ export const SidePanel = ({
 
   return (
     <div style={panelStyle}>
-      {/* HEADER */}
       <div style={headerStyle}>
         <div style={toggleContainerStyle}>
           <span 
             style={getToggleItemStyle(mode === 'features')}
-            onClick={() => setMode('features')}
+            onClick={() => setMode?.('features')}
           >
             Feature
           </span>
@@ -79,7 +90,7 @@ export const SidePanel = ({
               opacity: hasAIAccess ? 1 : 0.3,
               cursor: hasAIAccess ? 'pointer' : 'not-allowed'
             }}
-            onClick={() => hasAIAccess && setMode('ai')}
+            onClick={() => hasAIAccess && setMode?.('ai')}
           >
             AI
           </span>
@@ -94,14 +105,16 @@ export const SidePanel = ({
         </button>
       </div>
 
-      <div style={{ 
-        flex: 1, 
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         {mode === 'features' ? (
-          <FeaturesPanel poi={poi} />
+          <FeaturesPanel 
+            poi={poi} 
+            region={region}
+            onRegionChange={handleRegionChange}
+            selectedTypes={selectedTypes}
+            onTypesChange={setSelectedTypes}
+            onRestaurantsUpdate={onRestaurantsUpdate} 
+          />
         ) : (
           <AIChatPanel poi={poi} />
         )}

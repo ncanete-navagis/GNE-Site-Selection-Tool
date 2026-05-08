@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { MapDashboardLayout } from '../components/templates/MapDashboardLayout';
 import { MapCanvas } from '../components/organisms/MapCanvas';
 import { OverlayHUD } from '../components/organisms/OverlayHUD';
-import { SidePanel } from '../components/organisms/SidePanel';\nimport { useBackendAPI } from '../hooks/useBackendAPI';
+import { SidePanel } from '../components/organisms/SidePanel';
+import { useBackendAPI } from '../hooks/useBackendAPI';
 
 // Mock data for demonstration
 const MOCK_SITES = [
@@ -26,20 +27,35 @@ export const SiteSelectionHome = () => {
   const [geminiMarker, setGeminiMarker] = useState(null);
   const [hazardData, setHazardData] = useState(null);
   const [trafficData, setTrafficData] = useState(null);
+  
+  // Dynamic Restaurants State from SidePanel -> MapCanvas
+  const [restaurants, setRestaurants] = useState([]);
+  
+  // Shared region state for MapCanvas panning and FeaturesPanel fetching
+  const [region, setRegion] = useState('cebu');
+  
   const { generateRecommendation, getHazards, getTraffic } = useBackendAPI();
 
   useEffect(() => {
     window.onLayerToggleGlobal = async (layers) => {
       const bounds = { xmin: 123.8, ymin: 10.2, xmax: 124.0, ymax: 10.4 };
       if (layers.includes('Flood Hazard') || layers.includes('Earthquake Risk')) {
-        const data = await getHazards(bounds);
-        setHazardData(data);
+        try {
+          const data = await getHazards(bounds);
+          setHazardData(data);
+        } catch (err) {
+          console.error(err);
+        }
       } else {
         setHazardData(null);
       }
       if (layers.includes('Traffic Layer')) {
-        const data = await getTraffic(bounds);
-        setTrafficData(data);
+        try {
+          const data = await getTraffic(bounds);
+          setTrafficData(data);
+        } catch (err) {
+          console.error(err);
+        }
       } else {
         setTrafficData(null);
       }
@@ -79,7 +95,8 @@ export const SiteSelectionHome = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlacingMarker, isPanelOpen]);
 
-  const handleMarkerPlaced = async (coords) => {\n    try { await generateRecommendation(coords.lat, coords.lng, 'New Site'); } catch(e) {}
+  const handleMarkerPlaced = async (coords) => {
+    try { await generateRecommendation(coords.lat, coords.lng, 'New Site'); } catch (e) { }
     console.log("Marker placed at", coords);
     setGeminiMarker(coords);
     setPanelMode('ai');
@@ -94,7 +111,11 @@ export const SiteSelectionHome = () => {
       isPlacingMarker={isPlacingMarker}
       setIsPlacingMarker={setIsPlacingMarker}
       onMarkerPlaced={handleMarkerPlaced}
-      geminiMarker={geminiMarker}\n      hazardData={hazardData}\n      trafficData={trafficData}
+      geminiMarker={geminiMarker}
+      hazardData={hazardData}
+      trafficData={trafficData}
+      restaurants={restaurants}
+      region={region}
     />
   );
 
@@ -106,7 +127,7 @@ export const SiteSelectionHome = () => {
       onToggleMode={handleToggleMode}
       onFabClick={handleFabClick}
       isPlacingMarker={isPlacingMarker}
-      onOpenFeatures={handleOpenFeatures} // New handler
+      onOpenFeatures={handleOpenFeatures}
     />
   );
 
@@ -123,6 +144,9 @@ export const SiteSelectionHome = () => {
         rating: 4.5
       } : null}
       onClose={() => setIsPanelOpen(false)}
+      onRestaurantsUpdate={setRestaurants}
+      region={region}
+      onRegionChange={setRegion}
     />
   );
 
