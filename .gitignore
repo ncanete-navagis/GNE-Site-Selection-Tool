@@ -37,3 +37,4 @@ dist-ssr/
 # OS files
 Thumbs.db
 desktop.ini
+__pycache__/
