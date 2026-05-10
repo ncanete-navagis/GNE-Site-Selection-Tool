@@ -32,6 +32,7 @@ export const SiteSelectionHome = () => {
   const [population, setPopulation] = useState(5000);
   const [trafficKmh, setTrafficKmh] = useState(40);
   const [lotArea, setLotArea] = useState(1200);
+  const [selectedSectors, setSelectedSectors] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { generateRecommendation, getHazards, getTraffic } = useBackendAPI();
 
@@ -106,7 +107,8 @@ export const SiteSelectionHome = () => {
         radius,
         population,
         trafficKmh,
-        lotArea
+        lotArea,
+        selectedSectors
       );
       setAnalysisResult(result);
     } catch (e) {
@@ -158,6 +160,8 @@ export const SiteSelectionHome = () => {
       lotArea={lotArea}
       setLotArea={setLotArea}
       isAnalyzing={isAnalyzing}
+      selectedSectors={selectedSectors}
+      setSelectedSectors={setSelectedSectors}
       onRunAnalysis={handleRunAnalysis}
       poi={geminiMarker ? {
         id: `new-site-${geminiMarker.lat}-${geminiMarker.lng}`,

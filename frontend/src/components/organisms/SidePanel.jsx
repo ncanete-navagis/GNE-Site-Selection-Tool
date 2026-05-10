@@ -18,6 +18,8 @@ export const SidePanel = ({
   lotArea,
   setLotArea,
   isAnalyzing,
+  selectedSectors,
+  setSelectedSectors,
   onRunAnalysis
 }) => {
   const panelStyle = {
@@ -122,6 +124,8 @@ export const SidePanel = ({
             lotArea={lotArea}
             setLotArea={setLotArea}
             isAnalyzing={isAnalyzing}
+            selectedSectors={selectedSectors}
+            setSelectedSectors={setSelectedSectors}
             onRunAnalysis={onRunAnalysis}
           />
         ) : (

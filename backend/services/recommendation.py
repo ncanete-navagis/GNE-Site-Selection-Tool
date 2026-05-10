@@ -29,6 +29,7 @@ async def create_recommendation(
     population: Optional[int] = None,
     traffic_kmh: Optional[float] = None,
     lot_area: Optional[float] = None,
+    business_sectors: Optional[List[str]] = None,
 ) -> dict:
     """
     Generate a new recommendation by running an analysis.
@@ -50,6 +51,7 @@ async def create_recommendation(
         population=population,
         traffic_kmh=traffic_kmh,
         lot_area=lot_area,
+        business_sectors=business_sectors,
     )
 
     # 2. Persist to LocationRecommendation only for authenticated users

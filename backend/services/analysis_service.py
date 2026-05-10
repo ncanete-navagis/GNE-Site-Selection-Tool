@@ -58,8 +58,10 @@ from services.scoring import (
     score_to_stars,
     generate_pros_cons,
 )
-from utils.logger import log_scoring_engine_call
+from utils.logger import log_scoring_engine_call, get_logger
 import time
+
+logger = get_logger()
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -112,6 +114,7 @@ def _build_response_dict(record: Analysis, details: dict) -> dict:
         "actual_traffic_kmh": details.get("actual_traffic_kmh"),
         "lot_area": details.get("lot_area"),
         "commercial_space": details.get("commercial_space"),
+        "sector_counts": details.get("sector_counts", {}),
     }
 
 
@@ -131,6 +134,7 @@ async def run_analysis(
     population: Optional[int] = None,
     traffic_kmh: Optional[float] = None,
     lot_area: Optional[float] = None,
+    business_sectors: Optional[List[str]] = None,
 ) -> dict:
     """Execute the full site-analysis pipeline and persist the result.
 
@@ -188,14 +192,20 @@ async def run_analysis(
     # Use provided radius or fall back to default
     radius = radius_m if radius_m is not None else SCORING_RADIUS_M
 
-    hazards, traffic_data, businesses, foot_traffic_data, address_details, live_traffic_speed = await asyncio.gather(
-        geo_queries.get_hazards_near_point(session, lon, lat, radius),
-        geo_queries.get_traffic_near_point(session, lon, lat, radius),
-        geo_queries.get_buildings_near_point(session, lon, lat, radius),
-        external_places.get_foot_traffic_proxy(lat, lon, radius),
-        external_places.reverse_geocode(lat, lon),
-        external_places.get_traffic_speed_proxy(lat, lon),
-    )
+    start_gather = time.perf_counter()
+    import httpx
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        hazards, traffic_data, businesses, foot_traffic_data, address_details, live_traffic_speed, sector_counts = await asyncio.gather(
+            geo_queries.get_hazards_near_point(session, lon, lat, radius),
+            geo_queries.get_traffic_near_point(session, lon, lat, radius),
+            geo_queries.get_buildings_near_point(session, lon, lat, radius),
+            external_places.get_foot_traffic_proxy(lat, lon, radius, client=client),
+            external_places.reverse_geocode(lat, lon, client=client),
+            external_places.get_traffic_speed_proxy(lat, lon, client=client),
+            external_places.get_sector_counts(lat, lon, radius, business_sectors, client=client),
+        )
+    gather_duration = (time.perf_counter() - start_gather) * 1000
+    logger.info(f"Parallel analysis gather took {gather_duration:.2f}ms")
 
     # ------------------------------------------------------------------
     # Step 3 — Compute sub-scores (normalised to [0.0, 1.0])
@@ -250,6 +260,7 @@ async def run_analysis(
         "actual_population": int((barangay.AREA_SQKM or 1.0) * 5000), # Mock: 5k people per sqkm
         "actual_traffic_kmh": round(live_traffic_speed, 1),
         "commercial_space": "Yes" if len(businesses) > 0 else "No",
+        "sector_counts": sector_counts,
     }
 
     record = Analysis(

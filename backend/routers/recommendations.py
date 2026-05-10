@@ -39,6 +39,7 @@ class RecommendationCreateRequest(BaseModel):
     population: Optional[int] = Field(None, description="Target population in the area")
     traffic_kmh: Optional[float] = Field(None, description="Average traffic speed in km/h")
     lot_area: Optional[float] = Field(None, description="Target lot area in sq. m")
+    business_sectors: Optional[List[str]] = Field(None, description="List of business sectors to analyze")
 
 
 class RecommendationResponse(BaseModel):
@@ -71,7 +72,8 @@ async def generate_recommendation(
         radius_m=request.radius_m,
         population=request.population,
         traffic_kmh=request.traffic_kmh,
-        lot_area=request.lot_area
+        lot_area=request.lot_area,
+        business_sectors=request.business_sectors
     )
     return res
 

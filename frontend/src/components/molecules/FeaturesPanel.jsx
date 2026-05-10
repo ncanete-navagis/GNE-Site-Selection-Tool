@@ -13,6 +13,14 @@ const regionOptions = [
   { label: 'Manila' }
 ];
 
+const sectorOptions = [
+  { label: 'Banks' },
+  { label: 'Schools' },
+  { label: 'Malls' },
+  { label: 'Hospitals' },
+  { label: 'Restaurants' }
+];
+
 /* ---------- REUSABLE UI PARTS ---------- */
 
 const InputField = ({ label, unit, value, onChange, onApply }) => (
@@ -230,6 +238,8 @@ export const FeaturesPanel = ({
   trafficKmh, setTrafficKmh,
   lotArea, setLotArea,
   isAnalyzing,
+  selectedSectors,
+  setSelectedSectors,
   onRunAnalysis 
 }) => {
   const [localRadius, setLocalRadius] = useState(radius);
@@ -357,6 +367,31 @@ export const FeaturesPanel = ({
               />
             </div>
 
+            {/* Sector Counts */}
+            {poi.analysis.sector_counts && Object.keys(poi.analysis.sector_counts).length > 0 && (
+              <div style={{ marginTop: '24px' }}>
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '12px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Nearby Establishments
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+                  {Object.entries(poi.analysis.sector_counts).map(([sector, count]) => (
+                    <div key={sector} style={{ 
+                      background: 'rgba(255,255,255,0.03)', 
+                      padding: '12px', 
+                      borderRadius: '12px', 
+                      border: '1px solid rgba(255,255,255,0.05)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px'
+                    }}>
+                      <div style={{ fontSize: '10px', color: '#888', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{sector}</div>
+                      <div style={{ fontSize: '18px', fontWeight: '800', color: '#FFF' }}>{count}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Pros & Cons */}
             <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {poi.analysis.pros?.length > 0 && (
@@ -418,6 +453,42 @@ export const FeaturesPanel = ({
               unit="sq. m" 
               onChange={setLotArea}
             />
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '8px', fontWeight: '500' }}>
+                Business Sector
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {sectorOptions.map((sector) => {
+                  const isSelected = selectedSectors.includes(sector.label);
+                  return (
+                    <button
+                      key={sector.label}
+                      onClick={() => {
+                        setSelectedSectors(prev => 
+                          prev.includes(sector.label)
+                            ? prev.filter(s => s !== sector.label)
+                            : [...prev, sector.label]
+                        );
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '20px',
+                        border: isSelected ? '1px solid #ff2a85' : '1px solid #444',
+                        backgroundColor: isSelected ? 'rgba(255, 42, 133, 0.1)' : 'transparent',
+                        color: isSelected ? '#ff2a85' : '#BBB',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {sector.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             
             <button
               onClick={onRunAnalysis}
