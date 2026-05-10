@@ -8,7 +8,17 @@ export const SidePanel = ({
   mode, 
   setMode, 
   hasAIAccess, 
-  poi 
+  poi,
+  radius,
+  setRadius,
+  population,
+  setPopulation,
+  trafficKmh,
+  setTrafficKmh,
+  lotArea,
+  setLotArea,
+  isAnalyzing,
+  onRunAnalysis
 }) => {
   const panelStyle = {
     position: 'fixed',
@@ -101,7 +111,19 @@ export const SidePanel = ({
         flexDirection: 'column'
       }}>
         {mode === 'features' ? (
-          <FeaturesPanel poi={poi} />
+          <FeaturesPanel 
+            poi={poi} 
+            radius={radius} 
+            setRadius={setRadius} 
+            population={population}
+            setPopulation={setPopulation}
+            trafficKmh={trafficKmh}
+            setTrafficKmh={setTrafficKmh}
+            lotArea={lotArea}
+            setLotArea={setLotArea}
+            isAnalyzing={isAnalyzing}
+            onRunAnalysis={onRunAnalysis}
+          />
         ) : (
           <AIChatPanel poi={poi} />
         )}

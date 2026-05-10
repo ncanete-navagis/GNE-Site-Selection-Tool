@@ -35,6 +35,10 @@ class RecommendationCreateRequest(BaseModel):
     latitude: float = Field(..., ge=-90, le=90, description="Latitude in EPSG:4326")
     name: Optional[str] = Field(None, description="Optional name for the location")
     description: Optional[str] = Field(None, description="Optional description for the location")
+    radius_m: Optional[float] = Field(None, ge=100, le=5000, description="Search radius in metres")
+    population: Optional[int] = Field(None, description="Target population in the area")
+    traffic_kmh: Optional[float] = Field(None, description="Average traffic speed in km/h")
+    lot_area: Optional[float] = Field(None, description="Target lot area in sq. m")
 
 
 class RecommendationResponse(BaseModel):
@@ -63,7 +67,11 @@ async def generate_recommendation(
         lat=request.latitude,
         user_id=user_id,
         name=request.name,
-        description=request.description
+        description=request.description,
+        radius_m=request.radius_m,
+        population=request.population,
+        traffic_kmh=request.traffic_kmh,
+        lot_area=request.lot_area
     )
     return res
 

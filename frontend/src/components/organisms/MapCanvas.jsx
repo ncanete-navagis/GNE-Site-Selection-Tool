@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useMemo, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, OverlayView, Data } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, OverlayView, Data, Circle } from '@react-google-maps/api';
 import { MapMarker } from '../molecules/MapMarker';
 
 const containerStyle = {
@@ -43,7 +43,8 @@ export const MapCanvas = React.memo(({
   isPlacingMarker,
   setIsPlacingMarker,
   onMarkerPlaced,
-  geminiMarker
+  geminiMarker,
+  radius
 }) => {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -52,7 +53,6 @@ export const MapCanvas = React.memo(({
 
   const [map, setMap] = useState(null);
 
-  // Guard against race conditions for double clicks
   const isProcessingClick = useRef(false);
 
   const onLoad = useCallback((mapInstance) => {
@@ -65,8 +65,6 @@ export const MapCanvas = React.memo(({
 
   const handleMapClick = useCallback((e) => {
     if (!isPlacingMarker || isProcessingClick.current) return;
-
-    // Prevent immediate double-fires
     isProcessingClick.current = true;
 
     const lat = e.latLng.lat();
@@ -75,22 +73,18 @@ export const MapCanvas = React.memo(({
     onMarkerPlaced({ lat, lng });
     setIsPlacingMarker(false);
 
-    // Release guard after a short delay to prevent double-click zooms acting as second clicks
     setTimeout(() => {
       isProcessingClick.current = false;
     }, 300);
   }, [isPlacingMarker, onMarkerPlaced, setIsPlacingMarker]);
 
-  // Memoize map options to prevent unnecessary map re-renders while updating dynamic props
   const mapOptions = useMemo(() => ({
     styles: darkMapStyle,
     disableDefaultUI: true,
     draggableCursor: isPlacingMarker ? "crosshair" : "grab",
-    // Prevent double clicking from zooming while we are trying to place a marker
     disableDoubleClickZoom: isPlacingMarker
   }), [isPlacingMarker]);
 
-  // Optional: A helper function to properly center custom DOM elements over the coordinate.
   const getPixelPositionOffset = useCallback((offsetWidth, offsetHeight) => {
     return { x: 0, y: 0 };
   }, []);
@@ -117,7 +111,7 @@ export const MapCanvas = React.memo(({
           onLoad={data => data.addGeoJson(trafficData)}
         />
       )}
-      {/* Existing markers */}
+
       {sites.map(site => (
         <OverlayView
           key={site.id}
@@ -132,19 +126,34 @@ export const MapCanvas = React.memo(({
         </OverlayView>
       ))}
 
-      {/* Gemini marker */}
       {geminiMarker && (
-        <OverlayView
-          position={geminiMarker}
-          mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-          getPixelPositionOffset={getPixelPositionOffset}
-        >
-          <MapMarker isSelected onClick={() => onMarkerPlaced(geminiMarker)} />
-        </OverlayView>
+        <>
+          <Circle
+            center={geminiMarker}
+            radius={radius}
+            options={{
+              fillColor: "#ff2a85",
+              fillOpacity: 0.1,
+              strokeColor: "#ff2a85",
+              strokeOpacity: 0.8,
+              strokeWeight: 1,
+              clickable: false,
+              zIndex: 1
+            }}
+          />
+          <OverlayView
+            key={`gemini-marker-${geminiMarker.lat}-${geminiMarker.lng}`}
+            position={geminiMarker}
+            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+            getPixelPositionOffset={getPixelPositionOffset}
+          >
+            <MapMarker isSelected onClick={() => onMarkerPlaced(geminiMarker)} />
+          </OverlayView>
+        </>
       )}
 
     </GoogleMap>
   ) : (
     <div style={{ ...containerStyle, backgroundColor: '#121212' }} />
   );
-});
+});

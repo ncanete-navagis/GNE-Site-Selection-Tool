@@ -41,13 +41,14 @@ from typing import Any, Optional
 # ---------------------------------------------------------------------------
 
 #: Count of nearby hazard records at which the risk saturates at 1.0 → score 0.0
-HAZARD_SATURATION: int = 3
+HAZARD_SATURATION: int = 5
 
 #: Count of nearby competing businesses at which the density saturates → score 0.0
-COMPETING_BUSINESS_SATURATION: int = 15
+COMPETING_BUSINESS_SATURATION: int = 40
 
 #: Aggregated user review count at which foot traffic saturates → score 1.0
-FOOT_TRAFFIC_SATURATION: int = 15000
+# Adjusted for 20-result API limit (e.g., 20 places with 400 reviews each = 8000)
+FOOT_TRAFFIC_SATURATION: int = 8000
 
 #: Sub-score at-or-above which a dimension is promoted to "pro".
 PRO_THRESHOLD: float = 0.65
@@ -55,14 +56,14 @@ PRO_THRESHOLD: float = 0.65
 #: Sub-score at-or-below which a dimension is flagged as "con".
 CON_THRESHOLD: float = 0.35
 
-# Human-readable label per scoring dimension used in pros/cons generation.
+# Human-readable label per scoring dimension used in pros/cons generation (PROS).
 _DIMENSION_LABELS: dict[str, str] = {
-    "flood_hazard_score":        "Flood risk",
-    "landslide_hazard_score":    "Landslide risk",
-    "storm_surge_score":         "Storm surge risk",
-    "competing_business_score":  "Nearby competition",
-    "traffic_score":             "Vehicle traffic",      # note: estimated
-    "foot_traffic_score":        "Foot traffic",         # note: estimated
+    "flood_hazard_score":        "Low flood risk",
+    "landslide_hazard_score":    "Low landslide risk",
+    "storm_surge_score":         "Low storm surge risk",
+    "competing_business_score":  "Low competition",
+    "traffic_score":             "Good vehicle traffic",
+    "foot_traffic_score":        "High foot traffic",
 }
 
 # Human-readable con labels per dimension (used when score is low).
@@ -70,9 +71,9 @@ _CON_LABELS: dict[str, str] = {
     "flood_hazard_score":        "High flood risk",
     "landslide_hazard_score":    "High landslide risk",
     "storm_surge_score":         "High storm surge risk",
-    "competing_business_score":  "High nearby competition",
-    "traffic_score":             "Low vehicle traffic (estimated)",
-    "foot_traffic_score":        "Low foot traffic (estimated)",
+    "competing_business_score":  "High competition",
+    "traffic_score":             "Low vehicle traffic",
+    "foot_traffic_score":        "Low foot traffic",
 }
 
 # ---------------------------------------------------------------------------
@@ -116,30 +117,51 @@ def compute_scores(
     """
     # ------------------------------------------------------------------
     # 1. flood_hazard_score
-    #    Count flood-type hazard records → invert against saturation of 5
+    #    Use max intensity (Var) if available. 1=Low, 2=Med, 3=High.
+    #    If no intensity, count records against saturation.
     # ------------------------------------------------------------------
-    flood_count = sum(
-        1 for h in hazards if (h.get("hazard_type") if isinstance(h, dict) else getattr(h, "hazard_type", None)) == "flood"
-    )
-    flood_hazard_score = max(0.0, 1.0 - (flood_count / HAZARD_SATURATION))
+    flood_hazards = [h for h in hazards if (h.get("hazard_type") if isinstance(h, dict) else getattr(h, "hazard_type", None)) == "flood"]
+    if not flood_hazards:
+        flood_hazard_score = 1.0
+    else:
+        # Check for intensity value 'Var' (1-3 scale)
+        intensities = [h.get("Var", 1.0) for h in flood_hazards if isinstance(h, dict)]
+        if intensities:
+            max_val = max(intensities)
+            # Map 1.0 -> 0.7, 2.0 -> 0.4, 3.0 -> 0.1 (or 0.0)
+            flood_hazard_score = max(0.0, 1.0 - (max_val / 3.3)) 
+        else:
+            flood_hazard_score = max(0.0, 1.0 - (len(flood_hazards) / HAZARD_SATURATION))
 
     # ------------------------------------------------------------------
     # 2. landslide_hazard_score
-    #    Count landslide-type hazard records → invert against saturation of 5
+    #    Use max intensity (LH) if available. 1=Low, 2=Med, 3=High.
     # ------------------------------------------------------------------
-    landslide_count = sum(
-        1 for h in hazards if (h.get("hazard_type") if isinstance(h, dict) else getattr(h, "hazard_type", None)) == "landslide"
-    )
-    landslide_hazard_score = max(0.0, 1.0 - (landslide_count / HAZARD_SATURATION))
+    landslide_hazards = [h for h in hazards if (h.get("hazard_type") if isinstance(h, dict) else getattr(h, "hazard_type", None)) == "landslide"]
+    if not landslide_hazards:
+        landslide_hazard_score = 1.0
+    else:
+        intensities = [h.get("LH", 1.0) for h in landslide_hazards if isinstance(h, dict)]
+        if intensities:
+            max_val = max(intensities)
+            landslide_hazard_score = max(0.0, 1.0 - (max_val / 3.3))
+        else:
+            landslide_hazard_score = max(0.0, 1.0 - (len(landslide_hazards) / HAZARD_SATURATION))
 
     # ------------------------------------------------------------------
     # 3. storm_surge_score
-    #    Count storm-surge-type hazard records → invert against saturation of 5
+    #    Use max intensity (HAZ) if available. 1=Low, 2=Med, 3=High.
     # ------------------------------------------------------------------
-    storm_count = sum(
-        1 for h in hazards if (h.get("hazard_type") if isinstance(h, dict) else getattr(h, "hazard_type", None)) == "storm_surge"
-    )
-    storm_surge_score = max(0.0, 1.0 - (storm_count / HAZARD_SATURATION))
+    storm_hazards = [h for h in hazards if (h.get("hazard_type") if isinstance(h, dict) else getattr(h, "hazard_type", None)) == "storm_surge"]
+    if not storm_hazards:
+        storm_surge_score = 1.0
+    else:
+        intensities = [h.get("HAZ", 1.0) for h in storm_hazards if isinstance(h, dict)]
+        if intensities:
+            max_val = max(intensities)
+            storm_surge_score = max(0.0, 1.0 - (max_val / 3.3))
+        else:
+            storm_surge_score = max(0.0, 1.0 - (len(storm_hazards) / HAZARD_SATURATION))
 
     # ------------------------------------------------------------------
     # 4. competing_business_score

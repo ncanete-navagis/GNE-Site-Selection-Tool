@@ -25,6 +25,10 @@ async def create_recommendation(
     user_id: Optional[int] = None,
     name: Optional[str] = None,
     description: Optional[str] = None,
+    radius_m: Optional[float] = None,
+    population: Optional[int] = None,
+    traffic_kmh: Optional[float] = None,
+    lot_area: Optional[float] = None,
 ) -> dict:
     """
     Generate a new recommendation by running an analysis.
@@ -42,6 +46,10 @@ async def create_recommendation(
         name=name,
         user_id=str(user_id) if user_id else None,
         restaurant_type=None,
+        radius_m=radius_m,
+        population=population,
+        traffic_kmh=traffic_kmh,
+        lot_area=lot_area,
     )
 
     # 2. Persist to LocationRecommendation only for authenticated users

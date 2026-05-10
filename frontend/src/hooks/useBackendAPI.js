@@ -37,10 +37,18 @@ export const useBackendAPI = () => {
     }
   }, [idToken]);
 
-  const generateRecommendation = useCallback(async (lat, lng, name) => {
+  const generateRecommendation = useCallback(async (lat, lng, name, radius_m, population, traffic_kmh, lot_area) => {
     return fetchWithState(`${API_BASE}/recommendations/generate`, {
       method: 'POST',
-      body: JSON.stringify({ latitude: lat, longitude: lng, name })
+      body: JSON.stringify({
+        latitude: lat,
+        longitude: lng,
+        name,
+        radius_m,
+        population: population ? parseInt(population) : null,
+        traffic_kmh: traffic_kmh ? parseFloat(traffic_kmh) : null,
+        lot_area: lot_area ? parseFloat(lot_area) : null
+      })
     });
   }, [fetchWithState]);
 

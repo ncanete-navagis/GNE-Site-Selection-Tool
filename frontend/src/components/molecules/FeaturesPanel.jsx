@@ -15,34 +15,63 @@ const regionOptions = [
 
 /* ---------- REUSABLE UI PARTS ---------- */
 
-const InputField = ({ label, unit, value }) => (
+const InputField = ({ label, unit, value, onChange, onApply }) => (
   <div style={{ marginBottom: '20px' }}>
     <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '8px', fontWeight: '500' }}>
       {label}
     </label>
-    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-      <input
-        type="text"
-        defaultValue={value}
-        style={{
-          width: '100%',
-          backgroundColor: '#2A2A2A',
-          border: 'none',
-          borderRadius: '8px',
-          padding: '12px 40px 12px 16px',
-          color: '#FFF',
-          fontSize: '14px',
-          outline: 'none'
-        }}
-      />
-      <span style={{
-        position: 'absolute',
-        right: '16px',
-        color: '#666',
-        fontSize: '12px'
-      }}>
-        {unit}
-      </span>
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ position: 'relative', flex: 1 }}>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange && onChange(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && onApply && onApply()}
+          style={{
+            width: '100%',
+            backgroundColor: '#2A2A2A',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 40px 12px 16px',
+            color: '#FFF',
+            fontSize: '14px',
+            outline: 'none',
+            boxSizing: 'border-box'
+          }}
+        />
+        <span style={{
+          position: 'absolute',
+          right: '12px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          color: '#666',
+          fontSize: '12px',
+          pointerEvents: 'none'
+        }}>
+          {unit}
+        </span>
+      </div>
+      {onApply && (
+        <button 
+          onClick={onApply}
+          style={{
+            backgroundColor: '#4285F4',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '10px 16px',
+            fontSize: '13px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            boxShadow: '0 2px 6px rgba(66, 133, 244, 0.3)'
+          }}
+          onMouseEnter={(e) => e.target.style.backgroundColor = '#357ae8'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = '#4285F4'}
+        >
+          Apply
+        </button>
+      )}
     </div>
   </div>
 );
@@ -62,16 +91,6 @@ const CollapsibleSection = ({ title, items = [], type = 'list', value, onChange,
         ? currentValues.filter(item => item !== label)
         : [...currentValues, label]
     );
-    setSelectedItems(prev => {
-      const next = prev.includes(label)
-        ? prev.filter(item => item !== label)
-        : [...prev, label];
-
-      if (title === 'Layers' && typeof window.onLayerToggleGlobal === 'function') {
-        window.onLayerToggleGlobal(next);
-      }
-      return next;
-    });
   };
 
   return (
@@ -157,15 +176,69 @@ const ToggleSwitch = ({ label, isOn, onToggle }) => (
         height: '20px',
         borderRadius: '20px',
         backgroundColor: isOn ? '#3291ff' : '#444',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        position: 'relative'
       }}
-    />
+    >
+       <div style={{
+         position: 'absolute',
+         top: '2px',
+         left: isOn ? '22px' : '2px',
+         width: '16px',
+         height: '16px',
+         borderRadius: '50%',
+         backgroundColor: '#FFF',
+         transition: 'left 0.2s'
+       }} />
+    </div>
+  </div>
+);
+
+const ComparisonSquare = ({ label, required, actual, unit, isMeeting }) => (
+  <div style={{ 
+    background: 'rgba(255,255,255,0.03)', 
+    padding: '12px', 
+    borderRadius: '12px', 
+    border: '1px solid rgba(255,255,255,0.05)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
+  }}>
+    <div style={{ fontSize: '10px', color: '#888', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+      <div style={{ 
+        fontSize: '16px', 
+        fontWeight: '800', 
+        color: isMeeting === null ? '#FFF' : (isMeeting ? '#00dc82' : '#ff4d4d') 
+      }}>
+        {typeof actual === 'number' ? actual.toLocaleString() : actual}
+      </div>
+      <span style={{ fontSize: '10px', color: '#666' }}>{unit}</span>
+    </div>
+    <div style={{ fontSize: '9px', color: '#555', marginTop: '2px' }}>
+      Target: {typeof required === 'number' ? required.toLocaleString() : required}
+    </div>
   </div>
 );
 
 /* ---------- MAIN COMPONENT ---------- */
 
-export const FeaturesPanel = ({ poi }) => {
+export const FeaturesPanel = ({ 
+  poi, 
+  radius, setRadius, 
+  population, setPopulation,
+  trafficKmh, setTrafficKmh,
+  lotArea, setLotArea,
+  isAnalyzing,
+  onRunAnalysis 
+}) => {
+  const [localRadius, setLocalRadius] = useState(radius);
+
+  // Sync local radius if external radius changes
+  useEffect(() => {
+    setLocalRadius(radius);
+  }, [radius]);
+
   const [restaurantTypes, setRestaurantTypes] = useState([]);
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [selectedLayers, setSelectedLayers] = useState([]);
@@ -194,11 +267,16 @@ export const FeaturesPanel = ({ poi }) => {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
       <div style={{ padding: '24px 20px' }}>
-        <h3 style={{ color: '#FFF', marginBottom: '24px', fontSize: '18px', fontWeight: '700' }}>
+        <h3 style={{ color: '#FFF', marginBottom: poi?.analysis?.street ? '4px' : '24px', fontSize: '18px', fontWeight: '700' }}>
           {poi?.title || 'Criteria Options'}
         </h3>
+        {poi?.analysis?.street && (
+          <div style={{ color: '#888', fontSize: '13px', marginBottom: '24px', fontWeight: '400' }}>
+            {poi.analysis.house_number ? `${poi.analysis.house_number} ` : ''}{poi.analysis.street}
+          </div>
+        )}
 
-        {poi && !poi.analysis ? (
+        {isAnalyzing ? (
           <div style={{ padding: '40px 0', textAlign: 'center' }}>
             <div className="loading-spinner" style={{ 
               width: '40px', 
@@ -242,6 +320,43 @@ export const FeaturesPanel = ({ poi }) => {
               ))}
             </div>
 
+            {/* Comparison Squares */}
+            <div style={{ 
+              marginTop: '24px', 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(2, 1fr)', 
+              gap: '10px' 
+            }}>
+              <ComparisonSquare 
+                label="Population" 
+                required={poi.analysis.population ?? "N/A"}
+                actual={poi.analysis.actual_population ?? 0}
+                unit="ppl"
+                isMeeting={poi.analysis.population ? (poi.analysis.actual_population >= poi.analysis.population) : null}
+              />
+              <ComparisonSquare 
+                label="Traffic Speed" 
+                required={poi.analysis.traffic_kmh ?? "N/A"}
+                actual={poi.analysis.actual_traffic_kmh ?? 0}
+                unit="km/h"
+                isMeeting={poi.analysis.traffic_kmh ? (poi.analysis.actual_traffic_kmh >= poi.analysis.traffic_kmh) : null}
+              />
+              <ComparisonSquare 
+                label="Comm. Space" 
+                required="Any"
+                actual={poi.analysis.commercial_space || 'No'}
+                unit=""
+                isMeeting={poi.analysis.commercial_space === 'Yes'}
+              />
+              <ComparisonSquare 
+                label="Lot Area" 
+                required={poi.analysis.lot_area ?? "N/A"}
+                actual={poi.analysis.lot_area ?? 0} // Placeholder
+                unit="sqm"
+                isMeeting={true}
+              />
+            </div>
+
             {/* Pros & Cons */}
             <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {poi.analysis.pros?.length > 0 && (
@@ -275,11 +390,58 @@ export const FeaturesPanel = ({ poi }) => {
             </div>
           </div>
         ) : (
-          <>
-            <InputField label="Radius" value="250" unit="m" />
-            <InputField label="Traffic" value="2,400" unit="vph" />
-            <InputField label="Lot area" value="1,200" unit="sq. m" />
-          </>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <InputField 
+              label="Analysis Radius" 
+              value={localRadius} 
+              unit="m" 
+              onChange={(val) => {
+                setLocalRadius(val);
+                setRadius(parseInt(val) || radius);
+              }}
+            />
+            <InputField 
+              label="Population" 
+              value={population} 
+              unit="people" 
+              onChange={setPopulation}
+            />
+            <InputField 
+              label="Traffic Speed" 
+              value={trafficKmh} 
+              unit="km/h" 
+              onChange={setTrafficKmh}
+            />
+            <InputField 
+              label="Lot Area" 
+              value={lotArea} 
+              unit="sq. m" 
+              onChange={setLotArea}
+            />
+            
+            <button
+              onClick={onRunAnalysis}
+              disabled={!poi}
+              style={{
+                marginTop: '12px',
+                width: '100%',
+                backgroundColor: poi ? '#ff2a85' : '#444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '14px',
+                fontSize: '15px',
+                fontWeight: '700',
+                cursor: poi ? 'pointer' : 'not-allowed',
+                transition: 'all 0.2s',
+                boxShadow: poi ? '0 4px 12px rgba(255, 42, 133, 0.3)' : 'none'
+              }}
+              onMouseEnter={(e) => poi && (e.target.style.backgroundColor = '#e61e75')}
+              onMouseLeave={(e) => poi && (e.target.style.backgroundColor = '#ff2a85')}
+            >
+              {poi ? 'Run Analysis' : 'Drop a pin to analyze'}
+            </button>
+          </div>
         )}
       </div>
 

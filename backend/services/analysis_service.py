@@ -104,6 +104,14 @@ def _build_response_dict(record: Analysis, details: dict) -> dict:
         ),
         "barangay_pcode": details.get("barangay_pcode"),
         "barangay_name": details.get("barangay_name"),
+        "street": details.get("street"),
+        "house_number": details.get("house_number"),
+        "population": details.get("population"),
+        "actual_population": details.get("actual_population"),
+        "traffic_kmh": details.get("traffic_kmh"),
+        "actual_traffic_kmh": details.get("actual_traffic_kmh"),
+        "lot_area": details.get("lot_area"),
+        "commercial_space": details.get("commercial_space"),
     }
 
 
@@ -119,6 +127,10 @@ async def run_analysis(
     name: Optional[str] = None,
     user_id: Optional[str] = None,
     restaurant_type: Optional[str] = None,
+    radius_m: Optional[float] = None,
+    population: Optional[int] = None,
+    traffic_kmh: Optional[float] = None,
+    lot_area: Optional[float] = None,
 ) -> dict:
     """Execute the full site-analysis pipeline and persist the result.
 
@@ -173,11 +185,16 @@ async def run_analysis(
     # The queries are independent — no data dependency between them.
     # asyncio.gather() runs them concurrently, reducing wall-clock latency.
     # ------------------------------------------------------------------
-    hazards, traffic_data, businesses, foot_traffic_data = await asyncio.gather(
-        geo_queries.get_hazards_near_point(session, lon, lat, SCORING_RADIUS_M),
-        geo_queries.get_traffic_near_point(session, lon, lat, SCORING_RADIUS_M),
-        geo_queries.get_buildings_near_point(session, lon, lat, SCORING_RADIUS_M),
-        external_places.get_foot_traffic_proxy(lat, lon, SCORING_RADIUS_M),
+    # Use provided radius or fall back to default
+    radius = radius_m if radius_m is not None else SCORING_RADIUS_M
+
+    hazards, traffic_data, businesses, foot_traffic_data, address_details, live_traffic_speed = await asyncio.gather(
+        geo_queries.get_hazards_near_point(session, lon, lat, radius),
+        geo_queries.get_traffic_near_point(session, lon, lat, radius),
+        geo_queries.get_buildings_near_point(session, lon, lat, radius),
+        external_places.get_foot_traffic_proxy(lat, lon, radius),
+        external_places.reverse_geocode(lat, lon),
+        external_places.get_traffic_speed_proxy(lat, lon),
     )
 
     # ------------------------------------------------------------------
@@ -222,9 +239,17 @@ async def run_analysis(
         "cons": pros_cons["cons"],
         "barangay_pcode": barangay.ADM4_PCODE,   # actual PK column in ph_barangays
         "barangay_name": barangay.ADM4_EN,        # English barangay name column
+        "street": address_details.get("street"),
+        "house_number": address_details.get("house_number"),
         "name": name,
         "user_id": str(user_id) if user_id else None,
         "restaurant_type": restaurant_type,
+        "population": population,
+        "traffic_kmh": traffic_kmh,
+        "lot_area": lot_area,
+        "actual_population": int((barangay.AREA_SQKM or 1.0) * 5000), # Mock: 5k people per sqkm
+        "actual_traffic_kmh": round(live_traffic_speed, 1),
+        "commercial_space": "Yes" if len(businesses) > 0 else "No",
     }
 
     record = Analysis(

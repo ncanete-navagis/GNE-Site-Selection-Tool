@@ -28,6 +28,11 @@ export const SiteSelectionHome = () => {
   const [hazardData, setHazardData] = useState(null);
   const [trafficData, setTrafficData] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [radius, setRadius] = useState(250);
+  const [population, setPopulation] = useState(5000);
+  const [trafficKmh, setTrafficKmh] = useState(40);
+  const [lotArea, setLotArea] = useState(1200);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { generateRecommendation, getHazards, getTraffic } = useBackendAPI();
 
   useEffect(() => {
@@ -81,19 +86,34 @@ export const SiteSelectionHome = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlacingMarker, isPanelOpen]);
 
-  const handleMarkerPlaced = async (coords) => {
+  const handleMarkerPlaced = (coords) => {
     setGeminiMarker(coords);
-    setAnalysisResult(null); // Reset previous analysis
+    setAnalysisResult(null);
     setPanelMode('features');
     setIsPanelOpen(true);
+    console.log("Marker placed at", coords);
+  };
 
+  const handleRunAnalysis = async () => {
+    if (!geminiMarker) return;
+    setIsAnalyzing(true);
+    setAnalysisResult(null);
     try {
-      const result = await generateRecommendation(coords.lat, coords.lng, 'New Site');
+      const result = await generateRecommendation(
+        geminiMarker.lat, 
+        geminiMarker.lng, 
+        'New Site', 
+        radius,
+        population,
+        trafficKmh,
+        lotArea
+      );
       setAnalysisResult(result);
     } catch (e) {
       console.error("Failed to generate recommendation:", e);
+    } finally {
+      setIsAnalyzing(false);
     }
-    console.log("Marker placed at", coords);
   };
 
   const mapComponent = (
@@ -107,6 +127,7 @@ export const SiteSelectionHome = () => {
       geminiMarker={geminiMarker}
       hazardData={hazardData}
       trafficData={trafficData}
+      radius={radius}
     />
   );
 
@@ -128,6 +149,16 @@ export const SiteSelectionHome = () => {
       mode={panelMode}
       setMode={setPanelMode}
       hasAIAccess={hasAIAccess}
+      radius={radius}
+      setRadius={setRadius}
+      population={population}
+      setPopulation={setPopulation}
+      trafficKmh={trafficKmh}
+      setTrafficKmh={setTrafficKmh}
+      lotArea={lotArea}
+      setLotArea={setLotArea}
+      isAnalyzing={isAnalyzing}
+      onRunAnalysis={handleRunAnalysis}
       poi={geminiMarker ? {
         id: `new-site-${geminiMarker.lat}-${geminiMarker.lng}`,
         title: analysisResult?.barangay_name || 'New Target Location',
