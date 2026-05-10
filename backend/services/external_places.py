@@ -179,6 +179,118 @@ async def get_traffic_speed_proxy(
         if _close_client:
             await client.aclose()
 
+async def get_site_context(
+    lat: float,
+    lng: float,
+    radius_m: float = 500.0,
+    client: Optional[httpx.AsyncClient] = None,
+) -> Dict[str, Any]:
+    """Retrieve accessibility and site-specific context (Parking, Transit)."""
+    if not settings.GOOGLE_API_KEY:
+        return {"parking_count": 0, "transit_count": 0}
+
+    # Search for Parking and Transit Stations
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": settings.GOOGLE_API_KEY,
+        "X-Goog-FieldMask": "places.id,places.types",
+    }
+
+    body = {
+        "locationRestriction": {
+            "circle": {
+                "center": {"latitude": lat, "longitude": lng},
+                "radius": radius_m,
+            }
+        },
+        "includedTypes": ["parking", "transit_station", "bus_station"],
+        "maxResultCount": 20,
+    }
+
+    _close_client = False
+    if client is None:
+        client = httpx.AsyncClient(timeout=10.0)
+        _close_client = True
+
+    try:
+        response = await client.post(SEARCH_NEARBY_URL, json=body, headers=headers)
+        if response.status_code != 200:
+            return {"parking_count": 0, "transit_count": 0}
+
+        data = response.json()
+        places = data.get("places", [])
+        
+        parking_count = sum(1 for p in places if "parking" in p.get("types", []))
+        transit_count = sum(1 for p in places if any(t in p.get("types", []) for t in ["transit_station", "bus_station"]))
+        
+        return {
+            "parking_count": parking_count,
+            "transit_count": transit_count,
+            "accessibility_score": min(1.0, (parking_count + transit_count) / 5.0)
+        }
+    except Exception:
+        return {"parking_count": 0, "transit_count": 0}
+    finally:
+        if _close_client:
+            await client.aclose()
+
+async def get_market_analysis(
+    lat: float,
+    lng: float,
+    radius_m: float = 500.0,
+    client: Optional[httpx.AsyncClient] = None,
+) -> Dict[str, Any]:
+    """Analyze the competitive landscape (Nearby restaurant ratings/popularity)."""
+    if not settings.GOOGLE_API_KEY:
+        return {"avg_rating": 0, "competition_intensity": 0}
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": settings.GOOGLE_API_KEY,
+        "X-Goog-FieldMask": "places.id,places.rating,places.userRatingCount",
+    }
+
+    body = {
+        "locationRestriction": {
+            "circle": {
+                "center": {"latitude": lat, "longitude": lng},
+                "radius": radius_m,
+            }
+        },
+        "includedTypes": ["restaurant"],
+        "maxResultCount": 20,
+    }
+
+    _close_client = False
+    if client is None:
+        client = httpx.AsyncClient(timeout=10.0)
+        _close_client = True
+
+    try:
+        response = await client.post(SEARCH_NEARBY_URL, json=body, headers=headers)
+        if response.status_code != 200:
+            return {"avg_rating": 0, "competition_intensity": 0}
+
+        data = response.json()
+        places = data.get("places", [])
+        
+        if not places:
+            return {"avg_rating": 0, "competition_intensity": 0}
+
+        ratings = [p.get("rating", 0) for p in places if p.get("rating")]
+        avg_rating = sum(ratings) / len(ratings) if ratings else 0
+        
+        return {
+            "avg_rating": round(avg_rating, 1),
+            "competition_intensity": len(places),
+            "market_saturation": "High" if len(places) > 10 else "Moderate" if len(places) > 5 else "Low"
+        }
+    except Exception:
+        return {"avg_rating": 0, "competition_intensity": 0}
+    finally:
+        if _close_client:
+            await client.aclose()
+
 SECTOR_TYPE_MAP = {
     "banks": ["bank", "atm"],
     "schools": ["school", "primary_school", "secondary_school", "university"],

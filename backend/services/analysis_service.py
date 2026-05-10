@@ -195,7 +195,7 @@ async def run_analysis(
     start_gather = time.perf_counter()
     import httpx
     async with httpx.AsyncClient(timeout=15.0) as client:
-        hazards, traffic_data, businesses, foot_traffic_data, address_details, live_traffic_speed, sector_counts = await asyncio.gather(
+        hazards, traffic_data, businesses, foot_traffic_data, address_details, live_traffic_speed, sector_counts, site_context, market_analysis = await asyncio.gather(
             geo_queries.get_hazards_near_point(session, lon, lat, radius),
             geo_queries.get_traffic_near_point(session, lon, lat, radius),
             geo_queries.get_buildings_near_point(session, lon, lat, radius),
@@ -203,6 +203,8 @@ async def run_analysis(
             external_places.reverse_geocode(lat, lon, client=client),
             external_places.get_traffic_speed_proxy(lat, lon, client=client),
             external_places.get_sector_counts(lat, lon, radius, business_sectors, client=client),
+            external_places.get_site_context(lat, lon, radius, client=client),
+            external_places.get_market_analysis(lat, lon, radius, client=client),
         )
     gather_duration = (time.perf_counter() - start_gather) * 1000
     logger.info(f"Parallel analysis gather took {gather_duration:.2f}ms")
@@ -261,6 +263,8 @@ async def run_analysis(
         "actual_traffic_kmh": round(live_traffic_speed, 1),
         "commercial_space": "Yes" if len(businesses) > 0 else "No",
         "sector_counts": sector_counts,
+        "site_context": site_context,
+        "market_analysis": market_analysis,
     }
 
     record = Analysis(
