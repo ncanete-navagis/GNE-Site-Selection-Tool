@@ -183,33 +183,26 @@ SECTOR_TYPE_MAP = {
     "banks": ["bank", "atm"],
     "schools": ["school", "primary_school", "secondary_school", "university"],
     "malls": ["shopping_mall"],
-    "hospitals": ["hospital", "medical_center"],
-    "restaurants": ["restaurant", "cafe", "food"],
+    "hospitals": ["hospital"],
+    "restaurants": ["restaurant", "cafe", "fast_food_restaurant", "bakery", "bar"],
 }
 
-async def get_sector_counts(
+async def _get_single_sector_count(
     lat: float,
     lng: float,
-    radius_m: float = 500.0,
-    sectors: Optional[List[str]] = None,
-    client: Optional[httpx.AsyncClient] = None,
-) -> Dict[str, int]:
-    """Retrieve counts for multiple business sectors in a single optimized API call."""
-    if not sectors:
-        return {}
-    if not settings.GOOGLE_API_KEY:
-        return {s.lower(): 0 for s in sectors}
-
-    all_types = []
-    for s in sectors:
-        all_types.extend(SECTOR_TYPE_MAP.get(s.lower(), []))
-    if not all_types:
-        return {s.lower(): 0 for s in sectors}
+    radius_m: float,
+    sector: str,
+    client: httpx.AsyncClient
+) -> int:
+    """Fetch count for a single business sector with de-duplication logic."""
+    types = SECTOR_TYPE_MAP.get(sector.lower(), [])
+    if not types:
+        return 0
 
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": settings.GOOGLE_API_KEY,
-        "X-Goog-FieldMask": "places.types,places.id",
+        "X-Goog-FieldMask": "places.id,places.displayName,places.types,places.location",
     }
 
     body = {
@@ -219,33 +212,79 @@ async def get_sector_counts(
                 "radius": radius_m,
             }
         },
-        "includedTypes": list(set(all_types)),
+        "includedTypes": types,
         "maxResultCount": 20,
     }
 
+    try:
+        response = await client.post(SEARCH_NEARBY_URL, json=body, headers=headers)
+        if response.status_code != 200:
+            logger.error(f"Sector count error for {sector}: {response.text}")
+            return 0
+        
+        data = response.json()
+        places = data.get("places", [])
+        logger.info(f"Raw places found for {sector}: {len(places)}")
+        
+        if not places:
+            return 0
+
+        # De-duplication Logic:
+        # We group by name (lowercase) to avoid counting "Mall Wing A" and "Mall Wing B" separately
+        # We also filter out items that are likely just components of a larger business.
+        seen_names = set()
+        unique_count = 0
+        
+        for p in places:
+            display_name = p.get("displayName", {}).get("text", "").lower().strip()
+            if not display_name:
+                continue
+                
+            # Basic normalization: remove common suffixes that cause duplicates
+            norm_name = display_name
+            for suffix in [" - parking", " entrance", " wing", " annex", " building", " atm"]:
+                if norm_name.endswith(suffix):
+                    norm_name = norm_name.replace(suffix, "").strip()
+            
+            # If we haven't seen this name (or normalized name) yet, count it
+            if norm_name not in seen_names:
+                seen_names.add(norm_name)
+                unique_count += 1
+                
+        return unique_count
+    except Exception as e:
+        logger.error(f"Error fetching sector count for {sector}: {e}")
+        return 0
+
+async def get_sector_counts(
+    lat: float,
+    lng: float,
+    radius_m: float = 500.0,
+    sectors: Optional[List[str]] = None,
+    client: Optional[httpx.AsyncClient] = None,
+) -> Dict[str, int]:
+    """Retrieve counts for multiple business sectors in parallel using the connection pool."""
+    if not sectors:
+        return {}
+    if not settings.GOOGLE_API_KEY:
+        return {s: 0 for s in sectors}
+
+    # If no client provided, create a one-off
     _close_client = False
     if client is None:
         client = httpx.AsyncClient(timeout=10.0)
         _close_client = True
 
     try:
-        response = await client.post(SEARCH_NEARBY_URL, json=body, headers=headers)
-        if response.status_code != 200:
-            return {s.lower(): 0 for s in sectors}
-
-        data = response.json()
-        places = data.get("places", [])
+        import asyncio
+        tasks = [_get_single_sector_count(lat, lng, radius_m, s, client) for s in sectors]
+        results = await asyncio.gather(*tasks)
         
-        counts = {s.lower(): 0 for s in sectors}
-        for place in places:
-            place_types = place.get("types", [])
-            for s in sectors:
-                sector_types = SECTOR_TYPE_MAP.get(s.lower(), [])
-                if any(t in place_types for t in sector_types):
-                    counts[s.lower()] += 1
-        return counts
-    except Exception:
-        return {s.lower(): 0 for s in sectors}
+        # Use original sector casing for keys to match frontend expectations
+        return {sector: count for sector, count in zip(sectors, results)}
+    except Exception as e:
+        logger.error(f"Global error in get_sector_counts: {e}")
+        return {s: 0 for s in sectors}
     finally:
         if _close_client:
             await client.aclose()

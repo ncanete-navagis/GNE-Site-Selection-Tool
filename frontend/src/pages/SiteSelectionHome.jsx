@@ -73,6 +73,13 @@ export const SiteSelectionHome = () => {
   const handleOpenFeatures = () => {
     setPanelMode('features');
     setIsPanelOpen(true);
+    
+    // If no pin has been dropped yet, trigger pin placement mode
+    if (!geminiMarker) {
+      setIsPlacingMarker(true);
+      setIsPanelOpen(false);
+      console.log("No pin found. Triggering pin placement from Site Features button.");
+    }
   };
 
   // Allow exiting placement mode via Escape key
