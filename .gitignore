@@ -34,6 +34,8 @@ dist-ssr/
 .env.production.local
 .env*.local
 
+__pycache__/
+*.pyc
 # OS files
 Thumbs.db
 desktop.ini

@@ -66,7 +66,7 @@ import time
 # ---------------------------------------------------------------------------
 
 #: Default spatial search radius in metres.  Override with env var.
-SCORING_RADIUS_M: float = float(os.environ.get("SCORING_RADIUS_M", 500))
+SCORING_RADIUS_M: float = float(os.environ.get("SCORING_RADIUS_M", 1000))
 
 
 # ---------------------------------------------------------------------------
@@ -104,6 +104,7 @@ def _build_response_dict(record: Analysis, details: dict) -> dict:
         ),
         "barangay_pcode": details.get("barangay_pcode"),
         "barangay_name": details.get("barangay_name"),
+        "competitors": details.get("competitors", []),
     }
 
 
@@ -225,6 +226,15 @@ async def run_analysis(
         "name": name,
         "user_id": str(user_id) if user_id else None,
         "restaurant_type": restaurant_type,
+        "competitors": [
+            {
+                "name": b.name or "Unnamed Business",
+                "amenity": b.amenity,
+                "lat": b.lat,
+                "lng": b.lon,
+                "cuisine": getattr(b, "cuisine", None)
+            } for b in businesses
+        ]
     }
 
     record = Analysis(

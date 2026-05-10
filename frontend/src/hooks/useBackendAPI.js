@@ -34,8 +34,8 @@ export const useBackendAPI = () => {
     });
   }, [fetchWithState]);
 
-  const getHazards = useCallback(async (bounds, hazardType = null) => {
-    let url = `${API_BASE}/hazards/?xmin=${bounds.xmin}&ymin=${bounds.ymin}&xmax=${bounds.xmax}&ymax=${bounds.ymax}`;
+  const getHazards = useCallback(async (bounds, hazardType = null, zoom = 12) => {
+    let url = `${API_BASE}/hazards/?xmin=${bounds.xmin}&ymin=${bounds.ymin}&xmax=${bounds.xmax}&ymax=${bounds.ymax}&zoom=${zoom}`;
     if (hazardType) url += `&hazard_type=${hazardType}`;
     return fetchWithState(url);
   }, [fetchWithState]);
@@ -49,11 +49,17 @@ export const useBackendAPI = () => {
     return fetchWithState(`${API_BASE}/regions/`);
   }, [fetchWithState]);
 
+  const getBuyingProperties = useCallback(async (bounds) => {
+    const url = `${API_BASE}/properties/buying?min_lat=${bounds.min_lat}&max_lat=${bounds.max_lat}&min_lng=${bounds.min_lng}&max_lng=${bounds.max_lng}`;
+    return fetchWithState(url);
+  }, [fetchWithState]);
+
   return {
     generateRecommendation,
     getHazards,
     getTraffic,
     getRegions,
+    getBuyingProperties,
     isLoading,
     error
   };

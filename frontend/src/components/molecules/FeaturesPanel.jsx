@@ -195,27 +195,16 @@ export const FeaturesPanel = () => {
 
       <div style={{ padding: '24px 20px' }}>
         <h3 style={{ color: '#FFF', marginBottom: '24px' }}>
-          Criteria Options
+          Map Layers
         </h3>
-
-        <InputField label="Radius" value="500" unit="m" />
-        <InputField label="Traffic" value="2,400" unit="vph" />
-        <InputField label="Lot area" value="1,200" unit="sq. m" />
+        <p style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>
+          Toggle layers to visualize risk and traffic data.
+        </p>
       </div>
 
       <div style={{ flex: 1 }}>
         <CollapsibleSection
-          title="Filter"
-          items={restaurantTypes}
-          type="checkbox"
-          value={selectedTypes}
-          onChange={setSelectedTypes}
-          isLoading={isLoadingTypes}
-          emptyText="No filters found"
-        />
-
-        <CollapsibleSection
-          title="Layers"
+          title="Hazards & Risk"
           items={layerOptions}
           type="checkbox"
           value={selectedLayers}
@@ -223,7 +212,7 @@ export const FeaturesPanel = () => {
         />
 
         <CollapsibleSection
-          title="Region"
+          title="Active Region"
           items={regionOptions}
           type="chip"
           value={region}

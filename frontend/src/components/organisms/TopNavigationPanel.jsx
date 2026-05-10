@@ -3,21 +3,28 @@ import { PillBase } from '../atoms/PillBase';
 import { DropdownButton } from '../molecules/DropdownButton';
 import { SearchField } from '../molecules/SearchField';
 
-export const TopNavigationPanel = ({ searchQuery, onSearchChange }) => {
+export const TopNavigationPanel = ({ searchQuery, onSearchChange, onFilterChange, onRegionChange }) => {
+  const [selectedFilter, setSelectedFilter] = React.useState('None');
+  const [selectedRegion, setSelectedRegion] = React.useState('Cebu');
+  const [selectedLayer, setSelectedLayer] = React.useState(null);
+
+  // Map layer option labels to filter values the parent understands
+  const layerFilterMap = {
+    'Flood Hazard Layer':       'Flood',
+    'Storm Surge Hazard Layer': 'Storm Surge 2',
+    'Earthquake Hazard Layer':  'Landslide',
+    'Traffic Layer':            'Traffic',
+    'Foot Traffic Layer':       'Traffic',
+  };
+
   const filterOptions = [
-    { label: 'All' },
-    { label: 'Buffet' },
-    { label: 'Cafes and Coffee Shops' },
-    { label: 'Casual' },
-    { label: 'Concession Stands' },
-    { label: 'Contemporary Casual' },
-    { label: 'Fast Casual' },
-    { label: 'Fast Food' },
-    { label: 'Fine Dining' },
-    { label: 'Food Trucks' },
-    { label: 'Ghost Restaurants' },
-    { label: 'Pop-Ups' },
-    { label: 'Specialty Drinks' }
+    { label: 'None' },
+    { label: 'Flood' },
+    { label: 'Landslide' },
+    { label: 'Storm Surge 1' },
+    { label: 'Storm Surge 2' },
+    { label: 'Storm Surge 3' },
+    { label: 'Storm Surge 4' }
   ];
 
   const layerOptions = [
@@ -25,7 +32,7 @@ export const TopNavigationPanel = ({ searchQuery, onSearchChange }) => {
     { label: 'Foot Traffic Layer' },
     { label: 'Flood Hazard Layer' },
     { label: 'Storm Surge Hazard Layer' },
-    { label: 'Earth Quake Hazard Layer' }
+    { label: 'Earthquake Hazard Layer' }
   ];
 
   const containerStyle = {
@@ -44,11 +51,33 @@ export const TopNavigationPanel = ({ searchQuery, onSearchChange }) => {
 
   return (
     <PillBase style={containerStyle}>
-      <DropdownButton iconName="filter" label="Filter" options={filterOptions} />
+      <DropdownButton 
+        iconName="filter" 
+        label={selectedFilter === 'None' ? 'Hazards' : selectedFilter} 
+        options={filterOptions} 
+        onSelect={(opt) => {
+          setSelectedFilter(opt.label);
+          if (onFilterChange) onFilterChange(opt.label);
+        }} 
+      />
       <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
-      <DropdownButton iconName="public" label="Region" options={regionOptions} />
+      <DropdownButton 
+        iconName="mapPin" 
+        label={selectedRegion} 
+        options={regionOptions} 
+        onSelect={(opt) => {
+          setSelectedRegion(opt.label);
+          if (onRegionChange) onRegionChange(opt.label);
+        }} 
+      />
       <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
-      <DropdownButton iconName="layers" label="Layers" options={layerOptions} />
+      <DropdownButton iconName="layers" label={selectedLayer || 'Layers'} options={layerOptions} onSelect={(opt) => {
+        const isSame = selectedLayer === opt.label;
+        const next = isSame ? null : opt.label;
+        setSelectedLayer(next);
+        const filterValue = next ? (layerFilterMap[next] || 'None') : 'None';
+        if (onFilterChange) onFilterChange(filterValue);
+      }} />
       <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
       <SearchField value={searchQuery} onChange={(e) => onSearchChange(e.target.value)} />
     </PillBase>

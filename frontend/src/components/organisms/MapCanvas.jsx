@@ -1,5 +1,5 @@
-import React, { useCallback, useState, useMemo, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, OverlayView, Data } from '@react-google-maps/api';
+import React, { useCallback, useState, useMemo, useRef, useEffect } from 'react';
+import { GoogleMap, useJsApiLoader, OverlayView, Marker, MarkerClusterer } from '@react-google-maps/api';
 import { MapMarker } from '../molecules/MapMarker';
 
 const containerStyle = {
@@ -34,8 +34,15 @@ const darkMapStyle = [
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#3d3d3d" }] }
 ];
 
+// Clean Green Pin SVG
+const GREEN_PIN_SVG = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="30" height="42" viewBox="0 0 24 36">
+  <path d="M12 0C5.373 0 0 5.373 0 12c0 8.4 12 24 12 24s12-15.6 12-24c0-6.627-5.373-12-12-12zm0 18c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6z" fill="#28a745" stroke="#1b702e" stroke-width="1.5"/>
+</svg>`);
+
 export const MapCanvas = ({
   hazardData,
+  hazardVersion = 0,
   trafficData,
   sites = [],
   selectedSiteId,
@@ -43,7 +50,11 @@ export const MapCanvas = ({
   isPlacingMarker,
   setIsPlacingMarker,
   onMarkerPlaced,
-  geminiMarker
+  geminiMarker,
+  buyingProperties = [],
+  onPropertySelect,
+  competitorMarkers = [],
+  onBoundsChanged
 }) => {
 
   const { isLoaded } = useJsApiLoader({
@@ -52,51 +63,77 @@ export const MapCanvas = ({
   });
 
   const [map, setMap] = useState(null);
-
-  // Guard against race conditions for double clicks
   const isProcessingClick = useRef(false);
 
-  const onLoad = useCallback((mapInstance) => {
-    setMap(mapInstance);
-  }, []);
+  const onLoad = useCallback((mapInstance) => { setMap(mapInstance); }, []);
+  const onUnmount = useCallback(() => { setMap(null); }, []);
 
-  const onUnmount = useCallback(() => {
-    setMap(null);
-  }, []);
+  useEffect(() => {
+    if (!map) return;
+    map.data.forEach((feature) => { map.data.remove(feature); });
+
+    if (hazardData && hazardData.features && hazardData.features.length > 0) {
+      try {
+        map.data.addGeoJson(hazardData);
+        map.data.setStyle({
+          fillColor: "#FF0000",
+          strokeColor: "#CC0000",
+          strokeWeight: 1,
+          fillOpacity: 0.4
+        });
+      } catch (e) { console.error("Hazard error:", e); }
+    } else if (trafficData && trafficData.features && trafficData.features.length > 0) {
+      try {
+        map.data.addGeoJson(trafficData);
+        map.data.setStyle({
+          fillColor: "orange",
+          strokeColor: "#CC6600",
+          strokeWeight: 2,
+          fillOpacity: 0.5
+        });
+      } catch (e) { console.error("Traffic error:", e); }
+    }
+  }, [map, hazardData, trafficData, hazardVersion]);
 
   const handleMapClick = useCallback((e) => {
     if (!isPlacingMarker || isProcessingClick.current) return;
-
-    // Prevent immediate double-fires
     isProcessingClick.current = true;
-
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
-
     onMarkerPlaced({ lat, lng });
     setIsPlacingMarker(false);
-
-    // Release guard after a short delay to prevent double-click zooms acting as second clicks
-    setTimeout(() => {
-      isProcessingClick.current = false;
-    }, 300);
+    setTimeout(() => { isProcessingClick.current = false; }, 300);
   }, [isPlacingMarker, onMarkerPlaced, setIsPlacingMarker]);
 
-  // Memoize map options to prevent unnecessary map re-renders while updating dynamic props
+  const handleIdle = useCallback(() => {
+    if (map && onBoundsChanged) {
+      const bounds = map.getBounds();
+      if (bounds) {
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        onBoundsChanged({
+          xmin: sw.lng(),
+          ymin: sw.lat(),
+          xmax: ne.lng(),
+          ymax: ne.lat(),
+          min_lat: sw.lat(),
+          max_lat: ne.lat(),
+          min_lng: sw.lng(),
+          max_lng: ne.lng(),
+          zoom: map.getZoom()
+        });
+      }
+    }
+  }, [map, onBoundsChanged]);
+
   const mapOptions = useMemo(() => ({
     styles: darkMapStyle,
     disableDefaultUI: true,
     draggableCursor: isPlacingMarker ? "crosshair" : "grab",
-    // Prevent double clicking from zooming while we are trying to place a marker
     disableDoubleClickZoom: isPlacingMarker
   }), [isPlacingMarker]);
 
-  // Optional: A helper function to properly center custom DOM elements over the coordinate.
-  // Note: Your MapMarker already has a top/left -20px offset, so we return 0 here to prevent double-offsetting.
-  // But if you ever remove the -20px from MapMarker, change this to return { x: -20, y: -20 }.
-  const getPixelPositionOffset = useCallback((offsetWidth, offsetHeight) => {
-    return { x: 0, y: 0 };
-  }, []);
+  const getPixelPositionOffset = (offsetWidth, offsetHeight) => ({ x: 0, y: 0 });
 
   return isLoaded ? (
     <GoogleMap
@@ -106,20 +143,9 @@ export const MapCanvas = ({
       onLoad={onLoad}
       onUnmount={onUnmount}
       onClick={handleMapClick}
+      onIdle={handleIdle}
       options={mapOptions}
     >
-      {hazardData && (
-        <Data
-          options={{ fillColor: "red", strokeColor: "red", strokeWeight: 2, fillOpacity: 0.3 }}
-          onLoad={data => data.addGeoJson(hazardData)}
-        />
-      )}
-      {trafficData && (
-        <Data
-          options={{ fillColor: "orange", strokeColor: "orange", strokeWeight: 3, fillOpacity: 0.5 }}
-          onLoad={data => data.addGeoJson(trafficData)}
-        />
-      )}
       {/* Existing markers */}
       {sites.map(site => (
         <OverlayView
@@ -145,6 +171,46 @@ export const MapCanvas = ({
           <MapMarker isSelected onClick={() => onMarkerPlaced(geminiMarker)} />
         </OverlayView>
       )}
+
+      {/* Competitor markers (Blue Pins) */}
+      {competitorMarkers.map((marker, idx) => (
+        <OverlayView
+          key={`comp-${idx}`}
+          position={marker.pos || { lat: marker.lat, lng: marker.lng }}
+          mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+          getPixelPositionOffset={getPixelPositionOffset}
+        >
+          <MapMarker
+            color="#3399FF"
+            onClick={() => console.log("Selected competitor:", marker.name)}
+          />
+        </OverlayView>
+      ))}
+
+      {/* Buying properties markers (Green Pins) - Clustered */}
+      <MarkerClusterer
+        options={{
+          gridSize: 50,
+          maxZoom: 15,
+          zoomOnClick: true
+        }}
+      >
+        {(clusterer) =>
+          buyingProperties.map(property => (
+            <Marker
+              key={property.url}
+              position={{ lat: property.lat, lng: property.long }}
+              clusterer={clusterer}
+              icon={window.google ? {
+                url: GREEN_PIN_SVG,
+                scaledSize: new window.google.maps.Size(30, 42),
+                anchor: new window.google.maps.Point(15, 42)
+              } : undefined}
+              onClick={() => onPropertySelect && onPropertySelect(property)}
+            />
+          ))
+        }
+      </MarkerClusterer>
 
     </GoogleMap>
   ) : (

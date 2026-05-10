@@ -1,17 +1,17 @@
 import React from 'react';
 import { Icon } from '../atoms/Icon';
 
-export const MapMarker = ({ isSelected, onClick }) => {
+export const MapMarker = ({ isSelected, onClick, color = 'var(--color-accent-pink)' }) => {
   const pinStyle = {
     width: '40px',
     height: '40px',
-    backgroundColor: 'var(--color-accent-pink)',
+    backgroundColor: color,
     borderRadius: '50% 50% 50% 0',
     transform: 'rotate(-45deg)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: 'var(--shadow-glow-pink)',
+    boxShadow: `0 0 15px ${color}`,
     cursor: 'pointer',
     border: isSelected ? '2px solid #fff' : '2px solid transparent',
     transition: 'var(--transition-fast)',

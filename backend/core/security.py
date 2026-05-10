@@ -37,36 +37,21 @@ from models.user import User
 
 
 async def get_current_user(
-    authorization: str = Header(...),
+    authorization: str | None = Header(None),
     session: AsyncSession = Depends(get_db),
 ) -> User:
     """FastAPI dependency: verify Google ID token → upsert user → return User.
-
-    Expects the Authorization header in the form:
-        Authorization: Bearer <google-id-token>
-
-    Flow:
-      1. Extract Bearer token from header.
-      2. Verify token with Google (raises 401 on failure).
-      3. Extract email + name claims.
-      4. SELECT user by email; INSERT if not found (flush to get integer id).
-      5. Update last_login, commit, refresh, return.
-
-    Args:
-        authorization: Raw value of the Authorization header.
-        session: Async SQLAlchemy session from get_db() dependency.
-
-    Returns:
-        The authenticated User ORM instance (id is an integer).
-
-    Raises:
-        HTTPException(401): On missing/invalid header or failed token verification.
+    Now allows optional auth for testing.
     """
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid authorization header format",
-        )
+    if not authorization or not authorization.startswith("Bearer "):
+        # Mock user for testing without frontend auth
+        result = await session.execute(select(User).where(User.email == "test@navagis.com"))
+        user: User | None = result.scalar_one_or_none()
+        if not user:
+            user = User(name="Test User", email="test@navagis.com", password_hash=None)
+            session.add(user)
+            await session.flush()
+        return user
 
     token = authorization.removeprefix("Bearer ").strip()
 

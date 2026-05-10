@@ -1,12 +1,9 @@
-"""
-routers/hazards.py — FastAPI router for Hazard Data API.
-"""
-
-from typing import Optional, Dict, Any
-from fastapi import APIRouter, Depends, Query
+import json
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
+# These imports perfectly match your folder structure!
 from dependencies import get_db
 from models.hazard import FloodHazard, LandslideHazard, StormSurgeHazard
 
@@ -15,26 +12,97 @@ router = APIRouter(
     tags=["Hazards"]
 )
 
-@router.get("/", response_model=Dict[str, Any])
+@router.get("")
 async def get_hazards(
-    xmin: float = Query(..., description="Western longitude bound"),
-    ymin: float = Query(..., description="Southern latitude bound"),
-    xmax: float = Query(..., description="Eastern longitude bound"),
-    ymax: float = Query(..., description="Northern latitude bound"),
-    hazard_type: Optional[str] = Query(None, description="flood, landslide, or storm_surge"),
+    hazard_type: str = Query(None),
+    city_tag: str = Query("Cebu"),
+    zoom: float = Query(12.0),
+    xmin: float = Query(None),
+    ymin: float = Query(None),
+    xmax: float = Query(None),
+    ymax: float = Query(None),
     db: AsyncSession = Depends(get_db)
 ):
-    envelope = func.ST_MakeEnvelope(xmin, ymin, xmax, ymax, 4326)
-    features = []
-    models = [(FloodHazard, "flood"), (LandslideHazard, "landslide"), (StormSurgeHazard, "storm_surge")]
-    import json
-    for model, label in models:
-        if hazard_type and hazard_type != label: continue
-        stmt = select(model, func.ST_AsGeoJSON(model.geometry).label("geojson")).where(func.ST_Intersects(model.geometry, envelope)).limit(1000)
+    # If the user selects "None" or the app first loads, return an empty FeatureCollection
+    if not hazard_type or hazard_type == 'None':
+        return {"type": "FeatureCollection", "features": []}
+
+    # Map the exact text from your React API call to the correct DB Model
+    if hazard_type == 'flood':
+        model = FloodHazard
+        severity = 'High'
+        description = 'Flood Hazard Area'
+        base_type = 'Flood'
+        
+    elif hazard_type == 'landslide':
+        model = LandslideHazard
+        severity = 'High'
+        description = 'Landslide Susceptibility'
+        base_type = 'Landslide'
+        
+    elif hazard_type == 'storm_surge':
+        model = StormSurgeHazard
+        severity = 'Unknown' # Resolved per feature below
+        description = 'Storm Surge Hazard'
+        base_type = 'Storm Surge'
+    else:
+        return {"type": "FeatureCollection", "features": []}
+
+    # Dynamic simplification tolerance based on zoom level
+    if zoom >= 17:
+        tolerance = 0.00001
+    elif zoom <= 12:
+        tolerance = 0.001
+    else:
+        tolerance = 0.001 / (2 ** (zoom - 12))
+
+    # Build the SQLAlchemy query safely
+    stmt = select(
+        model, 
+        func.ST_AsGeoJSON(func.ST_Simplify(model.geometry, tolerance)).label("geojson")
+    ).where(
+        func.lower(func.trim(model.city_tag)) == city_tag.strip().lower()
+    )
+
+    # Filter by bounding box if provided from the frontend map
+    if xmin is not None and ymin is not None and xmax is not None and ymax is not None:
+        bbox_polygon = func.ST_SetSRID(func.ST_MakeEnvelope(xmin, ymin, xmax, ymax), 4326)
+        stmt = stmt.where(func.ST_Intersects(model.geometry, bbox_polygon))
+
+    try:
         result = await db.execute(stmt)
-        for row in result.all():
+        
+        features = []
+        for i, row in enumerate(result.all()):
             obj, geojson_str = row
-            properties = {k: v for k, v in obj.__dict__.items() if not k.startswith("_") and k != "geometry"}
-            properties["hazard_type"] = label
-            features.append({"type": "Feature", "geometry": json.loads(geojson_str), "properties": properties})
-    return {"type": "FeatureCollection", "features": features}
+            
+            # Ensure the GeoJSON is a dictionary, not a string
+            if isinstance(geojson_str, str):
+                geojson_data = json.loads(geojson_str)
+            else:
+                geojson_data = geojson_str
+                
+            # Storm surge uses the `surge_level` attribute from the DB
+            current_severity = f"Level {obj.surge_level}" if base_type == 'Storm Surge' else severity
+
+            features.append({
+                "type": "Feature",
+                "geometry": geojson_data,
+                "properties": {
+                    "id": i + 1,
+                    "name": f'{base_type} Polygon {i + 1}',
+                    "filter_type": base_type,
+                    "severity": current_severity,
+                    "description": description
+                }
+            })
+            
+        print(f"DEBUG: Found {len(features)} hazards for {hazard_type} in {city_tag}")
+        return {
+            "type": "FeatureCollection",
+            "features": features
+        }
+
+    except Exception as e:
+        print(f"Error fetching hazards: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
