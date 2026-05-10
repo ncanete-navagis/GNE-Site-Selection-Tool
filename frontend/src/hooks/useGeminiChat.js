@@ -29,7 +29,7 @@ export const useGeminiChat = (selectedPOI) => {
   ];
 
   // Endpoint for the backend proxy
-  const BACKEND_URL = 'http://localhost:5000/chat';
+  const BACKEND_URL = 'http://localhost:8000/api/v1/ai/chat';
 
   // Reset chat when POI changes
   useEffect(() => {
@@ -42,7 +42,7 @@ export const useGeminiChat = (selectedPOI) => {
           role: 'model',
           content: `Hi! I'm analyzing ${selectedPOI.title}.
 
-  This location has a rating of ${selectedPOI.rating}/5. Based on my initial look, it seems interesting for a restaurant.
+  This location has a rating of ${selectedPOI.rating}/5.${selectedPOI.analysis ? ` Its foot traffic score is ${(selectedPOI.analysis.foot_traffic_score * 100).toFixed(0)}%.` : ''} Based on my initial look, it seems interesting for a restaurant.
 
   What type of cuisine are you planning for this location?`,
           timestamp: Date.now(),
@@ -50,7 +50,7 @@ export const useGeminiChat = (selectedPOI) => {
         }
       ]);
     }
-  }, [selectedPOI?.id]);
+  }, [selectedPOI?.id, selectedPOI?.rating, !!selectedPOI?.analysis]);
 
   const sendMessage = useCallback(async (text) => {
     if (!text.trim() || !selectedPOI) return;
@@ -84,7 +84,8 @@ export const useGeminiChat = (selectedPOI) => {
           poiContext: {
             title: selectedPOI.title,
             type: selectedPOI.type,
-            rating: selectedPOI.rating
+            rating: selectedPOI.rating,
+            analysis: selectedPOI.analysis
           }
         }),
       });

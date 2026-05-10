@@ -2,16 +2,25 @@ import React, { useState, useCallback } from 'react';
 import { AIChatPanel } from '../molecules/AIChatPanel';
 import { FeaturesPanel } from '../molecules/FeaturesPanel';
 
-export const SidePanel = ({ 
-  isOpen, 
-  onClose, 
-  mode, 
-  setMode, 
-  hasAIAccess, 
+export const SidePanel = ({
+  isOpen,
+  onClose,
+  mode,
+  setMode,
+  hasAIAccess,
   poi,
-  onRestaurantsUpdate,
-  region,
-  onRegionChange
+  radius,
+  setRadius,
+  population,
+  setPopulation,
+  trafficKmh,
+  setTrafficKmh,
+  lotArea,
+  setLotArea,
+  isAnalyzing,
+  selectedSectors,
+  setSelectedSectors,
+  onRunAnalysis
 }) => {
   // Centralized state management for the filters
   const [selectedTypes, setSelectedTypes] = useState([]);
@@ -77,14 +86,14 @@ export const SidePanel = ({
     <div style={panelStyle}>
       <div style={headerStyle}>
         <div style={toggleContainerStyle}>
-          <span 
+          <span
             style={getToggleItemStyle(mode === 'features')}
             onClick={() => setMode?.('features')}
           >
             Feature
           </span>
           <span>|</span>
-          <span 
+          <span
             style={{
               ...getToggleItemStyle(mode === 'ai'),
               opacity: hasAIAccess ? 1 : 0.3,
@@ -95,8 +104,8 @@ export const SidePanel = ({
             AI
           </span>
         </div>
-        <button 
-          style={closeBtnStyle} 
+        <button
+          style={closeBtnStyle}
           onClick={onClose}
           onMouseEnter={(e) => e.target.style.color = '#FFF'}
           onMouseLeave={(e) => e.target.style.color = '#888'}
@@ -107,13 +116,20 @@ export const SidePanel = ({
 
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         {mode === 'features' ? (
-          <FeaturesPanel 
-            poi={poi} 
-            region={region}
-            onRegionChange={handleRegionChange}
-            selectedTypes={selectedTypes}
-            onTypesChange={setSelectedTypes}
-            onRestaurantsUpdate={onRestaurantsUpdate} 
+          <FeaturesPanel
+            poi={poi}
+            radius={radius}
+            setRadius={setRadius}
+            population={population}
+            setPopulation={setPopulation}
+            trafficKmh={trafficKmh}
+            setTrafficKmh={setTrafficKmh}
+            lotArea={lotArea}
+            setLotArea={setLotArea}
+            isAnalyzing={isAnalyzing}
+            selectedSectors={selectedSectors}
+            setSelectedSectors={setSelectedSectors}
+            onRunAnalysis={onRunAnalysis}
           />
         ) : (
           <AIChatPanel poi={poi} />

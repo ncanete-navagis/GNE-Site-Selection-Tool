@@ -27,13 +27,13 @@ export const SiteSelectionHome = () => {
   const [geminiMarker, setGeminiMarker] = useState(null);
   const [hazardData, setHazardData] = useState(null);
   const [trafficData, setTrafficData] = useState(null);
-  
-  // Dynamic Restaurants State from SidePanel -> MapCanvas
-  const [restaurants, setRestaurants] = useState([]);
-  
-  // Shared region state for MapCanvas panning and FeaturesPanel fetching
-  const [region, setRegion] = useState('cebu');
-  
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [radius, setRadius] = useState(250);
+  const [population, setPopulation] = useState(5000);
+  const [trafficKmh, setTrafficKmh] = useState(40);
+  const [lotArea, setLotArea] = useState(1200);
+  const [selectedSectors, setSelectedSectors] = useState([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { generateRecommendation, getHazards, getTraffic } = useBackendAPI();
 
   useEffect(() => {
@@ -81,6 +81,13 @@ export const SiteSelectionHome = () => {
   const handleOpenFeatures = () => {
     setPanelMode('features');
     setIsPanelOpen(true);
+
+    // If no pin has been dropped yet, trigger pin placement mode
+    if (!geminiMarker) {
+      setIsPlacingMarker(true);
+      setIsPanelOpen(false);
+      console.log("No pin found. Triggering pin placement from Site Features button.");
+    }
   };
 
   // Allow exiting placement mode via Escape key
@@ -95,12 +102,35 @@ export const SiteSelectionHome = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlacingMarker, isPanelOpen]);
 
-  const handleMarkerPlaced = async (coords) => {
-    try { await generateRecommendation(coords.lat, coords.lng, 'New Site'); } catch (e) { }
-    console.log("Marker placed at", coords);
+  const handleMarkerPlaced = (coords) => {
     setGeminiMarker(coords);
-    setPanelMode('ai');
+    setAnalysisResult(null);
+    setPanelMode('features');
     setIsPanelOpen(true);
+    console.log("Marker placed at", coords);
+  };
+
+  const handleRunAnalysis = async () => {
+    if (!geminiMarker) return;
+    setIsAnalyzing(true);
+    setAnalysisResult(null);
+    try {
+      const result = await generateRecommendation(
+        geminiMarker.lat,
+        geminiMarker.lng,
+        'New Site',
+        radius,
+        population,
+        trafficKmh,
+        lotArea,
+        selectedSectors
+      );
+      setAnalysisResult(result);
+    } catch (e) {
+      console.error("Failed to generate recommendation:", e);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const mapComponent = (
@@ -114,8 +144,7 @@ export const SiteSelectionHome = () => {
       geminiMarker={geminiMarker}
       hazardData={hazardData}
       trafficData={trafficData}
-      restaurants={restaurants}
-      region={region}
+      radius={radius}
     />
   );
 
@@ -137,11 +166,24 @@ export const SiteSelectionHome = () => {
       mode={panelMode}
       setMode={setPanelMode}
       hasAIAccess={hasAIAccess}
+      radius={radius}
+      setRadius={setRadius}
+      population={population}
+      setPopulation={setPopulation}
+      trafficKmh={trafficKmh}
+      setTrafficKmh={setTrafficKmh}
+      lotArea={lotArea}
+      setLotArea={setLotArea}
+      isAnalyzing={isAnalyzing}
+      selectedSectors={selectedSectors}
+      setSelectedSectors={setSelectedSectors}
+      onRunAnalysis={handleRunAnalysis}
       poi={geminiMarker ? {
         id: `new-site-${geminiMarker.lat}-${geminiMarker.lng}`,
-        title: 'New Target Location',
+        title: analysisResult?.barangay_name || 'New Target Location',
         type: 'Selected Site',
-        rating: 4.5
+        rating: analysisResult?.analysis?.stars || 4.5,
+        analysis: analysisResult?.analysis
       } : null}
       onClose={() => setIsPanelOpen(false)}
       onRestaurantsUpdate={setRestaurants}

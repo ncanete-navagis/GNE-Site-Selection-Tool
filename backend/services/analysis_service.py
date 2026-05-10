@@ -51,15 +51,17 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.analysis import Analysis
-from services import geo_queries
+from services import geo_queries, external_places
 from services.scoring import (
     compute_scores,
     compute_overall_score,
     score_to_stars,
     generate_pros_cons,
 )
-from utils.logger import log_scoring_engine_call
+from utils.logger import log_scoring_engine_call, get_logger
 import time
+
+logger = get_logger()
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -104,6 +106,15 @@ def _build_response_dict(record: Analysis, details: dict) -> dict:
         ),
         "barangay_pcode": details.get("barangay_pcode"),
         "barangay_name": details.get("barangay_name"),
+        "street": details.get("street"),
+        "house_number": details.get("house_number"),
+        "population": details.get("population"),
+        "actual_population": details.get("actual_population"),
+        "traffic_kmh": details.get("traffic_kmh"),
+        "actual_traffic_kmh": details.get("actual_traffic_kmh"),
+        "lot_area": details.get("lot_area"),
+        "commercial_space": details.get("commercial_space"),
+        "sector_counts": details.get("sector_counts", {}),
     }
 
 
@@ -119,6 +130,11 @@ async def run_analysis(
     name: Optional[str] = None,
     user_id: Optional[str] = None,
     restaurant_type: Optional[str] = None,
+    radius_m: Optional[float] = None,
+    population: Optional[int] = None,
+    traffic_kmh: Optional[float] = None,
+    lot_area: Optional[float] = None,
+    business_sectors: Optional[List[str]] = None,
 ) -> dict:
     """Execute the full site-analysis pipeline and persist the result.
 
@@ -170,21 +186,34 @@ async def run_analysis(
     # ------------------------------------------------------------------
     # Step 2 — Spatial proximity queries (concurrent)
     #
-    # The three queries are independent — no data dependency between them.
-    # asyncio.gather() runs them concurrently, reducing wall-clock latency
-    # from ~3× to ~1× the slowest individual query.
+    # The queries are independent — no data dependency between them.
+    # asyncio.gather() runs them concurrently, reducing wall-clock latency.
     # ------------------------------------------------------------------
-    hazards, traffic_data, businesses = await asyncio.gather(
-        geo_queries.get_hazards_near_point(session, lon, lat, SCORING_RADIUS_M),
-        geo_queries.get_traffic_near_point(session, lon, lat, SCORING_RADIUS_M),
-        geo_queries.get_businesses_near_point(session, lon, lat, SCORING_RADIUS_M),
-    )
+    # Use provided radius or fall back to default
+    radius = radius_m if radius_m is not None else SCORING_RADIUS_M
+
+    start_gather = time.perf_counter()
+    import httpx
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        hazards, traffic_data, businesses, foot_traffic_data, address_details, live_traffic_speed, sector_counts, site_context, market_analysis = await asyncio.gather(
+            geo_queries.get_hazards_near_point(session, lon, lat, radius),
+            geo_queries.get_traffic_near_point(session, lon, lat, radius),
+            geo_queries.get_buildings_near_point(session, lon, lat, radius),
+            external_places.get_foot_traffic_proxy(lat, lon, radius, client=client),
+            external_places.reverse_geocode(lat, lon, client=client),
+            external_places.get_traffic_speed_proxy(lat, lon, client=client),
+            external_places.get_sector_counts(lat, lon, radius, business_sectors, client=client),
+            external_places.get_site_context(lat, lon, radius, client=client),
+            external_places.get_market_analysis(lat, lon, radius, client=client),
+        )
+    gather_duration = (time.perf_counter() - start_gather) * 1000
+    logger.info(f"Parallel analysis gather took {gather_duration:.2f}ms")
 
     # ------------------------------------------------------------------
     # Step 3 — Compute sub-scores (normalised to [0.0, 1.0])
     # ------------------------------------------------------------------
     _start_score_time = time.perf_counter()
-    sub_scores = compute_scores(hazards, traffic_data, businesses)
+    sub_scores = compute_scores(hazards, businesses, traffic_data, foot_traffic_data)
     _score_duration = (time.perf_counter() - _start_score_time) * 1000.0
 
     log_scoring_engine_call(
@@ -222,9 +251,20 @@ async def run_analysis(
         "cons": pros_cons["cons"],
         "barangay_pcode": barangay.ADM4_PCODE,   # actual PK column in ph_barangays
         "barangay_name": barangay.ADM4_EN,        # English barangay name column
+        "street": address_details.get("street"),
+        "house_number": address_details.get("house_number"),
         "name": name,
         "user_id": str(user_id) if user_id else None,
         "restaurant_type": restaurant_type,
+        "population": population,
+        "traffic_kmh": traffic_kmh,
+        "lot_area": lot_area,
+        "actual_population": int((barangay.AREA_SQKM or 1.0) * 5000), # Mock: 5k people per sqkm
+        "actual_traffic_kmh": round(live_traffic_speed, 1),
+        "commercial_space": "Yes" if len(businesses) > 0 else "No",
+        "sector_counts": sector_counts,
+        "site_context": site_context,
+        "market_analysis": market_analysis,
     }
 
     record = Analysis(

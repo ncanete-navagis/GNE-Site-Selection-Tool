@@ -17,7 +17,7 @@ from routers import places
 from core.config import settings
 from utils.logger import log_request
 from core.rate_limit import limiter
-from routers import recommendations, users, ai, location_history, barangays, hazards, traffic, regions, hazards, traffic, regions
+from routers import recommendations, users, ai, location_history, barangays, hazards, traffic, regions, places
 
 app = FastAPI(
     title="GNE Site Selection Tool API",
@@ -93,12 +93,9 @@ app.include_router(barangays.router)
 app.include_router(hazards.router)
 app.include_router(traffic.router)
 app.include_router(regions.router)
-app.include_router(places.router)
 app.include_router(hazards.router)
 app.include_router(traffic.router)
 app.include_router(regions.router)
-app.include_router(places.router)
-
 
 @app.get("/health")
 def health_check():

@@ -3,7 +3,6 @@ import { TopNavigationPanel } from './TopNavigationPanel';
 import { UserAvatar } from '../molecules/UserAvatar';
 import { ModeToggle } from '../molecules/ModeToggle';
 import { BrandLogo } from '../molecules/BrandLogo';
-import avatarImg from '../../assets/images/UserAvatar.webp';
 import logoImg from '../../assets/images/navagis_logo.jpg';
 
 export const AIHUD = ({
@@ -92,7 +91,7 @@ export const AIHUD = ({
               onSearchChange={onSearchChange}
             />
             <div style={{ pointerEvents: 'auto' }}>
-              <UserAvatar src={avatarImg} />
+              <UserAvatar />
             </div>
           </div>
         </div>

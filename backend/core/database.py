@@ -24,10 +24,11 @@ from sqlalchemy.orm import sessionmaker
 # ---------------------------------------------------------------------------
 
 #: Async database URL.  Must use the ``postgresql+asyncpg://`` scheme.
-#: Override via the ASYNC_DATABASE_URL environment variable.
-ASYNC_DATABASE_URL: str = os.environ.get(
-    "ASYNC_DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres_password@db:5432/gne_db",
+#: Reads ASYNC_DATABASE_URL first (legacy alias), then DATABASE_URL (set in .env).
+ASYNC_DATABASE_URL: str = (
+    os.environ.get("ASYNC_DATABASE_URL")
+    or os.environ.get("DATABASE_URL")
+    or "postgresql+asyncpg://postgres:postgres@localhost:5432/gne_db"
 )
 
 engine = create_async_engine(

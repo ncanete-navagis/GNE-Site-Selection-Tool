@@ -4,7 +4,6 @@ import { UserAvatar } from '../molecules/UserAvatar';
 import { ModeToggle } from '../molecules/ModeToggle';
 import { FloatingActionButton } from '../molecules/FloatingActionButton';
 import { BrandLogo } from '../molecules/BrandLogo';
-import avatarImg from '../../assets/images/UserAvatar.webp';
 import logoImg from '../../assets/images/navagis_logo.jpg';
 
 export const DefaultHUD = ({
@@ -63,7 +62,7 @@ export const DefaultHUD = ({
           searchQuery={searchQuery}
           onSearchChange={onSearchChange}
         />
-        <UserAvatar src={avatarImg} />
+        <UserAvatar />
       </div>
 
       {/* Bottom Section */}

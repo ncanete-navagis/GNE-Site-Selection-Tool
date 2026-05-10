@@ -30,8 +30,8 @@ class LocationRecommendation(Base):
     # Matches the `barangay_pcode` column in the actual DB schema.
     barangay_pcode = Column(Text, nullable=True)
 
-    # FK → analyses.analysis_id (UUID)
-    analysis_id = Column(UUID(as_uuid=True), ForeignKey("analyses.analysis_id", ondelete="SET NULL"), nullable=True)
+    # FK → analysis.analysis_id (UUID)
+    analysis_id = Column(UUID(as_uuid=True), ForeignKey("analysis.analysis_id", ondelete="SET NULL"), nullable=True)
 
     name            = Column(String,  nullable=True)
     description     = Column(String,  nullable=True)

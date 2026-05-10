@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useMemo, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, OverlayView, Data, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, OverlayView, Data, Circle } from '@react-google-maps/api';
 import { MapMarker } from '../molecules/MapMarker';
 
 const containerStyle = {
@@ -125,169 +126,223 @@ const RestaurantMarker = React.memo(({ restaurant, isActive, onClick }) => {
 export const MapCanvas = ({
   hazardData,
   trafficData,
-  sites = [],
-  selectedSiteId,
-  onSiteSelect,
-  isPlacingMarker,
-  setIsPlacingMarker,
-  onMarkerPlaced,
+  export const MapCanvas = React.memo(({
+    hazardData,
+    trafficData,
+    sites = [],
+    selectedSiteId,
+    onSiteSelect,
+    isPlacingMarker,
+    setIsPlacingMarker,
+    onMarkerPlaced,
+    geminiMarker,
+    restaurants = [],
+    region = 'cebu'
   geminiMarker,
-  restaurants = [],
-  region = 'cebu'
-}) => {
+    radius
+  }) => {
+    const { isLoaded } = useJsApiLoader({
+      id: 'google-map-script',
+      googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
+    });
 
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
-  });
+    const [map, setMap] = useState(null);
+    const [activeRestaurantId, setActiveRestaurantId] = useState(null);
 
-  const [map, setMap] = useState(null);
-  const [activeRestaurantId, setActiveRestaurantId] = useState(null);
-  const isProcessingClick = useRef(false);
+    const isProcessingClick = useRef(false);
 
-  // Region panning logic
-  const panToRegion = useCallback((regionName) => {
-    if (!map || !regionName) return;
+    // Region panning logic
+    const panToRegion = useCallback((regionName) => {
+      if (!map || !regionName) return;
 
-    const key = regionName.toLowerCase();
-    const config = REGION_CONFIG[key];
-    const bounds = REGION_BOUNDS[key];
+      const key = regionName.toLowerCase();
+      const config = REGION_CONFIG[key];
+      const bounds = REGION_BOUNDS[key];
 
-    if (config && bounds) {
-      // 🔒 Lock camera to region
-      map.setOptions({
-        restriction: {
-          latLngBounds: bounds,
-          strictBounds: true,
-        },
-      });
+      if (config && bounds) {
+        // 🔒 Lock camera to region
+        map.setOptions({
+          restriction: {
+            latLngBounds: bounds,
+            strictBounds: true,
+          },
+        });
 
-      // 🎯 Move camera
-      map.panTo(config.center);
-      map.setZoom(config.zoom);
-    }
-  }, [map]);
+        // 🎯 Move camera
+        map.panTo(config.center);
+        map.setZoom(config.zoom);
+      }
+    }, [map]);
 
-  React.useEffect(() => {
-    if (map && region) {
-      panToRegion(region);
-    }
-  }, [map, region, panToRegion]);
+    React.useEffect(() => {
+      if (map && region) {
+        panToRegion(region);
+      }
+    }, [map, region, panToRegion]);
 
-  const onLoad = useCallback((mapInstance) => setMap(mapInstance), []);
-  const onUnmount = useCallback(() => setMap(null), []);
+    const onLoad = useCallback((mapInstance) => setMap(mapInstance), []);
+    const onUnmount = useCallback(() => setMap(null), []);
 
-  const handleMapClick = useCallback((e) => {
-    if (!isPlacingMarker || isProcessingClick.current) return;
-    isProcessingClick.current = true;
-    onMarkerPlaced({ lat: e.latLng.lat(), lng: e.latLng.lng() });
-    setIsPlacingMarker(false);
-    setTimeout(() => { isProcessingClick.current = false; }, 300);
-  }, [isPlacingMarker, onMarkerPlaced, setIsPlacingMarker]);
+    const handleMapClick = useCallback((e) => {
+      if (!isPlacingMarker || isProcessingClick.current) return;
+      isProcessingClick.current = true;
+      onMarkerPlaced({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+      setIsPlacingMarker(false);
+      setTimeout(() => { isProcessingClick.current = false; }, 300);
 
-  const mapOptions = useMemo(() => ({
-    styles: darkMapStyle,
-    disableDefaultUI: true,
-    draggableCursor: isPlacingMarker ? "crosshair" : "grab",
+      setTimeout(() => {
+        isProcessingClick.current = false;
+      }, 300);
+    }, [isPlacingMarker, onMarkerPlaced, setIsPlacingMarker]);
+
+    const mapOptions = useMemo(() => ({
+      styles: darkMapStyle,
+      disableDefaultUI: true,
+      draggableCursor: isPlacingMarker ? "crosshair" : "grab",
+      disableDoubleClickZoom: isPlacingMarker
     disableDoubleClickZoom: isPlacingMarker
-  }), [isPlacingMarker]);
+    }), [isPlacingMarker]);
 
-  const getPixelPositionOffset = useCallback((offsetWidth, offsetHeight) => ({ x: 0, y: 0 }), []);
+    const getPixelPositionOffset = useCallback((offsetWidth, offsetHeight) => ({ x: 0, y: 0 }), []);
 
-  // Use a slight vertical offset for InfoWindow positioning
-  const activeRestaurant = useMemo(() => {
-    return restaurants.find(r => r.id === activeRestaurantId);
-  }, [restaurants, activeRestaurantId]);
+    // Use a slight vertical offset for InfoWindow positioning
+    const activeRestaurant = useMemo(() => {
+      return restaurants.find(r => r.id === activeRestaurantId);
+    }, [restaurants, activeRestaurantId]);
+    const getPixelPositionOffset = useCallback((offsetWidth, offsetHeight) => {
+      return { x: 0, y: 0 };
+    }, []);
 
-  return isLoaded ? (
-    <GoogleMap
-      mapContainerStyle={containerStyle}
-      center={REGION_CONFIG.cebu.center}
-      zoom={REGION_CONFIG.cebu.zoom}
-      onLoad={onLoad}
-      onUnmount={onUnmount}
-      onClick={handleMapClick}
-      options={mapOptions}
-    >
-      {hazardData && <Data options={{ fillColor: "red", strokeColor: "red", strokeWeight: 2, fillOpacity: 0.3 }} onLoad={data => data.addGeoJson(hazardData)} />}
-      {trafficData && <Data options={{ fillColor: "orange", strokeColor: "orange", strokeWeight: 3, fillOpacity: 0.5 }} onLoad={data => data.addGeoJson(trafficData)} />}
+    return isLoaded ? (
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={REGION_CONFIG.cebu.center}
+        zoom={REGION_CONFIG.cebu.zoom}
+        onLoad={onLoad}
+        onUnmount={onUnmount}
+        onClick={handleMapClick}
+        options={mapOptions}
+      >
+        {hazardData && <Data options={{ fillColor: "red", strokeColor: "red", strokeWeight: 2, fillOpacity: 0.3 }} onLoad={data => data.addGeoJson(hazardData)} />}
+        {trafficData && <Data options={{ fillColor: "orange", strokeColor: "orange", strokeWeight: 3, fillOpacity: 0.5 }} onLoad={data => data.addGeoJson(trafficData)} />}
 
-      {sites.map(site => (
-        <OverlayView key={`site-${site.id}`} position={{ lat: site.lat, lng: site.lng }} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET} getPixelPositionOffset={getPixelPositionOffset}>
-          <MapMarker isSelected={selectedSiteId === site.id} onClick={() => onSiteSelect(site.id)} />
-        </OverlayView>
-      ))}
-
-      {geminiMarker && (
-        <OverlayView position={geminiMarker} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET} getPixelPositionOffset={getPixelPositionOffset}>
-          <MapMarker isSelected onClick={() => onMarkerPlaced(geminiMarker)} />
-        </OverlayView>
-      )}
-
-      {/* Render Premium Restaurant Markers */}
-      {restaurants.map(rest => (
-        <OverlayView
-          key={`restaurant-${rest.id}`}
-          position={{ lat: rest.lat, lng: rest.lng }}
-          mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-          getPixelPositionOffset={getPixelPositionOffset}
-        >
-          <RestaurantMarker
-            restaurant={rest}
-            isActive={activeRestaurantId === rest.id}
-            onClick={setActiveRestaurantId}
+        {hazardData && (
+          <Data
+            options={{ fillColor: "red", strokeColor: "red", strokeWeight: 2, fillOpacity: 0.3 }}
+            onLoad={data => data.addGeoJson(hazardData)}
           />
-        </OverlayView>
-      ))}
+        )}
+        {trafficData && (
+          <Data
+            options={{ fillColor: "orange", strokeColor: "orange", strokeWeight: 3, fillOpacity: 0.5 }}
+            onLoad={data => data.addGeoJson(trafficData)}
+          />
+        )}
 
-      {/* Enhanced InfoWindow for active restaurant */}
-      {activeRestaurant && window.google && (
-        <InfoWindow
-          position={{ lat: activeRestaurant.lat, lng: activeRestaurant.lng }}
-          onCloseClick={() => setActiveRestaurantId(null)}
-          options={{ pixelOffset: new window.google.maps.Size(0, -45) }}
-        >
-          <div style={{
-            color: '#1a1a1a',
-            padding: '8px 4px',
-            maxWidth: '240px',
-            fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif'
-          }}>
-            <h4 style={{
-              margin: '0 0 6px 0',
-              fontSize: '15px',
-              fontWeight: '700',
-              color: '#1a73e8',
-              lineHeight: '1.2'
+        {sites.map(site => (
+          <OverlayView key={`site-${site.id}`} position={{ lat: site.lat, lng: site.lng }} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET} getPixelPositionOffset={getPixelPositionOffset}>
+            <MapMarker isSelected={selectedSiteId === site.id} onClick={() => onSiteSelect(site.id)} />
+          </OverlayView>
+        ))}
+
+        {geminiMarker && (
+          <OverlayView position={geminiMarker} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET} getPixelPositionOffset={getPixelPositionOffset}>
+            <MapMarker isSelected onClick={() => onMarkerPlaced(geminiMarker)} />
+          </OverlayView>
+        )}
+
+        {/* Render Premium Restaurant Markers */}
+        {restaurants.map(rest => (
+          <OverlayView
+            key={`restaurant-${rest.id}`}
+            position={{ lat: rest.lat, lng: rest.lng }}
+            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+            getPixelPositionOffset={getPixelPositionOffset}
+          >
+            <RestaurantMarker
+              restaurant={rest}
+              isActive={activeRestaurantId === rest.id}
+              onClick={setActiveRestaurantId}
+            />
+          </OverlayView>
+        ))}
+
+        {/* Enhanced InfoWindow for active restaurant */}
+        {activeRestaurant && window.google && (
+          <InfoWindow
+            position={{ lat: activeRestaurant.lat, lng: activeRestaurant.lng }}
+            onCloseClick={() => setActiveRestaurantId(null)}
+            options={{ pixelOffset: new window.google.maps.Size(0, -45) }}
+          >
+            <div style={{
+              color: '#1a1a1a',
+              padding: '8px 4px',
+              maxWidth: '240px',
+              fontFamily: '"Inter", "Roboto", "Segoe UI", sans-serif'
             }}>
-              {activeRestaurant.name}
-            </h4>
-            <p style={{
-              margin: '0 0 12px 0',
-              fontSize: '13px',
-              lineHeight: '1.4',
-              color: '#5f6368'
-            }}>
-              {activeRestaurant.address}
-            </p>
-            {activeRestaurant.rating && (
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                backgroundColor: '#fff8e1',
-                padding: '4px 8px',
-                borderRadius: '12px',
-                border: '1px solid #ffe082'
+              <h4 style={{
+                margin: '0 0 6px 0',
+                fontSize: '15px',
+                fontWeight: '700',
+                color: '#1a73e8',
+                lineHeight: '1.2'
               }}>
-                <span style={{ color: '#f5b400', marginRight: '4px', fontSize: '14px' }}>★</span>
-                <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#b28900' }}>
-                  {activeRestaurant.rating}
-                </span>
-              </div>
-            )}
-          </div>
-        </InfoWindow>
-      )}
-    </GoogleMap>
-  ) : <div style={{ ...containerStyle, backgroundColor: '#121212' }} />;
-};
+                {activeRestaurant.name}
+              </h4>
+              <p style={{
+                margin: '0 0 12px 0',
+                fontSize: '13px',
+                lineHeight: '1.4',
+                color: '#5f6368'
+              }}>
+                {activeRestaurant.address}
+              </p>
+              {activeRestaurant.rating && (
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  backgroundColor: '#fff8e1',
+                  padding: '4px 8px',
+                  borderRadius: '12px',
+                  border: '1px solid #ffe082'
+                }}>
+                  <span style={{ color: '#f5b400', marginRight: '4px', fontSize: '14px' }}>★</span>
+                  <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#b28900' }}>
+                    {activeRestaurant.rating}
+                  </span>
+                </div>
+              )}
+            </div>
+          </InfoWindow>
+      {geminiMarker && (
+          <>
+            <Circle
+              center={geminiMarker}
+              radius={radius}
+              options={{
+                fillColor: "#ff2a85",
+                fillOpacity: 0.1,
+                strokeColor: "#ff2a85",
+                strokeOpacity: 0.8,
+                strokeWeight: 1,
+                clickable: false,
+                zIndex: 1
+              }}
+            />
+            <OverlayView
+              key={`gemini-marker-${geminiMarker.lat}-${geminiMarker.lng}`}
+              position={geminiMarker}
+              mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+              getPixelPositionOffset={getPixelPositionOffset}
+            >
+              <MapMarker isSelected onClick={() => onMarkerPlaced(geminiMarker)} />
+            </OverlayView>
+          </>
+        )}
+      </GoogleMap>
+    ) : <div style={{ ...containerStyle, backgroundColor: '#121212' }} />;
+  };
+  ) : (
+  <div style={{ ...containerStyle, backgroundColor: '#121212' }} />
+);
+});

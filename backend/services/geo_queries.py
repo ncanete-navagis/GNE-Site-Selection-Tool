@@ -43,6 +43,8 @@ Geometry column naming (CONFIRMED from Earl's schema):
 
 from __future__ import annotations
 
+import asyncio
+
 from typing import Optional
 
 from geoalchemy2.types import Geography
@@ -139,7 +141,8 @@ async def get_hazards_near_point(
         Geography,
     )
 
-    results: list[dict] = []
+    tasks = []
+    labels = []
 
     for model, label in [
         (FloodHazard,     "flood"),
@@ -149,15 +152,26 @@ async def get_hazards_near_point(
         if hazard_type and hazard_type != label:
             continue
 
-        rows = await session.execute(
+        labels.append(label)
+        # OPTIMIZATION: Use ST_Intersects with a bounding box (ST_Expand) first
+        # to leverage the GiST index on the geometry column. 0.01 degrees is ~1km.
+        point_geom = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
+        
+        tasks.append(session.execute(
             select(model).where(
+                model.geometry.ST_Intersects(func.ST_Expand(point_geom, 0.01)),
                 func.ST_DWithin(
                     cast(model.geometry, Geography),
                     point_geog,
                     radius_m,
                 )
             )
-        )
+        ))
+
+    all_rows = await asyncio.gather(*tasks)
+    results: list[dict] = []
+
+    for rows, label in zip(all_rows, labels):
         for row in rows.scalars():
             d = {k: v for k, v in row.__dict__.items() if not k.startswith("_")}
             d["hazard_type"] = label
@@ -199,11 +213,12 @@ async def get_buildings_near_point(
         Geography,
     )
 
-    all_results: list = []
-
-    for model in [CebuBuilding, ManilaBuilding]:
-        rows = await session.execute(
+    point_geom = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
+    
+    tasks = [
+        session.execute(
             select(model).where(
+                model.geom.ST_Intersects(func.ST_Expand(point_geom, 0.01)),
                 func.ST_DWithin(
                     cast(model.geom, Geography),
                     point_geog,
@@ -212,6 +227,12 @@ async def get_buildings_near_point(
                 model.amenity.in_(amenities),
             )
         )
+        for model in [CebuBuilding, ManilaBuilding]
+    ]
+
+    all_rows = await asyncio.gather(*tasks)
+    all_results = []
+    for rows in all_rows:
         all_results.extend(rows.scalars().all())
 
     return all_results
