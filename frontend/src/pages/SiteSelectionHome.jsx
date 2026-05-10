@@ -34,6 +34,8 @@ export const SiteSelectionHome = () => {
   const [lotArea, setLotArea] = useState(1200);
   const [selectedSectors, setSelectedSectors] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [region, setRegion] = useState('cebu');
+  const [restaurants, setRestaurants] = useState([]);
   const { generateRecommendation, getHazards, getTraffic } = useBackendAPI();
 
   useEffect(() => {
@@ -145,6 +147,8 @@ export const SiteSelectionHome = () => {
       hazardData={hazardData}
       trafficData={trafficData}
       radius={radius}
+      restaurants={restaurants}
+      region={region}
     />
   );
 

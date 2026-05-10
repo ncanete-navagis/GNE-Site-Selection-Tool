@@ -235,7 +235,7 @@ export const FeaturesPanel = ({
 
     setIsLoadingTypes(true);
 
-    fetch(`http://localhost:8000/api/restaurant-types?region=${region}`)
+    fetch(`http://localhost:8000/api/v1/places/restaurant-types?region=${region}`)
       .then(res => res.json())
       .then(data => {
 
@@ -279,7 +279,7 @@ export const FeaturesPanel = ({
     const filters = (selectedTypes || []).join(',');
 
     fetch(
-      `http://localhost:8000/api/restaurants?region=${region}&filters=${filters}`
+      `http://localhost:8000/api/v1/places/restaurants?region=${region}&filters=${filters}`
     )
       .then(res => res.json())
       .then(data => {

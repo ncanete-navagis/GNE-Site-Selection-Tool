@@ -20,7 +20,10 @@ export const SidePanel = ({
   isAnalyzing,
   selectedSectors,
   setSelectedSectors,
-  onRunAnalysis
+  onRunAnalysis,
+  region,
+  onRegionChange,
+  onRestaurantsUpdate
 }) => {
   // Centralized state management for the filters
   const [selectedTypes, setSelectedTypes] = useState([]);
@@ -130,6 +133,11 @@ export const SidePanel = ({
             selectedSectors={selectedSectors}
             setSelectedSectors={setSelectedSectors}
             onRunAnalysis={onRunAnalysis}
+            region={region}
+            onRegionChange={handleRegionChange}
+            onRestaurantsUpdate={onRestaurantsUpdate}
+            selectedTypes={selectedTypes}
+            onTypesChange={setSelectedTypes}
           />
         ) : (
           <AIChatPanel poi={poi} />

@@ -56,19 +56,15 @@ export const useBackendAPI = () => {
   const getHazards = useCallback(async (bounds, hazardType = null) => {
     let url = `${API_BASE}/hazards/?xmin=${bounds.xmin}&ymin=${bounds.ymin}&xmax=${bounds.xmax}&ymax=${bounds.ymax}`;
     if (hazardType) url += `&hazard_type=${hazardType}`;
-    let url = `${API_BASE}/hazards/?xmin=${bounds.xmin}&ymin=${bounds.ymin}&xmax=${bounds.xmax}&ymax=${bounds.ymax}`;
-    if (hazardType) url += `&hazard_type=${hazardType}`;
     return fetchWithState(url);
   }, [fetchWithState]);
 
   const getTraffic = useCallback(async (bounds) => {
     const url = `${API_BASE}/traffic/?xmin=${bounds.xmin}&ymin=${bounds.ymin}&xmax=${bounds.xmax}&ymax=${bounds.ymax}`;
-    const url = `${API_BASE}/traffic/?xmin=${bounds.xmin}&ymin=${bounds.ymin}&xmax=${bounds.xmax}&ymax=${bounds.ymax}`;
     return fetchWithState(url);
   }, [fetchWithState]);
 
   const getRegions = useCallback(async () => {
-    return fetchWithState(`${API_BASE}/regions/`);
     return fetchWithState(`${API_BASE}/regions/`);
   }, [fetchWithState]);
 

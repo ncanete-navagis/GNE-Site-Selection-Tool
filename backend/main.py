@@ -93,9 +93,8 @@ app.include_router(barangays.router)
 app.include_router(hazards.router)
 app.include_router(traffic.router)
 app.include_router(regions.router)
-app.include_router(hazards.router)
-app.include_router(traffic.router)
-app.include_router(regions.router)
+app.include_router(places.router)
+
 
 @app.get("/health")
 def health_check():

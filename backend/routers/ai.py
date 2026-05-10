@@ -5,12 +5,12 @@ Implemented by: API_SPECIALIST / SECURITY_SPECIALIST
 Version: 2.0 | May 2026 (Prompt C — AI routing determination)
 
 AI ROUTING DETERMINATION (Prompt C — Task 3D):
-  The frontend calls the BACKEND as a proxy at http://localhost:5000/chat
-  (see frontend/src/hooks/useGeminiChat.js line 9: BACKEND_URL).
+  The frontend calls the NODE.JS proxy at http://localhost:5000/chat
+  (see frontend/src/hooks/useGeminiChat.js line 32: BACKEND_URL).
   The frontend reads the "response" field from the JSON reply.
 
-  This FastAPI app runs on port 8000.  The port 5000 proxy (Node.js / Express
-  or similar) is a SEPARATE service that is NOT part of this FastAPI codebase.
+  This FastAPI app runs on port 8000.
+  The port 5000 proxy (Node.js / Express) handles Gemini Chat logic.
   That proxy calls Gemini and returns {"response": "..."}.
 
   The /api/v1/ai/chat endpoint below is a BACKEND-ONLY UTILITY and is NOT

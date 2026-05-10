@@ -114,7 +114,19 @@ def _build_response_dict(record: Analysis, details: dict) -> dict:
         "actual_traffic_kmh": details.get("actual_traffic_kmh"),
         "lot_area": details.get("lot_area"),
         "commercial_space": details.get("commercial_space"),
+        "restaurant_type": details.get("restaurant_type"),
         "sector_counts": details.get("sector_counts", {}),
+        "nearby_establishments": details.get("sector_counts", {}),
+        "site_context": details.get("site_context", {}),
+        "market_analysis": details.get("market_analysis", {}),
+        "scoring_breakdown": {
+            "foot_traffic": record.foot_traffic_score,
+            "competition": record.competing_business_score,
+            "flood_safety": record.flood_hazard_score,
+            "landslide_safety": record.landslide_hazard_score,
+            "storm_surge_safety": record.storm_surge_score,
+            "traffic": record.traffic_score,
+        }
     }
 
 
@@ -165,6 +177,12 @@ async def run_analysis(
         restaurant_type: Optional restaurant category string; reserved for
             future weight-vector customisation (currently ignored by the
             scoring engine — weights default to equal).
+        radius_m: Optional search radius in metres.
+        population: Optional target population count.
+        traffic_kmh: Optional target traffic speed.
+        lot_area: Optional target lot area.
+        business_sectors: Optional list of sectors to count. Defaults to 
+            ["restaurants", "banks", "schools", "hospitals", "malls"].
 
     Returns:
         A ``dict`` matching the POST /api/v1/analysis/ response schema.
@@ -192,6 +210,11 @@ async def run_analysis(
     # Use provided radius or fall back to default
     radius = radius_m if radius_m is not None else SCORING_RADIUS_M
 
+    # Use provided sectors or fall back to defaults expected by the UI
+    sectors = business_sectors
+    if sectors is None:
+        sectors = ["restaurants", "banks", "schools", "hospitals", "malls"]
+
     start_gather = time.perf_counter()
     import httpx
     async with httpx.AsyncClient(timeout=15.0) as client:
@@ -202,7 +225,7 @@ async def run_analysis(
             external_places.get_foot_traffic_proxy(lat, lon, radius, client=client),
             external_places.reverse_geocode(lat, lon, client=client),
             external_places.get_traffic_speed_proxy(lat, lon, client=client),
-            external_places.get_sector_counts(lat, lon, radius, business_sectors, client=client),
+            external_places.get_sector_counts(lat, lon, radius, sectors, client=client),
             external_places.get_site_context(lat, lon, radius, client=client),
             external_places.get_market_analysis(lat, lon, radius, client=client),
         )
