@@ -45,13 +45,22 @@ export const SiteSelectionHome = () => {
   const [competitorMarkers, setCompetitorMarkers] = useState([]);
   const [focusedLocation, setFocusedLocation] = useState(null);
   const [selectedPropertyPolygon, setSelectedPropertyPolygon] = useState(null);
+  const [selectedRegion, setSelectedRegion] = useState('Cebu');
+  const [restaurantFilters, setRestaurantFilters] = useState([]);
+  const [restaurantMarkers, setRestaurantMarkers] = useState([]);
 
   // Drawing Feature States
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawingResult, setDrawingResult] = useState(null);
   const [isDrawingResultVisible, setIsDrawingResultVisible] = useState(false);
 
-  const { generateRecommendation, getHazards, getTraffic, getBuyingProperties } = useBackendAPI();
+  const { 
+    generateRecommendation, 
+    getHazards, 
+    getTraffic, 
+    getBuyingProperties,
+    searchRestaurants 
+  } = useBackendAPI();
 
   // Handle Layer Toggles (Global Callback)
   useEffect(() => {
@@ -157,6 +166,20 @@ export const SiteSelectionHome = () => {
       console.error("Failed to fetch hazards:", err);
     }
   };
+
+  // Fetch Restaurant Markers when Region or Filters change
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const filtersStr = restaurantFilters.join(',');
+        const data = await searchRestaurants(selectedRegion, filtersStr);
+        setRestaurantMarkers(data || []);
+      } catch (err) {
+        console.error("Failed to fetch restaurant discovery markers:", err);
+      }
+    };
+    fetchRestaurants();
+  }, [selectedRegion, restaurantFilters, searchRestaurants]);
 
   const handleToggleMode = () => {
     setIsAIMode(!isAIMode);
@@ -325,6 +348,7 @@ export const SiteSelectionHome = () => {
       isDrawing={isDrawing}
       onDrawingComplete={handleDrawingComplete}
       finishTrigger={finishDrawingTrigger}
+      restaurantMarkers={restaurantMarkers}
     />
   );
 
@@ -342,7 +366,7 @@ export const SiteSelectionHome = () => {
       onOpenFeatures={handleOpenFeatures}
       geminiMarker={geminiMarker}
       onFilterChange={handleFilterChange}
-      onRegionChange={(region) => console.log("Region changed to:", region)}
+      onRegionChange={setSelectedRegion}
     />
   );
 
@@ -373,6 +397,7 @@ export const SiteSelectionHome = () => {
         isAnalyzing={isAnalyzing}
         selectedSectors={selectedSectors}
         setSelectedSectors={setSelectedSectors}
+        onFiltersChange={setRestaurantFilters}
         onRunAnalysis={handleRunAnalysis}
         onClose={() => setIsPanelOpen(false)}
       />

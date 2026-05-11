@@ -11,10 +11,10 @@ export const useRestaurantTypes = () => {
   useEffect(() => {
     setIsLoadingTypes(true);
     // Fetching with a default region since the region filter is removed
-    fetch(`http://localhost:8000/api/v1/places/restaurant-types?region=cebu`)
+    fetch(`http://localhost:8000/api/v1/places/filter-options?region=cebu`)
       .then(res => res.json())
       .then(data => {
-        const typesList = data.types || [];
+        const typesList = data || [];
         const formatted = typesList.map(type => ({
           label: type.replaceAll('_', ' ')
         }));

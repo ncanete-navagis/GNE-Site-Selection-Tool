@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Query
 import httpx
 from typing import Dict, Any, List, Optional
 from core.config import settings
+from services import placesService
 
 router = APIRouter(
     prefix="/api/v1/places",
@@ -70,3 +71,21 @@ async def get_restaurant_types(region: Optional[str] = Query("Cebu")):
     region_types_cache[normalized_region] = types_list
 
     return {"region": normalized_region, "types": types_list}
+
+
+@router.get("/filter-options")
+def get_filter_options(region: Optional[str] = Query("Cebu")):
+    """
+    New endpoint dedicated to providing simple filter dropdown data.
+    Returns a simple array of strings.
+    """
+    return placesService.fetchRestaurantTypesForRegion(region)
+
+
+@router.get("/search")
+def search_restaurants(region: Optional[str] = Query("Cebu"), filters: Optional[str] = Query("")):
+    """
+    Returns a list of restaurants for a given region and filters.
+    Used for rendering restaurant location pins on the map.
+    """
+    return placesService.discoverRestaurants(region, filters)

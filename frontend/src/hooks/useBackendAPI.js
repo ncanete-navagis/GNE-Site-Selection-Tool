@@ -62,12 +62,18 @@ export const useBackendAPI = () => {
     return fetchWithState(url);
   }, [fetchWithState]);
 
+  const searchRestaurants = useCallback(async (region = 'Cebu', filters = '') => {
+    const url = `${API_BASE}/places/search?region=${region}&filters=${filters}`;
+    return fetchWithState(url);
+  }, [fetchWithState]);
+
   return {
     generateRecommendation,
     getHazards,
     getTraffic,
     getRegions,
     getBuyingProperties,
+    searchRestaurants,
     isLoading,
     error
   };

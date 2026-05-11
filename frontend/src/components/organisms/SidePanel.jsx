@@ -9,6 +9,7 @@ export const SidePanel = ({
   setMode, 
   hasAIAccess, 
   poi,
+  onFiltersChange,
   ...props // Pass through all analysis criteria props
 }) => {
   const panelStyle = {
@@ -102,7 +103,7 @@ export const SidePanel = ({
         flexDirection: 'column'
       }}>
         {mode === 'features' ? (
-          <FeaturesPanel poi={poi} {...props} />
+          <FeaturesPanel poi={poi} onFiltersChange={onFiltersChange} {...props} />
         ) : (
           <AIChatPanel poi={poi} />
         )}

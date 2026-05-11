@@ -16,11 +16,19 @@ export const FeaturesPanel = (props) => {
   const {
     poi,
     isAnalyzing,
-    onRunAnalysis
+    onRunAnalysis,
+    onFiltersChange
   } = props;
 
   // Internal UI State
   const state = useFeaturePanelState(props);
+
+  // Notify parent of filter changes
+  React.useEffect(() => {
+    if (onFiltersChange) {
+      onFiltersChange(state.selectedTypes);
+    }
+  }, [state.selectedTypes, onFiltersChange]);
   
   // Data Fetching
   const { restaurantTypes, isLoadingTypes } = useRestaurantTypes();

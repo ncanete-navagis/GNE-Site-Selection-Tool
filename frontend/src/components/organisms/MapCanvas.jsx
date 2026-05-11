@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useMemo, useRef, useEffect } from 'react';
-import { GoogleMap, useJsApiLoader, OverlayView, MarkerF, MarkerClustererF, DrawingManagerF, PolylineF, PolygonF } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, OverlayView, MarkerF, MarkerClustererF, DrawingManagerF, PolylineF, PolygonF, InfoWindowF } from '@react-google-maps/api';
 import { MapMarker } from '../molecules/MapMarker';
 
 const containerStyle = {
@@ -42,6 +42,11 @@ const GREEN_PIN_SVG = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
   <path d="M12 0C5.373 0 0 5.373 0 12c0 8.4 12 24 12 24s12-15.6 12-24c0-6.627-5.373-12-12-12zm0 18c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6z" fill="#28a745" stroke="#1b702e" stroke-width="1.5"/>
 </svg>`);
 
+const RED_PIN_SVG = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="30" height="42" viewBox="0 0 24 36">
+  <path d="M12 0C5.373 0 0 5.373 0 12c0 8.4 12 24 12 24s12-15.6 12-24c0-6.627-5.373-12-12-12zm0 18c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6z" fill="#ff4444" stroke="#cc0000" stroke-width="1.5"/>
+</svg>`);
+
 export const MapCanvas = ({
   hazardData,
   hazardVersion = 0,
@@ -61,7 +66,8 @@ export const MapCanvas = ({
   selectedPropertyPolygon,
   isDrawing,
   onDrawingComplete,
-  finishTrigger = 0
+  finishTrigger = 0,
+  restaurantMarkers = []
 }) => {
 
   const { isLoaded } = useJsApiLoader({
@@ -73,6 +79,7 @@ export const MapCanvas = ({
   const [map, setMap] = useState(null);
   const [drawnObjects, setDrawnObjects] = useState([]);
   const [currentDrawingPoints, setCurrentDrawingPoints] = useState([]);
+  const [activeRestaurant, setActiveRestaurant] = useState(null);
   const isProcessingClick = useRef(false);
 
   const onLoad = useCallback((mapInstance) => { setMap(mapInstance); }, []);
@@ -363,6 +370,32 @@ export const MapCanvas = ({
           ))
         }
       </MarkerClustererF>
+
+      {/* Restaurant location pins (Red Pins) */}
+      {restaurantMarkers.map((restaurant, idx) => (
+        <MarkerF
+          key={`restaurant-${restaurant.id || idx}`}
+          position={{ lat: restaurant.lat, lng: restaurant.lng }}
+          icon={window.google ? {
+            url: RED_PIN_SVG,
+            scaledSize: new window.google.maps.Size(30, 42),
+            anchor: new window.google.maps.Point(15, 42)
+          } : undefined}
+          onClick={() => setActiveRestaurant(restaurant)}
+        />
+      ))}
+
+      {activeRestaurant && (
+        <InfoWindowF
+          position={{ lat: activeRestaurant.lat, lng: activeRestaurant.lng }}
+          onCloseClick={() => setActiveRestaurant(null)}
+        >
+          <div style={{ padding: '8px', color: '#333' }}>
+            <h4 style={{ margin: '0 0 4px 0' }}>{activeRestaurant.name}</h4>
+            <p style={{ margin: 0, fontSize: '12px' }}>{activeRestaurant.address}</p>
+          </div>
+        </InfoWindowF>
+      )}
 
     </GoogleMap>
   ) : (
