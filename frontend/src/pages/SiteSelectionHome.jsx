@@ -11,7 +11,6 @@ import { useBackendAPI } from '../hooks/useBackendAPI';
 
 export const SiteSelectionHome = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAIMode, setIsAIMode] = useState(false);
   const [selectedSiteId, setSelectedSiteId] = useState(null);
 
   // Filter States
@@ -181,9 +180,6 @@ export const SiteSelectionHome = () => {
     fetchRestaurants();
   }, [selectedRegion, restaurantFilters, searchRestaurants]);
 
-  const handleToggleMode = () => {
-    setIsAIMode(!isAIMode);
-  };
 
   const handleFabClick = () => {
     if (geminiMarker) {
@@ -356,8 +352,6 @@ export const SiteSelectionHome = () => {
     <OverlayHUD
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
-      isAIMode={isAIMode}
-      onToggleMode={handleToggleMode}
       onFabClick={handleFabClick}
       isPlacingMarker={isPlacingMarker}
       isDrawing={isDrawing}

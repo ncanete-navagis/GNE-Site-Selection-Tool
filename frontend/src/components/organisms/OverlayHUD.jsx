@@ -1,14 +1,7 @@
 import React from 'react';
 import { DefaultHUD } from './DefaultHUD';
-import { AIHUD } from './AIHUD';
 
 export const OverlayHUD = (props) => {
-  const { isAIMode } = props;
-
-  // Simply act as a switch between the two different HUD layouts
-  if (isAIMode) {
-    return <AIHUD {...props} />;
-  }
-
+  // Always render the default HUD as legacy AI mode is removed.
   return <DefaultHUD {...props} />;
 };

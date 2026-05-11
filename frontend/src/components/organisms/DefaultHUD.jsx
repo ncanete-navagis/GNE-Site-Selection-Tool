@@ -1,7 +1,6 @@
 import React from 'react';
 import { TopNavigationPanel } from './TopNavigationPanel';
 import { UserAvatar } from '../molecules/UserAvatar';
-import { ModeToggle } from '../molecules/ModeToggle';
 import { MapToolsPanel } from './MapToolsPanel';
 import { BrandLogo } from '../molecules/BrandLogo';
 import avatarImg from '../../assets/images/UserAvatar.webp';
@@ -10,8 +9,6 @@ import logoImg from '../../assets/images/navagis_logo.jpg';
 export const DefaultHUD = ({
   searchQuery,
   onSearchChange,
-  isAIMode,
-  onToggleMode,
   onFabClick,
   isPlacingMarker,
   isDrawing,
@@ -48,9 +45,6 @@ export const DefaultHUD = ({
     pointerEvents: 'auto'
   };
 
-  const modeToggleStyle = {
-    pointerEvents: 'auto'
-  };
 
   return (
     <div style={containerStyle}>
@@ -70,16 +64,8 @@ export const DefaultHUD = ({
           onFilterChange={onFilterChange}
           onRegionChange={onRegionChange}
         />
-        <UserAvatar src={avatarImg} />
-      </div>
-
-      {/* Bottom Section */}
-      <div style={bottomSectionStyle}>
-        <div style={modeToggleStyle}>
-          <ModeToggle isAIMode={isAIMode} onToggle={onToggleMode} />
-        </div>
-
-        <div style={rightBottomGroupStyle}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
+          <UserAvatar src={avatarImg} />
           <MapToolsPanel 
             isPlacingMarker={isPlacingMarker} 
             isDrawing={isDrawing}
@@ -88,6 +74,14 @@ export const DefaultHUD = ({
             onFinishDrawing={onFinishDrawing}
             onFilterClick={onOpenFeatures}
           />
+        </div>
+      </div>
+
+      {/* Bottom Section */}
+      <div style={bottomSectionStyle}>
+        <div />
+
+        <div style={rightBottomGroupStyle}>
           <BrandLogo src={logoImg} />
         </div>
       </div>
