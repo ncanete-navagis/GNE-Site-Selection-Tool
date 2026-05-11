@@ -14,6 +14,9 @@ export const DefaultHUD = ({
   onToggleMode,
   onFabClick,
   isPlacingMarker,
+  isDrawing,
+  onDrawClick,
+  onFinishDrawing,
   onOpenFeatures,
   onFilterChange,
   onRegionChange
@@ -79,8 +82,11 @@ export const DefaultHUD = ({
         <div style={rightBottomGroupStyle}>
           <MapToolsPanel 
             isPlacingMarker={isPlacingMarker} 
+            isDrawing={isDrawing}
             onDropPinClick={onFabClick} 
-            onDrawClick={() => console.log('Draw clicked')}
+            onDrawClick={onDrawClick}
+            onFinishDrawing={onFinishDrawing}
+            onFilterClick={onOpenFeatures}
           />
           <BrandLogo src={logoImg} />
         </div>

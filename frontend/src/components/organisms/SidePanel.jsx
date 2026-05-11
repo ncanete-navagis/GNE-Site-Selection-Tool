@@ -8,7 +8,8 @@ export const SidePanel = ({
   mode, 
   setMode, 
   hasAIAccess, 
-  poi 
+  poi,
+  ...props // Pass through all analysis criteria props
 }) => {
   const panelStyle = {
     position: 'fixed',
@@ -101,7 +102,7 @@ export const SidePanel = ({
         flexDirection: 'column'
       }}>
         {mode === 'features' ? (
-          <FeaturesPanel poi={poi} />
+          <FeaturesPanel poi={poi} {...props} />
         ) : (
           <AIChatPanel poi={poi} />
         )}

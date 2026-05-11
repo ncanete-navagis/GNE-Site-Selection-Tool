@@ -12,6 +12,7 @@ class PropertyResponse(BaseModel):
     url: str
     lat: Optional[float] = None
     long: Optional[float] = None
+    random_shape_polygon: Optional[str] = None
 
     class Config:
         from_attributes = True

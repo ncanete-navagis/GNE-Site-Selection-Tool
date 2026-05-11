@@ -2,7 +2,7 @@
 routers/recommendations.py — FastAPI router for location recommendations.
 
 Implemented by: API_SPECIALIST
-Version: 2.0 | May 2026 (Prompt C — User.id integer fix, async handlers)
+Version: 2.1 | May 2026 (criteria support + optional auth)
 """
 
 import uuid
@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 
 from dependencies import get_db
 from models.user import User
-from core.security import get_current_user
+from core.security import get_current_user, get_optional_user
 from services import recommendation as rec_service
 
 router = APIRouter(
@@ -28,6 +28,13 @@ class RecommendationCreateRequest(BaseModel):
     latitude: float = Field(..., ge=-90, le=90, description="Latitude in EPSG:4326")
     name: Optional[str] = Field(None, description="Optional name for the location")
     description: Optional[str] = Field(None, description="Optional description for the location")
+    
+    # Analysis Criteria
+    radius_m: Optional[float] = Field(None, ge=100, le=10000, description="Search radius in metres")
+    population: Optional[int] = Field(None, description="Target population in the area")
+    traffic_kmh: Optional[float] = Field(None, description="Target average traffic speed in km/h")
+    lot_area: Optional[float] = Field(None, description="Target lot area in sq. m")
+    business_sectors: Optional[List[str]] = Field(None, description="List of business sectors to analyze")
 
 
 class RecommendationResponse(BaseModel):
@@ -42,16 +49,25 @@ class RecommendationResponse(BaseModel):
 async def generate_recommendation(
     request: RecommendationCreateRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_user)
 ):
-    """Generate a new location recommendation by running analysis and persisting it."""
+    """Generate a new location recommendation by running analysis.
+    
+    If authenticated, the result is persisted. If unauthenticated, it returns analysis only.
+    """
+    user_id = current_user.id if current_user else None
     res = await rec_service.create_recommendation(
         session=db,
         lon=request.longitude,
         lat=request.latitude,
-        user_id=current_user.id,
+        user_id=user_id,
         name=request.name,
-        description=request.description
+        description=request.description,
+        radius_m=request.radius_m,
+        population=request.population,
+        traffic_kmh=request.traffic_kmh,
+        lot_area=request.lot_area,
+        business_sectors=request.business_sectors
     )
     return res
 

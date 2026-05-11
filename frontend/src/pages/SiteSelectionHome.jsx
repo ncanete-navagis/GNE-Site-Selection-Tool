@@ -4,6 +4,9 @@ import { MapCanvas } from '../components/organisms/MapCanvas';
 import { OverlayHUD } from '../components/organisms/OverlayHUD';
 import { SidePanel } from '../components/organisms/SidePanel';
 import { PropertySidePanel } from '../components/organisms/PropertySidePanel';
+import { MapToolsPanel } from '../components/organisms/MapToolsPanel';
+import { DefaultHUD } from '../components/organisms/DefaultHUD';
+import { DrawingResultPopup } from '../components/molecules/DrawingResultPopup';
 import { useBackendAPI } from '../hooks/useBackendAPI';
 
 export const SiteSelectionHome = () => {
@@ -25,12 +28,28 @@ export const SiteSelectionHome = () => {
 
   // Map Data State
   const [isPlacingMarker, setIsPlacingMarker] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [geminiMarker, setGeminiMarker] = useState(null);
+  
+  // Analysis Criteria States
+  const [analysisRadius, setAnalysisRadius] = useState(1000);
+  const [targetPopulation, setTargetPopulation] = useState(5000);
+  const [targetTrafficKmh, setTargetTrafficKmh] = useState(30);
+  const [targetLotArea, setTargetLotArea] = useState(500);
+  const [selectedSectors, setSelectedSectors] = useState(['Restaurants']);
+
   const [hazardData, setHazardData] = useState(null);
   const [hazardVersion, setHazardVersion] = useState(0);
   const [trafficData, setTrafficData] = useState(null);
   const [buyingProperties, setBuyingProperties] = useState([]);
   const [competitorMarkers, setCompetitorMarkers] = useState([]);
+  const [focusedLocation, setFocusedLocation] = useState(null);
+  const [selectedPropertyPolygon, setSelectedPropertyPolygon] = useState(null);
+
+  // Drawing Feature States
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [drawingResult, setDrawingResult] = useState(null);
+  const [isDrawingResultVisible, setIsDrawingResultVisible] = useState(false);
 
   const { generateRecommendation, getHazards, getTraffic, getBuyingProperties } = useBackendAPI();
 
@@ -61,7 +80,7 @@ export const SiteSelectionHome = () => {
     try {
       // Fetch properties
       const properties = await getBuyingProperties(bounds);
-      setBuyingProperties(properties);
+      setBuyingProperties(properties || []);
 
       // Dynamically fetch hazards based on zoom/viewport if a layer is active
       if (activeHazardFilter && activeHazardFilter !== 'None' && activeHazardFilter !== 'Traffic') {
@@ -147,6 +166,7 @@ export const SiteSelectionHome = () => {
     if (geminiMarker) {
       // Clear current analysis
       setGeminiMarker(null);
+      setSelectedPropertyPolygon(null);
       setIsPanelOpen(false);
       return;
     }
@@ -154,7 +174,8 @@ export const SiteSelectionHome = () => {
     setIsPlacingMarker((prev) => {
       const nextState = !prev;
       if (nextState) {
-        setIsPanelOpen(false);
+        setPanelMode('features');
+        setIsPanelOpen(true);
         setIsPropertyPanelOpen(false);
       }
       return nextState;
@@ -167,20 +188,38 @@ export const SiteSelectionHome = () => {
     setIsPropertyPanelOpen(false);
   };
 
-  const handleMarkerPlaced = async (coords) => {
-    setGeminiMarker(coords);
-    setIsPlacingMarker(false);
-    
-    try { 
-      const result = await generateRecommendation(coords.lat, coords.lng, 'New Site'); 
+  const runLocationAnalysis = async (coords, name) => {
+    setGeminiMarker({ ...coords, title: name });
+    setPanelMode('features');
+    setIsPanelOpen(true);
+    setIsAnalyzing(true);
+    try {
+      const criteria = {
+        radius_m: analysisRadius,
+        population: targetPopulation,
+        traffic_kmh: targetTrafficKmh,
+        lot_area: targetLotArea,
+        business_sectors: selectedSectors
+      };
+      
+      const result = await generateRecommendation(coords.lat, coords.lng, name, criteria);
       if (result && result.analysis && result.analysis.competitors) {
         setCompetitorMarkers(result.analysis.competitors);
       }
-      setPanelMode('ai');
-      setIsPanelOpen(true);
+      // Update the geminiMarker with the analysis results to show in the UI
+      setGeminiMarker({ ...coords, title: name, analysis: result.analysis });
     } catch (e) {
       console.error("Analysis failed:", e);
+    } finally {
+      setIsAnalyzing(false);
     }
+  };
+
+  const handleMarkerPlaced = async (coords) => {
+    setGeminiMarker(coords);
+    setSelectedPropertyPolygon(null);
+    setIsPlacingMarker(false);
+    await runLocationAnalysis(coords, 'New Site');
   };
 
   const handlePropertySelect = (property) => {
@@ -192,19 +231,56 @@ export const SiteSelectionHome = () => {
   const handleChooseLocation = async (property) => {
     setIsPropertyPanelOpen(false);
     const coords = { lat: property.lat, lng: property.long };
-    setGeminiMarker(coords);
+    setFocusedLocation({ ...coords, zoom: 18 });
     
-    try {
-      const result = await generateRecommendation(coords.lat, coords.lng, property.title);
-      if (result && result.analysis && result.analysis.competitors) {
-        setCompetitorMarkers(result.analysis.competitors);
+    // Set the polygon if it exists (backend now returns it as GeoJSON string)
+    if (property.random_shape_polygon) {
+      try {
+        setSelectedPropertyPolygon(JSON.parse(property.random_shape_polygon));
+      } catch (e) {
+        console.error("Failed to parse property polygon:", e);
       }
-      setPanelMode('ai');
-      setIsPanelOpen(true);
-    } catch (e) {
-      console.error("Analysis failed:", e);
+    } else {
+      setSelectedPropertyPolygon(null);
+    }
+
+    await runLocationAnalysis(coords, property.title);
+  };
+
+  const handleRunAnalysis = async () => {
+    if (geminiMarker) {
+      await runLocationAnalysis({ lat: geminiMarker.lat, lng: geminiMarker.lng }, geminiMarker.title || 'Selected Site');
     }
   };
+
+  const handleDrawClick = () => {
+    setIsDrawing(prev => {
+      const next = !prev;
+      if (next) {
+        setIsPlacingMarker(false);
+        setIsDrawingResultVisible(false);
+      }
+      return next;
+    });
+  };
+
+  const handleDrawingComplete = (result) => {
+    setDrawingResult(result);
+    setIsDrawingResultVisible(true);
+    setIsDrawing(false); // Stop drawing mode once complete
+  };
+
+  const handleClearDrawing = () => {
+    setDrawingResult(null);
+    setIsDrawingResultVisible(false);
+  };
+
+  const handleFinishDrawing = () => {
+    // This will be caught by MapCanvas via a ref or a new trigger prop
+    setFinishDrawingTrigger(prev => prev + 1);
+  };
+
+  const [finishDrawingTrigger, setFinishDrawingTrigger] = useState(0);
 
   // Exit modes via Escape
   useEffect(() => {
@@ -218,6 +294,16 @@ export const SiteSelectionHome = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlacingMarker, isPanelOpen, isPropertyPanelOpen]);
+
+  const mapToolsComponent = (
+    <MapToolsPanel 
+      isPlacingMarker={isPlacingMarker}
+      isDrawing={isDrawing}
+      onDropPinClick={handleFabClick}
+      onDrawClick={handleDrawClick}
+      onFilterClick={handleOpenFeatures}
+    />
+  );
 
   const mapComponent = (
     <MapCanvas
@@ -234,6 +320,11 @@ export const SiteSelectionHome = () => {
       onPropertySelect={handlePropertySelect}
       competitorMarkers={competitorMarkers}
       onBoundsChanged={handleBoundsChanged}
+      focusedLocation={focusedLocation}
+      selectedPropertyPolygon={selectedPropertyPolygon}
+      isDrawing={isDrawing}
+      onDrawingComplete={handleDrawingComplete}
+      finishTrigger={finishDrawingTrigger}
     />
   );
 
@@ -245,6 +336,9 @@ export const SiteSelectionHome = () => {
       onToggleMode={handleToggleMode}
       onFabClick={handleFabClick}
       isPlacingMarker={isPlacingMarker}
+      isDrawing={isDrawing}
+      onDrawClick={handleDrawClick}
+      onFinishDrawing={handleFinishDrawing}
       onOpenFeatures={handleOpenFeatures}
       geminiMarker={geminiMarker}
       onFilterChange={handleFilterChange}
@@ -254,17 +348,32 @@ export const SiteSelectionHome = () => {
 
   const sidePanelComponent = (
     <>
+      {isDrawingResultVisible && (
+        <DrawingResultPopup 
+          result={drawingResult} 
+          onClear={handleClearDrawing}
+          onClose={() => setIsDrawingResultVisible(false)}
+        />
+      )}
+      
       <SidePanel
         isOpen={isPanelOpen}
         mode={panelMode}
         setMode={setPanelMode}
         hasAIAccess={hasAIAccess}
-        poi={geminiMarker ? {
-          id: `new-site-${geminiMarker.lat}-${geminiMarker.lng}`,
-          title: selectedProperty ? selectedProperty.title : 'Selected Site',
-          type: 'Target Location',
-          rating: 4.8
-        } : null}
+        poi={geminiMarker}
+        radius={analysisRadius}
+        setRadius={setAnalysisRadius}
+        population={targetPopulation}
+        setPopulation={setTargetPopulation}
+        trafficKmh={targetTrafficKmh}
+        setTrafficKmh={setTargetTrafficKmh}
+        lotArea={targetLotArea}
+        setLotArea={setTargetLotArea}
+        isAnalyzing={isAnalyzing}
+        selectedSectors={selectedSectors}
+        setSelectedSectors={setSelectedSectors}
+        onRunAnalysis={handleRunAnalysis}
         onClose={() => setIsPanelOpen(false)}
       />
       

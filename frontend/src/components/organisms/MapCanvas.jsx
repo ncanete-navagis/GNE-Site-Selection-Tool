@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useMemo, useRef, useEffect } from 'react';
-import { GoogleMap, useJsApiLoader, OverlayView, Marker, MarkerClusterer } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, OverlayView, MarkerF, MarkerClustererF, DrawingManagerF, PolylineF, PolygonF } from '@react-google-maps/api';
 import { MapMarker } from '../molecules/MapMarker';
 
 const containerStyle = {
@@ -15,6 +15,8 @@ const center = {
   lat: 10.3157, // Cebu City
   lng: 123.8854
 };
+
+const LIBRARIES = ['drawing', 'geometry'];
 
 const darkMapStyle = [
   { elementType: "geometry", stylers: [{ color: "#212121" }] },
@@ -54,48 +56,171 @@ export const MapCanvas = ({
   buyingProperties = [],
   onPropertySelect,
   competitorMarkers = [],
-  onBoundsChanged
+  onBoundsChanged,
+  focusedLocation,
+  selectedPropertyPolygon,
+  isDrawing,
+  onDrawingComplete,
+  finishTrigger = 0
 }) => {
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+    libraries: LIBRARIES
   });
 
   const [map, setMap] = useState(null);
+  const [drawnObjects, setDrawnObjects] = useState([]);
+  const [currentDrawingPoints, setCurrentDrawingPoints] = useState([]);
   const isProcessingClick = useRef(false);
 
   const onLoad = useCallback((mapInstance) => { setMap(mapInstance); }, []);
   const onUnmount = useCallback(() => { setMap(null); }, []);
 
+  const onPolygonComplete = useCallback((polygon) => {
+    if (!window.google || !polygon) return;
+    
+    const path = polygon.getPath();
+    const points = [];
+    for (let i = 0; i < path.getLength(); i++) {
+      const p = path.getAt(i);
+      points.push({ lat: p.lat(), lng: p.lng() });
+    }
+
+    const area = window.google.maps.geometry.spherical.computeArea(path);
+    const perimeter = window.google.maps.geometry.spherical.computeLength(path);
+
+    onDrawingComplete({
+      area: Math.round(area),
+      perimeter: Math.round(perimeter),
+      points
+    });
+
+    setDrawnObjects(prev => [...prev, polygon]);
+  }, [onDrawingComplete]);
+
+  // Handle "Finish Drawing" trigger
+  useEffect(() => {
+    if (finishTrigger > 0 && currentDrawingPoints.length >= 3) {
+      if (!window.google) return;
+      
+      const path = currentDrawingPoints.map(p => new window.google.maps.LatLng(p.lat, p.lng));
+      const area = window.google.maps.geometry.spherical.computeArea(path);
+      const perimeter = window.google.maps.geometry.spherical.computeLength(path);
+
+      onDrawingComplete({
+        area: Math.round(area),
+        perimeter: Math.round(perimeter),
+        points: currentDrawingPoints
+      });
+
+      // We'll let the PolygonF handle the visualization of the result if needed, 
+      // but for now we just finish the drawing session.
+      setCurrentDrawingPoints([]);
+    }
+  }, [finishTrigger, onDrawingComplete]);
+
+  // Clear drawings when isDrawing becomes false
+  useEffect(() => {
+    if (!isDrawing) {
+      setCurrentDrawingPoints([]);
+      if (drawnObjects.length > 0) {
+        drawnObjects.forEach(obj => obj.setMap(null));
+        setDrawnObjects([]);
+      }
+    }
+  }, [isDrawing]);
+
+  // Handle focused location (zoom in)
+  useEffect(() => {
+    if (map && focusedLocation) {
+      map.panTo({ lat: focusedLocation.lat, lng: focusedLocation.lng });
+      if (focusedLocation.zoom) {
+        map.setZoom(focusedLocation.zoom);
+      }
+    }
+  }, [map, focusedLocation]);
+
   useEffect(() => {
     if (!map) return;
     map.data.forEach((feature) => { map.data.remove(feature); });
 
+    // 1. Property Polygon (Highest Priority)
+    if (selectedPropertyPolygon) {
+      try {
+        // Wrap the raw geometry in a FeatureCollection to satisfy Google Maps API
+        const featureCollection = {
+          type: "FeatureCollection",
+          features: [{
+            type: "Feature",
+            geometry: selectedPropertyPolygon,
+            properties: { dataType: 'property' }
+          }]
+        };
+        map.data.addGeoJson(featureCollection);
+      } catch (e) { console.error("Property polygon error:", e); }
+    }
+
+    // 2. Hazards
     if (hazardData && hazardData.features && hazardData.features.length > 0) {
       try {
-        map.data.addGeoJson(hazardData);
-        map.data.setStyle({
-          fillColor: "#FF0000",
-          strokeColor: "#CC0000",
-          strokeWeight: 1,
-          fillOpacity: 0.4
-        });
+        const features = map.data.addGeoJson(hazardData);
+        features.forEach(f => f.setProperty('dataType', 'hazard'));
       } catch (e) { console.error("Hazard error:", e); }
-    } else if (trafficData && trafficData.features && trafficData.features.length > 0) {
+    } 
+    
+    // 3. Traffic
+    if (trafficData && trafficData.features && trafficData.features.length > 0) {
       try {
-        map.data.addGeoJson(trafficData);
-        map.data.setStyle({
+        const features = map.data.addGeoJson(trafficData);
+        features.forEach(f => f.setProperty('dataType', 'traffic'));
+      } catch (e) { console.error("Traffic error:", e); }
+    }
+
+    // Dynamic Styling based on feature property
+    map.data.setStyle((feature) => {
+      const type = feature.getProperty('dataType');
+      if (type === 'property') {
+        return {
+          fillColor: "#4285F4",
+          strokeColor: "#4285F4",
+          strokeWeight: 3,
+          fillOpacity: 0.3,
+          clickable: false
+        };
+      }
+      if (type === 'hazard') {
+        return {
+          fillColor: "#ff4444",
+          strokeColor: "#ff4444",
+          strokeWeight: 1,
+          fillOpacity: 0.4,
+          clickable: false
+        };
+      }
+      if (type === 'traffic') {
+        return {
           fillColor: "orange",
           strokeColor: "#CC6600",
           strokeWeight: 2,
-          fillOpacity: 0.5
-        });
-      } catch (e) { console.error("Traffic error:", e); }
-    }
-  }, [map, hazardData, trafficData, hazardVersion]);
+          fillOpacity: 0.5,
+          clickable: false
+        };
+      }
+      return {};
+    });
+
+  }, [map, hazardData, trafficData, hazardVersion, selectedPropertyPolygon]);
 
   const handleMapClick = useCallback((e) => {
+    if (isDrawing) {
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+      setCurrentDrawingPoints(prev => [...prev, { lat, lng }]);
+      return;
+    }
+
     if (!isPlacingMarker || isProcessingClick.current) return;
     isProcessingClick.current = true;
     const lat = e.latLng.lat();
@@ -146,6 +271,32 @@ export const MapCanvas = ({
       onIdle={handleIdle}
       options={mapOptions}
     >
+      {/* Manual Drawing Preview */}
+      {isDrawing && currentDrawingPoints.length > 0 && (
+        <>
+          <PolylineF
+            path={currentDrawingPoints}
+            options={{
+              strokeColor: '#4285F4',
+              strokeOpacity: 0.8,
+              strokeWeight: 3,
+            }}
+          />
+          {currentDrawingPoints.map((p, i) => (
+            <MarkerF
+              key={`draw-pt-${i}`}
+              position={p}
+              icon={window.google ? {
+                path: window.google.maps.SymbolPath.CIRCLE,
+                fillColor: '#4285F4',
+                fillOpacity: 1,
+                strokeWeight: 0,
+                scale: 5
+              } : undefined}
+            />
+          ))}
+        </>
+      )}
       {/* Existing markers */}
       {sites.map(site => (
         <OverlayView
@@ -188,7 +339,8 @@ export const MapCanvas = ({
       ))}
 
       {/* Buying properties markers (Green Pins) - Clustered */}
-      <MarkerClusterer
+      <MarkerClustererF
+        key={`cluster-${buyingProperties.length}`}
         options={{
           gridSize: 50,
           maxZoom: 15,
@@ -196,9 +348,9 @@ export const MapCanvas = ({
         }}
       >
         {(clusterer) =>
-          buyingProperties.map(property => (
-            <Marker
-              key={property.url}
+          buyingProperties.map((property, idx) => (
+            <MarkerF
+              key={`${property.url}-${idx}`}
               position={{ lat: property.lat, lng: property.long }}
               clusterer={clusterer}
               icon={window.google ? {
@@ -210,7 +362,7 @@ export const MapCanvas = ({
             />
           ))
         }
-      </MarkerClusterer>
+      </MarkerClustererF>
 
     </GoogleMap>
   ) : (

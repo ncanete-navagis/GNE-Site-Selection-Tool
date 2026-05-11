@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Float, Integer, String
+from geoalchemy2 import Geometry
 from .base import Base
 
 class CebuProperty(Base):
@@ -16,3 +17,4 @@ class CebuProperty(Base):
     coverphotourl = Column(String)
     lat = Column(Float)
     long = Column(Float)
+    random_shape_polygon = Column(Geometry(geometry_type='GEOMETRY', srid=4326))

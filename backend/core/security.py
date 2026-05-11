@@ -2,27 +2,13 @@
 core/security.py — Google OAuth 2.0 Security Layer.
 
 Implemented by: SECURITY_SPECIALIST
-Version: 2.0 | May 2026 (Prompt C — async rewrite, email-based upsert)
-
-Auth strategy (confirmed):
-  - The frontend sends a Google ID token in the Authorization header
-    as "Bearer <token>".
-  - The backend verifies the token with Google's OAuth2 library.
-  - Users are matched / created by EMAIL, not by the Google 'sub' claim.
-  - User.id is an auto-increment integer assigned by the DB; it is never
-    set from the token payload.
-  - password_hash is NULL for all OAuth users.
-
-SECURITY SPECIALIST rules applied:
-  - Token verification delegates entirely to google.oauth2.id_token —
-    no manual JWT parsing.
-  - HTTPException(401) on any verification failure — no detail leakage.
-  - last_login is updated on every successful authentication.
+Version: 2.1 | May 2026 (added optional user support)
 """
 
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Optional
 
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy import select
@@ -92,3 +78,16 @@ async def get_current_user(
     await session.commit()
     await session.refresh(user)
     return user
+
+
+async def get_optional_user(
+    authorization: str | None = Header(None),
+    session: AsyncSession = Depends(get_db),
+) -> Optional[User]:
+    """Dependency for endpoints that can work without auth (transient mode)."""
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    try:
+        return await get_current_user(authorization, session)
+    except HTTPException:
+        return None

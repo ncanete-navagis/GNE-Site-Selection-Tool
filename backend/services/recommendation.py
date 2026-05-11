@@ -2,7 +2,7 @@
 services/recommendation.py — Business logic for Location Recommendations.
 
 Implemented by: API_SPECIALIST
-Version: 2.0 | May 2026 (Prompt C — async rewrite)
+Version: 2.1 | May 2026 (criteria support)
 """
 
 import uuid
@@ -22,51 +22,68 @@ async def create_recommendation(
     session: AsyncSession,
     lon: float,
     lat: float,
-    user_id: int,
+    user_id: Optional[int] = None,
     name: Optional[str] = None,
     description: Optional[str] = None,
+    radius_m: Optional[float] = None,
+    population: Optional[int] = None,
+    traffic_kmh: Optional[float] = None,
+    lot_area: Optional[float] = None,
+    business_sectors: Optional[List[str]] = None,
 ) -> dict:
     """
-    Generate a new recommendation by running an analysis and persisting it.
+    Generate a new recommendation by running an analysis and persisting it (if user_id provided).
     """
-    # 1. Run the analysis (this persists the Analysis record)
+    # 1. Run the analysis
     analysis_res = await run_analysis(
         session=session,
         lon=lon,
         lat=lat,
         name=name,
         user_id=str(user_id) if user_id else None,
-        restaurant_type=None,
+        radius_m=radius_m,
+        population=population,
+        traffic_kmh=traffic_kmh,
+        lot_area=lot_area,
+        business_sectors=business_sectors
     )
 
-    # 2. Persist to LocationRecommendation table
-    geom_wkt = f"SRID=4326;POINT({lon} {lat})"
-    
-    rlocation_id = uuid.uuid4()
-    
-    record = LocationRecommendation(
-        rlocation_id=rlocation_id,
-        user_id=user_id,
-        barangay_pcode=analysis_res.get("barangay_pcode"),
-        analysis_id=uuid.UUID(analysis_res["analysis_id"]),
-        name=name,
-        description=description,
-        geom=geom_wkt,
-        google_place_id=None
-    )
+    # 2. Persist to LocationRecommendation table ONLY if user_id exists
+    if user_id:
+        geom_wkt = f"SRID=4326;POINT({lon} {lat})"
+        rlocation_id = uuid.uuid4()
+        
+        record = LocationRecommendation(
+            rlocation_id=rlocation_id,
+            user_id=user_id,
+            barangay_pcode=analysis_res.get("barangay_pcode"),
+            analysis_id=uuid.UUID(analysis_res["analysis_id"]),
+            name=name,
+            description=description,
+            geom=geom_wkt,
+            google_place_id=None
+        )
 
-    session.add(record)
-    await session.commit()
-    await session.refresh(record)
+        session.add(record)
+        await session.commit()
+        await session.refresh(record)
 
-    # 3. Construct response dict
-    return {
-        "rlocation_id": str(record.rlocation_id),
-        "name": record.name,
-        "analysis": analysis_res,
-        "barangay_name": analysis_res.get("barangay_name"),
-        "created_at": record.created_at.isoformat() if record.created_at else None,
-    }
+        return {
+            "rlocation_id": str(record.rlocation_id),
+            "name": record.name,
+            "analysis": analysis_res,
+            "barangay_name": analysis_res.get("barangay_name"),
+            "created_at": record.created_at.isoformat() if record.created_at else None,
+        }
+    else:
+        # Return transient response for unauthenticated users
+        return {
+            "rlocation_id": str(uuid.uuid4()), # Transient ID
+            "name": name or "Temporary Analysis",
+            "analysis": analysis_res,
+            "barangay_name": analysis_res.get("barangay_name"),
+            "created_at": None,
+        }
 
 
 async def get_user_recommendations(session: AsyncSession, user_id: int) -> List[dict]:

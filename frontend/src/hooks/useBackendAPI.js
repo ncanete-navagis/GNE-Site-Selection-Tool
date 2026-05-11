@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = 'http://127.0.0.1:8000/api/v1';
 
 export const useBackendAPI = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -10,7 +10,6 @@ export const useBackendAPI = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Mock auth headers for now, since we're testing integration
       const headers = {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -27,10 +26,19 @@ export const useBackendAPI = () => {
     }
   }, []);
 
-  const generateRecommendation = useCallback(async (lat, lng, name) => {
+  const generateRecommendation = useCallback(async (lat, lng, name, criteria = {}) => {
     return fetchWithState(`${API_BASE}/recommendations/generate`, {
       method: 'POST',
-      body: JSON.stringify({ latitude: lat, longitude: lng, name })
+      body: JSON.stringify({ 
+        latitude: lat, 
+        longitude: lng, 
+        name,
+        radius_m: criteria.radius_m,
+        population: criteria.population,
+        traffic_kmh: criteria.traffic_kmh,
+        lot_area: criteria.lot_area,
+        business_sectors: criteria.business_sectors
+      })
     });
   }, [fetchWithState]);
 

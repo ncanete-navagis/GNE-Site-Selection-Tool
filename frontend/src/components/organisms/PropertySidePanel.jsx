@@ -161,7 +161,7 @@ export const PropertySidePanel = ({ isOpen, onClose, property, onChooseLocation 
           </div>
           <div style={infoGroupStyle}>
             <span style={labelStyle}>Area</span>
-            <span style={valueStyle}>{property.area ? `${property.area} sqm` : 'N/A'}</span>
+            <span style={valueStyle}>{property.area ? `${property.area} Square Meters` : 'N/A'}</span>
           </div>
           <div style={infoGroupStyle}>
             <span style={labelStyle}>Location</span>
