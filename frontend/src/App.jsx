@@ -1,12 +1,15 @@
 import React from 'react';
 import './styles/global.css';
+import { AuthProvider } from './context/AuthContext';
 import { SiteSelectionHome } from './pages/SiteSelectionHome';
 
 function App() {
   return (
-    <div className="App">
-      <SiteSelectionHome />
-    </div>
+    <AuthProvider>
+      <div className="App">
+        <SiteSelectionHome />
+      </div>
+    </AuthProvider>
   );
 }
 

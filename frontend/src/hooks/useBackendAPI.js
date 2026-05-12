@@ -1,10 +1,17 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
-const API_BASE = 'http://127.0.0.1:8000/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 export const useBackendAPI = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Pull idToken from AuthContext — null when the user is not signed in.
+  // When signed in, the Bearer token is injected into every request so the
+  // backend can optionally or mandatorily verify the user identity.
+  const auth = useContext(AuthContext);
+  const idToken = auth?.idToken ?? null;
 
   const fetchWithState = useCallback(async (url, options = {}) => {
     setIsLoading(true);
@@ -14,6 +21,14 @@ export const useBackendAPI = () => {
         'Content-Type': 'application/json',
         ...options.headers,
       };
+
+      // Attach the Google ID token only when the user is signed in.
+      // Endpoints using get_optional_user will use it to link the result to
+      // the user's account; endpoints using get_current_user will require it.
+      if (idToken) {
+        headers['Authorization'] = `Bearer ${idToken}`;
+      }
+
       const response = await fetch(url, { ...options, headers });
       if (!response.ok) throw new Error(`API Error: ${response.status} ${response.statusText}`);
       const data = await response.json();
@@ -24,14 +39,15 @@ export const useBackendAPI = () => {
       setIsLoading(false);
       throw err;
     }
-  }, []);
+  }, [idToken]);
 
+  // Uses criteria object pattern (new branch's cleaner API — preserved)
   const generateRecommendation = useCallback(async (lat, lng, name, criteria = {}) => {
     return fetchWithState(`${API_BASE}/recommendations/generate`, {
       method: 'POST',
-      body: JSON.stringify({ 
-        latitude: lat, 
-        longitude: lng, 
+      body: JSON.stringify({
+        latitude: lat,
+        longitude: lng,
         name,
         radius_m: criteria.radius_m,
         population: criteria.population,
@@ -57,11 +73,13 @@ export const useBackendAPI = () => {
     return fetchWithState(`${API_BASE}/regions/`);
   }, [fetchWithState]);
 
+  // Added in new branch — preserved as-is
   const getBuyingProperties = useCallback(async (bounds) => {
     const url = `${API_BASE}/properties/buying?min_lat=${bounds.min_lat}&max_lat=${bounds.max_lat}&min_lng=${bounds.min_lng}&max_lng=${bounds.max_lng}`;
     return fetchWithState(url);
   }, [fetchWithState]);
 
+  // Added in new branch — preserved as-is
   const searchRestaurants = useCallback(async (region = 'Cebu', filters = '') => {
     const url = `${API_BASE}/places/search?region=${region}&filters=${filters}`;
     return fetchWithState(url);
@@ -75,6 +93,7 @@ export const useBackendAPI = () => {
     getBuyingProperties,
     searchRestaurants,
     isLoading,
-    error
+    error,
+    isAuthenticated: !!idToken,
   };
 };
