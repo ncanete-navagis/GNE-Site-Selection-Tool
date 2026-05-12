@@ -89,3 +89,12 @@ def search_restaurants(region: Optional[str] = Query("Cebu"), filters: Optional[
     Used for rendering restaurant location pins on the map.
     """
     return placesService.discoverRestaurants(region, filters)
+
+
+@router.get("/pois")
+def search_pois(region: Optional[str] = Query("Cebu"), types: Optional[str] = Query("")):
+    """
+    Returns a list of POIs for a given region and types.
+    Types should be a comma-separated string of Google Place types.
+    """
+    return placesService.discoverPOIs(region, types)

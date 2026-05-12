@@ -17,6 +17,7 @@ export const SiteSelectionHome = () => {
 
   // Filter States
   const [activeHazardFilter, setActiveHazardFilter] = useState('None');
+  const [currentMapBounds, setCurrentMapBounds] = useState({ xmin: 123.8, ymin: 10.2, xmax: 124.0, ymax: 10.4 });
 
   // Left Side Panel State (Analysis/AI)
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -37,7 +38,7 @@ export const SiteSelectionHome = () => {
   const [targetPopulation, setTargetPopulation] = useState(5000);
   const [targetTrafficKmh, setTargetTrafficKmh] = useState(30);
   const [targetLotArea, setTargetLotArea] = useState(500);
-  const [selectedSectors, setSelectedSectors] = useState(['Restaurants']);
+  const [selectedSectors, setSelectedSectors] = useState([]);
 
   const [hazardData, setHazardData] = useState(null);
   const [hazardVersion, setHazardVersion] = useState(0);
@@ -60,8 +61,35 @@ export const SiteSelectionHome = () => {
     getHazards, 
     getTraffic, 
     getBuyingProperties,
-    searchRestaurants 
+    searchRestaurants,
+    getPOIs 
   } = useBackendAPI();
+
+  const [poisByCategory, setPoisByCategory] = useState({});
+
+  const SECTOR_TO_GOOGLE_TYPE = {
+    'Banks': 'bank',
+    'Schools': 'school',
+    'Malls': 'shopping_mall',
+    'Hospitals': 'hospital',
+    'Restaurants': 'restaurant'
+  };
+
+  // Helper to calculate distance in meters between two lat/lng points
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371e3; // Earth radius in meters
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
+  };
 
   // Handle Layer Toggles (Global Callback)
   useEffect(() => {
@@ -87,6 +115,7 @@ export const SiteSelectionHome = () => {
 
   // Handle Map Bounds Changed - Fetch Properties & Hazards
   const handleBoundsChanged = useCallback(async (bounds) => {
+    setCurrentMapBounds(bounds);
     try {
       // Fetch properties
       const properties = await getBuyingProperties(bounds);
@@ -103,6 +132,11 @@ export const SiteSelectionHome = () => {
           hazardType = 'storm_surge';
           const level = activeHazardFilter.replace('Storm Surge ', '');
           expectedSeverity = `Level ${level}`;
+        } else if (activeHazardFilter === 'Building Data') {
+          const data = await getBuildings(bounds, selectedRegion);
+          setHazardData(data);
+          setHazardVersion(v => v + 1);
+          return;
         }
 
         const data = await getHazards(bounds, hazardType, bounds.zoom || 12);
@@ -142,6 +176,18 @@ export const SiteSelectionHome = () => {
     // Hazard layers
     const bounds = { xmin: 123.8, ymin: 10.2, xmax: 124.0, ymax: 10.4 };
     
+    if (filterLabel === 'Building Data') {
+      try {
+        const data = await getBuildings(currentMapBounds, selectedRegion);
+        setTrafficData(null);
+        setHazardData(data);
+        setHazardVersion(v => v + 1);
+      } catch (err) {
+        console.error("Failed to fetch buildings:", err);
+      }
+      return;
+    }
+
     let hazardType = null;
     let expectedSeverity = null;
 
@@ -168,19 +214,101 @@ export const SiteSelectionHome = () => {
     }
   };
 
-  // Fetch Restaurant Markers when Region or Filters change
+  // Fetch POIs for all selected sectors and restaurant filters
   useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        const filtersStr = restaurantFilters.join(',');
-        const data = await searchRestaurants(selectedRegion, filtersStr);
-        setRestaurantMarkers(data || []);
-      } catch (err) {
-        console.error("Failed to fetch restaurant discovery markers:", err);
+    const fetchAllRequiredPOIs = async () => {
+      const requiredTypes = new Set();
+      
+      // Add sector types
+      selectedSectors.forEach(sector => {
+        if (SECTOR_TO_GOOGLE_TYPE[sector]) {
+          requiredTypes.add(SECTOR_TO_GOOGLE_TYPE[sector]);
+        }
+      });
+
+      // Add restaurant filters
+      restaurantFilters.forEach(filter => {
+        requiredTypes.add(filter);
+      });
+
+      if (requiredTypes.size === 0) {
+        setPoisByCategory({});
+        return;
       }
+
+      const newPoisMap = {};
+      for (const type of requiredTypes) {
+        try {
+          const data = await getPOIs(selectedRegion, type);
+          newPoisMap[type] = data || [];
+        } catch (err) {
+          console.error(`Failed to fetch POIs for ${type}:`, err);
+        }
+      }
+      setPoisByCategory(newPoisMap);
     };
-    fetchRestaurants();
-  }, [selectedRegion, restaurantFilters, searchRestaurants]);
+
+    fetchAllRequiredPOIs();
+  }, [selectedRegion, selectedSectors, restaurantFilters, getPOIs]);
+
+  // Derived state: Filtered Buying Properties based on 2km proximity
+  const filteredBuyingProperties = React.useMemo(() => {
+    const requiredTypes = [];
+    selectedSectors.forEach(s => { if (SECTOR_TO_GOOGLE_TYPE[s]) requiredTypes.push(SECTOR_TO_GOOGLE_TYPE[s]); });
+    restaurantFilters.forEach(f => requiredTypes.push(f));
+
+    if (requiredTypes.length === 0) return buyingProperties;
+
+    return buyingProperties.filter(prop => {
+      // Must satisfy ALL required types (AND logic)
+      return requiredTypes.every(type => {
+        const pois = poisByCategory[type] || [];
+        // Check if any POI of this type is within 2000 meters
+        return pois.some(poi => {
+          const dist = calculateDistance(prop.lat, prop.long, poi.lat, poi.lng);
+          return dist <= 2000;
+        });
+      });
+    });
+  }, [buyingProperties, selectedSectors, restaurantFilters, poisByCategory]);
+
+
+  // Update map markers (Red/Blue Pins) to show all selected POI types
+  useEffect(() => {
+    const markers = [];
+    Object.entries(poisByCategory).forEach(([type, pois]) => {
+      let color = '#ff4444'; // default red
+      let stroke = '#cc0000';
+
+      if (type === 'restaurant') {
+        color = '#e91e63';
+        stroke = '#ad1457';
+      } else if (type === 'bank') {
+        color = '#ff4444';
+        stroke = '#cc0000';
+      } else if (type === 'school') {
+        color = '#ffeb3b';
+        stroke = '#fbc02d';
+      } else if (type === 'shopping_mall') {
+        color = '#9c27b0';
+        stroke = '#6a1b9a';
+      } else if (type === 'hospital') {
+        color = '#ff9800';
+        stroke = '#e65100';
+      }
+
+      pois.forEach(p => {
+        markers.push({ ...p, pinColor: color, pinStroke: stroke });
+      });
+    });
+
+    // De-duplicate by POI ID
+    const uniquePois = Array.from(new Map(markers.map(p => [p.id, p])).values());
+    setRestaurantMarkers(uniquePois);
+  }, [poisByCategory]);
+
+
+  // Fetch Restaurant Markers when Region or Filters change (for Red Pins)
 
 
   const handleFabClick = () => {
@@ -340,7 +468,7 @@ export const SiteSelectionHome = () => {
       hazardData={hazardData}
       hazardVersion={hazardVersion}
       trafficData={trafficData}
-      buyingProperties={buyingProperties}
+      buyingProperties={filteredBuyingProperties}
       onPropertySelect={handlePropertySelect}
       competitorMarkers={competitorMarkers}
       onBoundsChanged={handleBoundsChanged}

@@ -67,6 +67,7 @@ export const FeaturesPanelForm = ({
               key={sector.label}
               label={sector.label}
               isSelected={selectedSectors.includes(sector.label)}
+              selectedBorderColor={sector.color}
               onClick={() => {
                 setSelectedSectors(prev =>
                   prev.includes(sector.label)

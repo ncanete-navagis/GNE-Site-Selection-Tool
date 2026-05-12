@@ -81,11 +81,14 @@ def fetchPlacesByText(query):
         return []
 
 
-def fetchNearbyPlaces(lat, lng, radius=5000.0):
+def fetchNearbyPlaces(lat, lng, radius=5000.0, includedTypes=None):
     url = "https://places.googleapis.com/v1/places:searchNearby"
 
+    if includedTypes is None:
+        includedTypes = ["restaurant"]
+
     body = {
-        "includedTypes": ["restaurant"],
+        "includedTypes": includedTypes,
         "maxResultCount": 20,
         "locationRestriction": {
             "circle": {
@@ -230,23 +233,53 @@ def discoverRestaurants(region, filters=""):
         if not filterList:
             return restaurants
 
-        # print(f"DEBUG: Applying filters: {filterList}")
-
         filtered_restaurants = []
-
         for restaurant in restaurants:
             restaurant_types = restaurant.get("types", [])
-
-            # Check if ANY of the selected filters match ANY of the restaurant types
-            matches = any(
-                f in restaurant_types
-                for f in filterList
-            )
-
+            matches = any(f in restaurant_types for f in filterList)
             if matches:
                 filtered_restaurants.append(restaurant)
-
-        # print(f"DEBUG: Found {len(filtered_restaurants)} matches")
         restaurants = filtered_restaurants
 
     return restaurants
+
+
+def discoverPOIs(region, types_list):
+    """
+    Returns a list of POIs for a given region and a list of Google Place types.
+    """
+    normalizedRegion = (
+        region[0].upper() + region[1:].lower()
+        if region
+        else "Cebu"
+    )
+
+    config = REGION_CONFIG.get(
+        normalizedRegion,
+        REGION_CONFIG["Cebu"]
+    )
+
+    if isinstance(types_list, str):
+        types_list = [t.strip() for t in types_list.split(",") if t.strip()]
+
+    places = fetchNearbyPlaces(
+        config["lat"],
+        config["lng"],
+        config["radius"],
+        includedTypes=types_list
+    )
+
+    pois = []
+    for place in places:
+        location = place.get("location", {})
+        pois.append({
+            "id": place.get("id", ""),
+            "name": place.get("displayName", {}).get("text", ""),
+            "lat": location.get("latitude"),
+            "lng": location.get("longitude"),
+            "address": place.get("formattedAddress", ""),
+            "rating": place.get("rating"),
+            "types": [str(t).strip().lower() for t in place.get("types", [])]
+        })
+
+    return pois

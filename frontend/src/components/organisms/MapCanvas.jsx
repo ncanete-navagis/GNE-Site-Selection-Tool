@@ -42,9 +42,14 @@ const GREEN_PIN_SVG = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
   <path d="M12 0C5.373 0 0 5.373 0 12c0 8.4 12 24 12 24s12-15.6 12-24c0-6.627-5.373-12-12-12zm0 18c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6z" fill="#28a745" stroke="#1b702e" stroke-width="1.5"/>
 </svg>`);
 
-const RED_PIN_SVG = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+const GET_PIN_SVG = (fill = '#ff4444', stroke = '#cc0000') => 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" width="30" height="42" viewBox="0 0 24 36">
-  <path d="M12 0C5.373 0 0 5.373 0 12c0 8.4 12 24 12 24s12-15.6 12-24c0-6.627-5.373-12-12-12zm0 18c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6z" fill="#ff4444" stroke="#cc0000" stroke-width="1.5"/>
+  <path d="M12 0C5.373 0 0 5.373 0 12c0 8.4 12 24 12 24s12-15.6 12-24c0-6.627-5.373-12-12-12zm0 18c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6z" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>
+</svg>`);
+
+const GET_DOT_SVG = (fill = '#ff4444', stroke = '#ffffff') => 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <circle cx="8" cy="8" r="6" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
 </svg>`);
 
 export const MapCanvas = ({
@@ -214,6 +219,15 @@ export const MapCanvas = ({
           strokeWeight: 2,
           fillOpacity: 0.5,
           clickable: false
+        };
+      }
+      if (type === 'building') {
+        return {
+          fillColor: "#ffffff",
+          strokeColor: "#666666",
+          strokeWeight: 1,
+          fillOpacity: 0.6,
+          clickable: true
         };
       }
       return {};
@@ -393,9 +407,9 @@ export const MapCanvas = ({
           key={`restaurant-${restaurant.id || idx}`}
           position={{ lat: restaurant.lat, lng: restaurant.lng }}
           icon={window.google ? {
-            url: RED_PIN_SVG,
-            scaledSize: new window.google.maps.Size(30, 42),
-            anchor: new window.google.maps.Point(15, 42)
+            url: GET_DOT_SVG(restaurant.pinColor),
+            scaledSize: new window.google.maps.Size(16, 16),
+            anchor: new window.google.maps.Point(8, 8)
           } : undefined}
           onClick={() => setActiveRestaurant(restaurant)}
         />

@@ -15,6 +15,7 @@ export const Tag = React.memo(({
   color,
   backgroundColor,
   borderColor,
+  selectedBorderColor,
   isSelected,
   onClick
 }) => {
@@ -22,7 +23,7 @@ export const Tag = React.memo(({
     fontSize: '12px',
     padding: '4px 12px',
     borderRadius: 'var(--border-radius-sm)',
-    border: '1px solid',
+    border: '2px solid',
     display: 'inline-block',
     transition: 'all var(--transition-fast)',
     cursor: onClick ? 'pointer' : 'default',
@@ -33,7 +34,9 @@ export const Tag = React.memo(({
     ? {
       padding: '10px 18px',
       borderRadius: 'var(--border-radius-pill)',
-      border: isSelected ? `1px solid var(--accent-primary)` : '1px solid var(--border-primary)',
+      border: isSelected 
+        ? `4px solid ${selectedBorderColor || 'var(--accent-primary)'}` 
+        : '1px solid var(--border-primary)',
       backgroundColor: isSelected ? 'var(--accent-primary)' : 'var(--bg-elevated)',
       color: isSelected ? '#ffffff' : 'var(--text-secondary)',
       fontWeight: '700',

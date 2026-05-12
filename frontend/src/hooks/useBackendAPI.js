@@ -85,6 +85,17 @@ export const useBackendAPI = () => {
     return fetchWithState(url);
   }, [fetchWithState]);
 
+  const getPOIs = useCallback(async (region = 'Cebu', types = '') => {
+    const url = `${API_BASE}/places/pois?region=${region}&types=${types}`;
+    return fetchWithState(url);
+  }, [fetchWithState]);
+
+  const getBuildings = useCallback(async (bounds, region = 'Cebu') => {
+    const { xmin, ymin, xmax, ymax } = bounds;
+    const url = `${API_BASE}/buildings/?region=${region}&xmin=${xmin}&ymin=${ymin}&xmax=${xmax}&ymax=${ymax}`;
+    return fetchWithState(url);
+  }, [fetchWithState]);
+
   return {
     generateRecommendation,
     getHazards,
@@ -92,6 +103,8 @@ export const useBackendAPI = () => {
     getRegions,
     getBuyingProperties,
     searchRestaurants,
+    getPOIs,
+    getBuildings,
     isLoading,
     error,
     isAuthenticated: !!idToken,
