@@ -50,7 +50,7 @@ export const TopNavigationPanel = ({ searchQuery, onSearchChange, onFilterChange
   ];
 
   return (
-    <PillBase style={containerStyle}>
+    <PillBase id="tutorial-top-navigation" style={containerStyle}>
       <DropdownButton 
         iconName="filter" 
         label={selectedFilter === 'None' ? 'Hazards' : selectedFilter} 

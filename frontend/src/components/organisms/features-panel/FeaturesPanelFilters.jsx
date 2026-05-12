@@ -8,7 +8,7 @@ export const FeaturesPanelFilters = ({
   isLoadingTypes
 }) => {
   return (
-    <div style={{ flex: 'none' }}>
+    <div id="tutorial-filters-section" style={{ flex: 'none' }}>
       <CollapsibleSection
         title="Filter"
         items={restaurantTypes}

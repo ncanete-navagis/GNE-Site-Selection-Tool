@@ -7,7 +7,7 @@ export const FeaturesPanelAnalysis = ({ poi }) => {
   if (!poi?.analysis) return null;
 
   return (
-    <div style={{ padding: '0 20px 24px 20px' }}>
+    <div id="tutorial-analysis-section" style={{ padding: '0 20px 24px 20px' }}>
       <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '16px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         Scoring Breakdown
       </div>

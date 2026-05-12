@@ -13,11 +13,11 @@ import { risksPrompts } from '../../ai-prompts/risks.prompts';
 import { spacePrompts } from '../../ai-prompts/space.prompts';
 import { businessFitPrompts } from '../../ai-prompts/businessFit.prompts';
 
-const FAQDropdown = ({ onSendPrompt }) => {
+const FAQDropdown = ({ id, onSendPrompt }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+    <div id={id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
@@ -108,7 +108,7 @@ export const AIChatPanel = ({ poi }) => {
             {/* 👇 Contextual Mini FAQ Dropdown (appears on model messages) */}
             {(msg.id === 'initial' || msg.showMiniFAQ) && msg.role === 'model' && (
               <div style={{ marginLeft: '12px', marginTop: '4px' }}>
-                <FAQDropdown onSendPrompt={sendFAQPrompt} />
+                <FAQDropdown id="tutorial-ai-faq" onSendPrompt={sendFAQPrompt} />
               </div>
             )}
           </div>
@@ -157,6 +157,7 @@ export const AIChatPanel = ({ poi }) => {
         borderTop: '1px solid var(--border-primary)'
       }}>
         <form
+          id="tutorial-ai-user-inputs"
           style={{
             display: 'flex',
             gap: '10px',

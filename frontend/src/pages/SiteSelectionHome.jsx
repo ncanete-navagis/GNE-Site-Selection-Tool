@@ -8,6 +8,8 @@ import { MapToolsPanel } from '../components/organisms/MapToolsPanel';
 import { DefaultHUD } from '../components/organisms/DefaultHUD';
 import { DrawingResultPopup } from '../components/molecules/DrawingResultPopup';
 import { useBackendAPI } from '../hooks/useBackendAPI';
+import TutorialTour from '../tutorial/TutorialTour';
+import AIChatTutorial from '../tutorial/AIChatTutorial';
 
 export const SiteSelectionHome = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -406,10 +408,17 @@ export const SiteSelectionHome = () => {
   );
 
   return (
-    <MapDashboardLayout
-      mapComponent={mapComponent}
-      hudComponent={hudComponent}
-      sidePanelComponent={sidePanelComponent}
-    />
+    <>
+      <MapDashboardLayout
+        mapComponent={mapComponent}
+        hudComponent={hudComponent}
+        sidePanelComponent={sidePanelComponent}
+      />
+      <TutorialTour onSidePanelOpen={() => setIsPanelOpen(true)} />
+      <AIChatTutorial 
+        poi={geminiMarker} 
+        isAIPanelOpen={isPanelOpen && panelMode === 'ai'} 
+      />
+    </>
   );
 };

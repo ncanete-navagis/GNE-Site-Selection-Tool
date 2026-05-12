@@ -33,8 +33,8 @@ regionRestaurantsCache = {}
 
 def debug_response(res):
     print("\n================ GOOGLE API DEBUG ================")
-    print("STATUS:", res.status_code)
-    print("BODY:", res.text)
+    # print("STATUS:", res.status_code)
+    # print("BODY:", res.text)
     print("==================================================\n")
 
 
@@ -230,7 +230,7 @@ def discoverRestaurants(region, filters=""):
         if not filterList:
             return restaurants
 
-        print(f"DEBUG: Applying filters: {filterList}")
+        # print(f"DEBUG: Applying filters: {filterList}")
 
         filtered_restaurants = []
 
@@ -246,7 +246,7 @@ def discoverRestaurants(region, filters=""):
             if matches:
                 filtered_restaurants.append(restaurant)
 
-        print(f"DEBUG: Found {len(filtered_restaurants)} matches")
+        # print(f"DEBUG: Found {len(filtered_restaurants)} matches")
         restaurants = filtered_restaurants
 
     return restaurants

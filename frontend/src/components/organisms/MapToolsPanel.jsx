@@ -2,7 +2,7 @@ import React from 'react';
 
 export const MapToolsPanel = ({ isPlacingMarker, isDrawing, onDropPinClick, onDrawClick, onFilterClick, onFinishDrawing }) => {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px', pointerEvents: 'auto' }}>
+    <div id="tutorial-map-tools" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px', pointerEvents: 'auto' }}>
       {/* Finish Button (Conditional) */}
       {isDrawing && (
         <button

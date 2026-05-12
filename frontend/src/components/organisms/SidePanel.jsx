@@ -78,8 +78,17 @@ export const SidePanel = ({
     transition: 'all var(--transition-fast)',
   };
 
+  // Tutorial onboarding: Auto-open side panel if tutorial is active
+  React.useEffect(() => {
+    const isTutorialActive = document.body.classList.contains('joyride-active');
+    if (isTutorialActive && !isOpen) {
+      // Logic to auto-open could be triggered here if we had access to setOpen
+      // For now, we ensure the ID is present for targeting
+    }
+  }, [isOpen]);
+
   return (
-    <div style={panelStyle}>
+    <div id="tutorial-side-panel" style={panelStyle}>
       {/* HEADER */}
       <div style={headerStyle}>
         <div style={toggleContainerStyle}>

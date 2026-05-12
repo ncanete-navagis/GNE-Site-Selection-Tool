@@ -9,17 +9,21 @@ export const FeaturesPanelMapControls = ({
 }) => {
   return (
     <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-primary)', backgroundColor: 'var(--bg-secondary)' }}>
-      <ToggleSwitch
-        label="Choropleth Map"
-        isOn={isChoroplethOn}
-        onToggle={() => setIsChoroplethOn(prev => !prev)}
-      />
+      <div id="tutorial-choropleth-toggle">
+        <ToggleSwitch
+          label="Choropleth Map"
+          isOn={isChoroplethOn}
+          onToggle={() => setIsChoroplethOn(prev => !prev)}
+        />
+      </div>
 
-      <ToggleSwitch
-        label="Heat Map"
-        isOn={isHeatMapOn}
-        onToggle={() => setIsHeatMapOn(prev => !prev)}
-      />
+      <div id="tutorial-heatmap-toggle">
+        <ToggleSwitch
+          label="Heat Map"
+          isOn={isHeatMapOn}
+          onToggle={() => setIsHeatMapOn(prev => !prev)}
+        />
+      </div>
     </div>
   );
 };

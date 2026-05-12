@@ -16,6 +16,7 @@ export const UserAvatar = ({ src }) => {
 
   return (
     <div 
+      id="tutorial-user-avatar"
       style={containerStyle} 
       className="user-avatar-container"
       onMouseEnter={(e) => {
