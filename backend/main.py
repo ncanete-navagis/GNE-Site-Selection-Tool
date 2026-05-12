@@ -52,7 +52,6 @@ async def database_error_handler(request: Request, exc: Exception):
     """
     Global exception handler for database errors to prevent data leakage.
     """
-    print(f"DATABASE ERROR: {exc}")
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error occurred."}

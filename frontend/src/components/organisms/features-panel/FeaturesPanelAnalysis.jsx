@@ -18,10 +18,30 @@ export const FeaturesPanelAnalysis = ({ poi }) => {
           { label: 'Competition', score: poi.analysis.competing_business_score, color: '#10b981' },
           { label: 'Flood Safety', score: poi.analysis.flood_hazard_score, color: '#f59e0b' },
           { label: 'Landslide Safety', score: poi.analysis.landslide_hazard_score, color: '#ef4444' },
+          { label: 'Storm Surge Safety', score: poi.analysis.storm_surge_score, color: '#8b5cf6' },
         ].map((item, idx) => (
           <ScoreBar key={idx} {...item} />
         ))}
       </div>
+
+      {/* Location Address (from reverse geocoding) */}
+      {(poi.analysis.street || poi.analysis.house_number) && (
+        <div style={{
+          marginTop: '24px',
+          backgroundColor: 'var(--bg-card)',
+          padding: '16px',
+          borderRadius: 'var(--border-radius-md)',
+          border: '1px solid var(--border-primary)',
+          boxShadow: 'var(--shadow-soft)',
+        }}>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+            📍 Location Address
+          </div>
+          <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '500' }}>
+            {[poi.analysis.house_number, poi.analysis.street].filter(Boolean).join(' ') || 'Address unavailable'}
+          </div>
+        </div>
+      )}
 
       {/* Comparison Squares */}
       <div style={{
@@ -83,6 +103,103 @@ export const FeaturesPanelAnalysis = ({ poi }) => {
                 <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>{count}</div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Site Accessibility (from site_context — parking & transit) */}
+      {poi.analysis.site_context && (poi.analysis.site_context.parking_count > 0 || poi.analysis.site_context.transit_count > 0) && (
+        <div style={{ marginTop: '32px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '16px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Site Accessibility
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+            <div style={{
+              backgroundColor: 'var(--bg-card)',
+              padding: '16px',
+              borderRadius: 'var(--border-radius-md)',
+              border: '1px solid var(--border-primary)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              boxShadow: 'var(--shadow-soft)',
+            }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>🅿️ Parking</div>
+              <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>{poi.analysis.site_context.parking_count}</div>
+            </div>
+            <div style={{
+              backgroundColor: 'var(--bg-card)',
+              padding: '16px',
+              borderRadius: 'var(--border-radius-md)',
+              border: '1px solid var(--border-primary)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              boxShadow: 'var(--shadow-soft)',
+            }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>🚌 Transit</div>
+              <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>{poi.analysis.site_context.transit_count}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Market Analysis (from market_analysis — competitive landscape) */}
+      {poi.analysis.market_analysis && poi.analysis.market_analysis.competition_intensity > 0 && (
+        <div style={{ marginTop: '32px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '16px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Market Analysis
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+            <div style={{
+              backgroundColor: 'var(--bg-card)',
+              padding: '16px',
+              borderRadius: 'var(--border-radius-md)',
+              border: '1px solid var(--border-primary)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              boxShadow: 'var(--shadow-soft)',
+            }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg Rating</div>
+              <div style={{ fontSize: '20px', fontWeight: '800', color: '#f59e0b', letterSpacing: '-0.02em' }}>
+                {poi.analysis.market_analysis.avg_rating > 0 ? `${poi.analysis.market_analysis.avg_rating} ★` : '—'}
+              </div>
+            </div>
+            <div style={{
+              backgroundColor: 'var(--bg-card)',
+              padding: '16px',
+              borderRadius: 'var(--border-radius-md)',
+              border: '1px solid var(--border-primary)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              boxShadow: 'var(--shadow-soft)',
+            }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Competitors</div>
+              <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>{poi.analysis.market_analysis.competition_intensity}</div>
+            </div>
+            <div style={{
+              backgroundColor: 'var(--bg-card)',
+              padding: '16px',
+              borderRadius: 'var(--border-radius-md)',
+              border: '1px solid var(--border-primary)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              boxShadow: 'var(--shadow-soft)',
+            }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Saturation</div>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: '800',
+                letterSpacing: '-0.02em',
+                color: poi.analysis.market_analysis.market_saturation === 'High' ? '#ef4444' :
+                       poi.analysis.market_analysis.market_saturation === 'Moderate' ? '#f59e0b' : '#10b981'
+              }}>
+                {poi.analysis.market_analysis.market_saturation || '—'}
+              </div>
+            </div>
           </div>
         </div>
       )}

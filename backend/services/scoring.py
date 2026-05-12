@@ -2,31 +2,36 @@
 services/scoring.py — GNE Site Selection Scoring Engine.
 
 Implemented by: OPTIMIZATION_ENGINEER / API_SPECIALIST
-Version: 2.0 | May 2026 (Prompt C integration — aligned with Earl's actual DB schema)
+Version: 2.1 | May 2026 (Merged: intensity-based hazard scoring + foot traffic from GNE-old)
 
 Data source mapping (what geo_queries.py actually returns):
   hazards  → list[dict] from get_hazards_near_point()
              each dict has a "hazard_type" key = "flood" | "landslide" | "storm_surge"
+             Intensity fields: Var (flood), LH (landslide), HAZ (storm surge) — 1-3 scale
   buildings → list of CebuBuilding/ManilaBuilding ORM instances from get_buildings_near_point()
   traffic_data → always [] (stub — traffic table not in Earl's schema)
+  foot_traffic_data → dict from external_places.get_foot_traffic_proxy()
+                      keys: "total_user_ratings", "place_count"
 
 Scoring design contracts:
   - All sub-scores are normalised to [0.0, 1.0].
-  - Higher hazard count  → MORE dangerous  → lower score (inverted).
+  - Higher hazard intensity → MORE dangerous → lower score (inverted).
   - Higher building count → MORE competitors → lower score (inverted).
-  - Traffic / foot-traffic scores are 0.5 neutral stubs.
+  - Traffic score is 0.5 neutral stub (no DB table yet).
+  - Foot traffic uses real Google Places review count as proxy.
   - Functions are stateless; no DB sessions, no ORM access.
 
 Saturation points:
-  Hazard:   5 records saturate the risk to 1.0 → score 0.0
-  Building: 20 records saturate the density  → score 0.0
+  Hazard:   5 records saturate the risk to 1.0 → score 0.0 (fallback when no intensity)
+  Building: 40 records saturate the density  → score 0.0
+  Foot traffic: 8000 aggregated reviews saturate → score 1.0
 
-Star-rating thresholds (overall_score → stars):
-    [0.00, 0.20) → 1 ★
-    [0.20, 0.40) → 2 ★
-    [0.40, 0.60) → 3 ★
-    [0.60, 0.80) → 4 ★
-    [0.80, 1.00] → 5 ★
+Star-rating thresholds (overall_score → stars) — ADJUSTED TO BE MORE CRITICAL:
+    [0.00, 0.30) → 1 ★
+    [0.30, 0.50) → 2 ★
+    [0.50, 0.70) → 3 ★
+    [0.70, 0.85) → 4 ★
+    [0.85, 1.00] → 5 ★
 
 Pros/cons thresholds:
   A sub-score ≥ 0.65 is considered a pro; ≤ 0.35 is considered a con.
@@ -44,7 +49,11 @@ from typing import Any, Optional
 HAZARD_SATURATION: int = 5
 
 #: Count of nearby competing businesses at which the density saturates → score 0.0
-COMPETING_BUSINESS_SATURATION: int = 20
+COMPETING_BUSINESS_SATURATION: int = 40
+
+#: Aggregated user review count at which foot traffic saturates → score 1.0
+# Adjusted for 20-result API limit (e.g., 20 places with 400 reviews each = 8000)
+FOOT_TRAFFIC_SATURATION: int = 8000
 
 #: Sub-score at-or-above which a dimension is promoted to "pro".
 PRO_THRESHOLD: float = 0.65
@@ -52,14 +61,14 @@ PRO_THRESHOLD: float = 0.65
 #: Sub-score at-or-below which a dimension is flagged as "con".
 CON_THRESHOLD: float = 0.35
 
-# Human-readable label per scoring dimension used in pros/cons generation.
+# Human-readable label per scoring dimension used in pros/cons generation (PROS).
 _DIMENSION_LABELS: dict[str, str] = {
-    "flood_hazard_score":        "Flood risk",
-    "landslide_hazard_score":    "Landslide risk",
-    "storm_surge_score":         "Storm surge risk",
-    "competing_business_score":  "Nearby competition",
-    "traffic_score":             "Vehicle traffic",      # note: estimated
-    "foot_traffic_score":        "Foot traffic",         # note: estimated
+    "flood_hazard_score":        "Low flood risk",
+    "landslide_hazard_score":    "Low landslide risk",
+    "storm_surge_score":         "Low storm surge risk",
+    "competing_business_score":  "Low competition",
+    "traffic_score":             "Good vehicle traffic",
+    "foot_traffic_score":        "High foot traffic",
 }
 
 # Human-readable con labels per dimension (used when score is low).
@@ -67,9 +76,9 @@ _CON_LABELS: dict[str, str] = {
     "flood_hazard_score":        "High flood risk",
     "landslide_hazard_score":    "High landslide risk",
     "storm_surge_score":         "High storm surge risk",
-    "competing_business_score":  "High nearby competition",
-    "traffic_score":             "Low vehicle traffic (estimated)",
-    "foot_traffic_score":        "Low foot traffic (estimated)",
+    "competing_business_score":  "High competition",
+    "traffic_score":             "Low vehicle traffic",
+    "foot_traffic_score":        "Low foot traffic",
 }
 
 # ---------------------------------------------------------------------------
@@ -91,6 +100,7 @@ def compute_scores(
     hazards: list[Any],
     buildings: list[Any],
     traffic_data: list[Any],
+    foot_traffic_data: Optional[dict[str, Any]] = None,
 ) -> dict[str, float]:
     """Compute all Analysis-entity sub-scores for a candidate site location.
 
@@ -102,6 +112,7 @@ def compute_scores(
                    get_buildings_near_point().  Only the count is used.
         traffic_data: Result of get_traffic_near_point() — currently always [].
                       Ignored; scores default to 0.5 neutral stub.
+        foot_traffic_data: Optional dict with "total_user_ratings" and "place_count".
 
     Returns:
         A dict[str, float] with keys:
@@ -111,34 +122,55 @@ def compute_scores(
     """
     # ------------------------------------------------------------------
     # 1. flood_hazard_score
-    #    Count flood-type hazard records → invert against saturation of 5
+    #    Use max intensity (Var) if available. 1=Low, 2=Med, 3=High.
+    #    If no intensity, count records against saturation.
     # ------------------------------------------------------------------
-    flood_count = sum(
-        1 for h in hazards if (h.get("hazard_type") if isinstance(h, dict) else getattr(h, "hazard_type", None)) == "flood"
-    )
-    flood_hazard_score = max(0.0, 1.0 - (flood_count / HAZARD_SATURATION))
+    flood_hazards = [h for h in hazards if (h.get("hazard_type") if isinstance(h, dict) else getattr(h, "hazard_type", None)) == "flood"]
+    if not flood_hazards:
+        flood_hazard_score = 1.0
+    else:
+        # Check for intensity value 'Var' (1-3 scale)
+        intensities = [h.get("Var", 1.0) for h in flood_hazards if isinstance(h, dict)]
+        if intensities:
+            max_val = max(intensities)
+            # Map 1.0 -> 0.7, 2.0 -> 0.4, 3.0 -> 0.1 (or 0.0)
+            flood_hazard_score = max(0.0, 1.0 - (max_val / 3.3)) 
+        else:
+            flood_hazard_score = max(0.0, 1.0 - (len(flood_hazards) / HAZARD_SATURATION))
 
     # ------------------------------------------------------------------
     # 2. landslide_hazard_score
-    #    Count landslide-type hazard records → invert against saturation of 5
+    #    Use max intensity (LH) if available. 1=Low, 2=Med, 3=High.
     # ------------------------------------------------------------------
-    landslide_count = sum(
-        1 for h in hazards if (h.get("hazard_type") if isinstance(h, dict) else getattr(h, "hazard_type", None)) == "landslide"
-    )
-    landslide_hazard_score = max(0.0, 1.0 - (landslide_count / HAZARD_SATURATION))
+    landslide_hazards = [h for h in hazards if (h.get("hazard_type") if isinstance(h, dict) else getattr(h, "hazard_type", None)) == "landslide"]
+    if not landslide_hazards:
+        landslide_hazard_score = 1.0
+    else:
+        intensities = [h.get("LH", 1.0) for h in landslide_hazards if isinstance(h, dict)]
+        if intensities:
+            max_val = max(intensities)
+            landslide_hazard_score = max(0.0, 1.0 - (max_val / 3.3))
+        else:
+            landslide_hazard_score = max(0.0, 1.0 - (len(landslide_hazards) / HAZARD_SATURATION))
 
     # ------------------------------------------------------------------
     # 3. storm_surge_score
-    #    Count storm-surge-type hazard records → invert against saturation of 5
+    #    Use max intensity (HAZ) if available. 1=Low, 2=Med, 3=High.
     # ------------------------------------------------------------------
-    storm_count = sum(
-        1 for h in hazards if (h.get("hazard_type") if isinstance(h, dict) else getattr(h, "hazard_type", None)) == "storm_surge"
-    )
-    storm_surge_score = max(0.0, 1.0 - (storm_count / HAZARD_SATURATION))
+    storm_hazards = [h for h in hazards if (h.get("hazard_type") if isinstance(h, dict) else getattr(h, "hazard_type", None)) == "storm_surge"]
+    if not storm_hazards:
+        storm_surge_score = 1.0
+    else:
+        intensities = [h.get("HAZ", 1.0) for h in storm_hazards if isinstance(h, dict)]
+        if intensities:
+            max_val = max(intensities)
+            storm_surge_score = max(0.0, 1.0 - (max_val / 3.3))
+        else:
+            storm_surge_score = max(0.0, 1.0 - (len(storm_hazards) / HAZARD_SATURATION))
 
     # ------------------------------------------------------------------
     # 4. competing_business_score
-    #    Count CebuBuilding/ManilaBuilding instances → invert against saturation of 20
+    #    Count CebuBuilding/ManilaBuilding instances → invert against saturation of 40
     # ------------------------------------------------------------------
     biz_count = len(buildings)
     competing_business_score = max(0.0, 1.0 - (biz_count / COMPETING_BUSINESS_SATURATION))
@@ -151,11 +183,16 @@ def compute_scores(
     traffic_score: float = 0.5
 
     # ------------------------------------------------------------------
-    # 6. foot_traffic_score — STUB
-    #    No foot traffic data source available. Returns 0.5 neutral.
+    # 6. foot_traffic_score
+    #    Uses aggregated review count from Google Places API as a proxy.
+    #    Normalised against a saturation of 8000 reviews.
     # ------------------------------------------------------------------
-    # STUB: no foot traffic data source available.
-    foot_traffic_score: float = 0.5
+    if foot_traffic_data:
+        total_reviews = foot_traffic_data.get("total_user_ratings", 0)
+        foot_traffic_score = total_reviews / FOOT_TRAFFIC_SATURATION
+    else:
+        # Default to 0.5 neutral stub if no data provided
+        foot_traffic_score = 0.5
 
     return {
         "flood_hazard_score":       _clamp(flood_hazard_score),
@@ -163,7 +200,7 @@ def compute_scores(
         "storm_surge_score":        _clamp(storm_surge_score),
         "competing_business_score": _clamp(competing_business_score),
         "traffic_score":            traffic_score,
-        "foot_traffic_score":       foot_traffic_score,
+        "foot_traffic_score":       _clamp(foot_traffic_score),
     }
 
 
@@ -207,12 +244,12 @@ def compute_overall_score(
 def score_to_stars(overall_score: float) -> int:
     """Map a normalised overall score to a 1–5 star rating.
 
-    Thresholds (inclusive lower bound):
-        [0.00, 0.20) → 1 ★
-        [0.20, 0.40) → 2 ★
-        [0.40, 0.60) → 3 ★
-        [0.60, 0.80) → 4 ★
-        [0.80, 1.00] → 5 ★
+    Thresholds (inclusive lower bound) — ADJUSTED TO BE MORE CRITICAL:
+        [0.00, 0.30) → 1 ★
+        [0.30, 0.50) → 2 ★
+        [0.50, 0.70) → 3 ★
+        [0.70, 0.85) → 4 ★
+        [0.85, 1.00] → 5 ★
 
     Args:
         overall_score: A float in [0.0, 1.0].
@@ -221,13 +258,13 @@ def score_to_stars(overall_score: float) -> int:
         An integer in [1, 5].
     """
     clamped = _clamp(overall_score)
-    if clamped >= 0.80:
+    if clamped >= 0.85:
         return 5
-    if clamped >= 0.60:
+    if clamped >= 0.70:
         return 4
-    if clamped >= 0.40:
+    if clamped >= 0.50:
         return 3
-    if clamped >= 0.20:
+    if clamped >= 0.30:
         return 2
     return 1
 
