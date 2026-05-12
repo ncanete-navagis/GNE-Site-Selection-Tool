@@ -12,38 +12,45 @@ export const ToggleSwitch = React.memo(({ label, isOn, onToggle }) => (
     style={{
       display: 'flex',
       justifyContent: 'space-between',
-      padding: '12px 20px',
-      borderBottom: '1px solid rgba(255,255,255,0.05)'
+      alignItems: 'center',
+      padding: '16px 24px',
+      borderBottom: '1px solid var(--border-primary)',
+      transition: 'background-color var(--transition-fast)'
     }}
+    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-card)'}
+    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
     role="switch"
     aria-checked={isOn}
     tabIndex={0}
     onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onToggle()}
   >
-    <span style={{ color: '#DDD' }}>{label}</span>
+    <span style={{ color: 'var(--text-secondary)', fontSize: '14px', fontWeight: '500' }}>{label}</span>
 
     <div
       onClick={onToggle}
       style={{
-        width: '40px',
-        height: '20px',
-        borderRadius: '20px',
-        backgroundColor: isOn ? '#3291ff' : '#444',
+        width: '44px',
+        height: '24px',
+        borderRadius: 'var(--border-radius-pill)',
+        backgroundColor: isOn ? 'var(--button-primary)' : 'var(--bg-elevated)',
+        border: '1px solid var(--border-primary)',
         cursor: 'pointer',
         position: 'relative',
-        transition: 'background-color 0.2s'
+        transition: 'all var(--transition-normal)',
+        boxShadow: isOn ? '0 0 8px var(--accent-soft)' : 'none'
       }}
     >
       <div
         style={{
           position: 'absolute',
-          top: '2px',
-          left: isOn ? '22px' : '2px',
+          top: '3px',
+          left: isOn ? '23px' : '3px',
           width: '16px',
           height: '16px',
           borderRadius: '50%',
           backgroundColor: '#FFF',
-          transition: 'left 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: 'all var(--transition-normal)',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
         }}
       />
     </div>

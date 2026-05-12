@@ -24,14 +24,14 @@ export const DefaultHUD = ({
     top: 0, left: 0, right: 0, bottom: 0,
     pointerEvents: 'none',
     zIndex: 10,
-    padding: '24px'
+    padding: '20px'
   };
 
   const bottomSectionStyle = {
     position: 'absolute',
-    bottom: '24px',
-    left: '24px',
-    right: '24px',
+    bottom: '20px',
+    left: '20px',
+    right: '20px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-end'
@@ -41,7 +41,7 @@ export const DefaultHUD = ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-end',
-    gap: '16px',
+    gap: '20px',
     pointerEvents: 'auto'
   };
 

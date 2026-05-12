@@ -10,11 +10,19 @@ import React from 'react';
  * @param {function} [props.onApply] - Optional apply button handler
  */
 export const InputField = React.memo(({ label, unit, value, onChange, onApply }) => (
-  <div style={{ marginBottom: '20px' }}>
-    <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '8px', fontWeight: '500' }}>
+  <div style={{ marginBottom: '24px' }}>
+    <label style={{ 
+      display: 'block', 
+      fontSize: '11px', 
+      color: 'var(--text-muted)', 
+      marginBottom: '10px', 
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: '0.05em'
+    }}>
       {label}
     </label>
-    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '12px' }}>
       <div style={{ position: 'relative', flex: 1 }}>
         <input
           type="text"
@@ -23,24 +31,38 @@ export const InputField = React.memo(({ label, unit, value, onChange, onApply })
           onKeyDown={(e) => e.key === 'Enter' && onApply && onApply()}
           style={{
             width: '100%',
-            backgroundColor: '#2A2A2A',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '12px 40px 12px 16px',
-            color: '#FFF',
+            backgroundColor: 'var(--bg-card)',
+            backgroundImage: 'linear-gradient(to bottom right, rgba(255, 255, 255, 0.02), transparent)',
+            border: '1px solid var(--border-primary)',
+            borderRadius: 'var(--border-radius-md)',
+            padding: '12px 16px',
+            color: 'var(--text-primary)',
             fontSize: '14px',
+            fontWeight: '500',
             outline: 'none',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            transition: 'all var(--transition-fast)',
+            boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)'
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = 'var(--accent-primary)';
+            e.target.style.boxShadow = '0 0 0 2px var(--accent-soft)';
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = 'var(--border-primary)';
+            e.target.style.boxShadow = 'inset 0 2px 4px rgba(0, 0, 0, 0.1)';
           }}
         />
         <span style={{
           position: 'absolute',
-          right: '12px',
+          right: '16px',
           top: '50%',
           transform: 'translateY(-50%)',
-          color: '#666',
+          color: 'var(--text-muted)',
           fontSize: '12px',
-          pointerEvents: 'none'
+          fontWeight: '600',
+          pointerEvents: 'none',
+          opacity: 0.6
         }}>
           {unit}
         </span>
@@ -49,19 +71,25 @@ export const InputField = React.memo(({ label, unit, value, onChange, onApply })
         <button
           onClick={onApply}
           style={{
-            backgroundColor: '#4285F4',
+            backgroundColor: 'var(--button-primary)',
             color: 'white',
             border: 'none',
-            borderRadius: '8px',
-            padding: '10px 16px',
+            borderRadius: 'var(--border-radius-md)',
+            padding: '12px 20px',
             fontSize: '13px',
-            fontWeight: '600',
+            fontWeight: '700',
             cursor: 'pointer',
-            transition: 'all 0.2s',
-            boxShadow: '0 2px 6px rgba(66, 133, 244, 0.3)'
+            transition: 'all var(--transition-fast)',
+            boxShadow: '0 4px 12px var(--accent-soft)'
           }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#357ae8'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = '#4285F4'}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = 'var(--button-primary-hover)';
+            e.target.style.transform = 'translateY(-1px)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = 'var(--button-primary)';
+            e.target.style.transform = 'translateY(0)';
+          }}
         >
           Apply
         </button>

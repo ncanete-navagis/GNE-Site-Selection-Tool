@@ -6,9 +6,12 @@ export const Input = ({ className = '', ...props }) => {
     padding: '10px 16px',
     backgroundColor: 'transparent',
     border: 'none',
-    color: 'var(--color-text-primary)',
+    color: 'var(--text-primary)',
     fontSize: '14px',
     outline: 'none',
+    '::placeholder': {
+      color: 'var(--text-muted)'
+    }
   };
 
   return (

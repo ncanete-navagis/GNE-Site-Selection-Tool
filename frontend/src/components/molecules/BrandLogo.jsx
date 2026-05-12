@@ -9,23 +9,23 @@ export const BrandLogo = () => {
   };
 
   const iconStyle = {
-    width: '32px',
-    height: '32px',
-    background: 'linear-gradient(135deg, var(--color-accent-blue), var(--color-accent-pink))',
-    borderRadius: '8px',
-    transform: 'rotate(-10deg)',
+    width: '36px',
+    height: '36px',
+    background: 'linear-gradient(135deg, var(--accent-primary), #4f46e5)',
+    borderRadius: 'var(--border-radius-md)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+    boxShadow: '0 4px 15px var(--accent-soft)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
   };
 
   return (
     <div style={containerStyle}>
       <div style={iconStyle}>
-        <div style={{ width: '16px', height: '16px', background: '#fff', borderRadius: '4px', opacity: 0.8 }}></div>
+        <div style={{ width: '18px', height: '18px', border: '3px solid #fff', borderRadius: '4px', opacity: 0.9 }}></div>
       </div>
-      <Typography variant="h3" style={{ margin: 0, letterSpacing: '1px' }}>NAVAGIS</Typography>
+      <Typography variant="h2" style={{ margin: 0, letterSpacing: '0.05em', fontSize: '20px', fontWeight: '900', color: 'var(--text-primary)' }}>NAVAGIS</Typography>
     </div>
   );
 };

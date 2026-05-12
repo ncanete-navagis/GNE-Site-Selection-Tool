@@ -10,39 +10,59 @@ export const Button = ({ children, variant = 'primary', className = '', ...props
     border: 'none',
     cursor: 'pointer',
     fontSize: '14px',
-    fontWeight: '500',
+    fontWeight: '600',
     transition: 'var(--transition-fast)',
   };
 
   const variants = {
     primary: {
-      backgroundColor: 'var(--color-accent-blue)',
+      backgroundColor: 'var(--accent-primary)',
       color: '#fff',
+      boxShadow: 'var(--shadow-soft)',
     },
     secondary: {
-      backgroundColor: 'var(--color-surface)',
-      color: 'var(--color-text-primary)',
-      border: '1px solid rgba(255, 255, 255, 0.22)',
+      backgroundColor: 'var(--bg-elevated)',
+      color: 'var(--text-primary)',
+      border: '1px solid var(--border-primary)',
     },
     floating: {
-      backgroundColor: 'var(--color-accent-blue)',
+      backgroundColor: 'var(--accent-primary)',
       color: '#fff',
       width: '56px',
       height: '56px',
       borderRadius: '50%',
       padding: '0',
-      boxShadow: 'var(--shadow-floating), var(--shadow-glow-blue)',
+      boxShadow: 'var(--shadow-elevated)',
     },
     ghost: {
       backgroundColor: 'transparent',
-      color: 'var(--color-text-primary)',
+      color: '#ffffff',
     }
   };
+
+  const hoverStyles = {
+    ghost: {
+      color: '#ffffff',
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    },
+    primary: {
+      backgroundColor: 'var(--button-primary-hover)',
+      transform: 'translateY(-1px)',
+    }
+  };
+
+  const [isHovered, setIsHovered] = React.useState(false);
 
   return (
     <button
       className={`btn btn-${variant} ${className}`}
-      style={{ ...baseStyles, ...variants[variant] }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{ 
+        ...baseStyles, 
+        ...variants[variant], 
+        ...(isHovered ? hoverStyles[variant] : {}) 
+      }}
       {...props}
     >
       {children}

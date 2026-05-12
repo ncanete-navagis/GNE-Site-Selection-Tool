@@ -27,10 +27,14 @@ export const MapToolsPanel = ({ isPlacingMarker, isDrawing, onDropPinClick, onDr
       {/* Button Row */}
       <div style={{ 
         display: 'flex', 
-        gap: '10px', 
-        backgroundColor: '#EAEAEA', 
+        gap: '12px', 
+        backgroundColor: 'var(--bg-secondary)', 
+        backgroundImage: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.03), transparent)',
+        backdropFilter: 'blur(var(--blur-intensity))',
         padding: '8px', 
-        borderRadius: '12px' 
+        borderRadius: 'var(--border-radius-md)',
+        border: '1px solid var(--border-primary)',
+        boxShadow: 'var(--shadow-elevated)'
       }}>
         {/* Drop a pin */}
         <button 
@@ -38,11 +42,19 @@ export const MapToolsPanel = ({ isPlacingMarker, isDrawing, onDropPinClick, onDr
           onClick={onDropPinClick}
           style={{ 
             width: '54px', height: '48px', 
-            borderRadius: '8px', 
-            backgroundColor: isPlacingMarker ? '#28a745' : '#1E1E1E', 
-            border: 'none', cursor: 'pointer', 
+            borderRadius: 'var(--border-radius-sm)', 
+            backgroundColor: isPlacingMarker ? 'var(--button-primary)' : 'var(--bg-elevated)', 
+            border: '1px solid var(--border-primary)', 
+            cursor: 'pointer', 
             display: 'flex', justifyContent: 'center', alignItems: 'center',
-            transition: 'background-color 0.2s'
+            transition: 'all var(--transition-fast)',
+            boxShadow: isPlacingMarker ? '0 4px 12px var(--accent-soft)' : 'none'
+          }}
+          onMouseEnter={(e) => {
+            if (!isPlacingMarker) e.currentTarget.style.backgroundColor = 'var(--bg-card)';
+          }}
+          onMouseLeave={(e) => {
+            if (!isPlacingMarker) e.currentTarget.style.backgroundColor = 'var(--bg-elevated)';
           }}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -57,11 +69,19 @@ export const MapToolsPanel = ({ isPlacingMarker, isDrawing, onDropPinClick, onDr
           onClick={onDrawClick}
           style={{ 
             width: '54px', height: '48px', 
-            borderRadius: '8px', 
-            backgroundColor: isDrawing ? '#4285F4' : '#1E1E1E', 
-            border: 'none', cursor: 'pointer', 
+            borderRadius: 'var(--border-radius-sm)', 
+            backgroundColor: isDrawing ? 'var(--button-primary)' : 'var(--bg-elevated)', 
+            border: '1px solid var(--border-primary)', 
+            cursor: 'pointer', 
             display: 'flex', justifyContent: 'center', alignItems: 'center',
-            transition: 'background-color 0.2s'
+            transition: 'all var(--transition-fast)',
+            boxShadow: isDrawing ? '0 4px 12px var(--accent-soft)' : 'none'
+          }}
+          onMouseEnter={(e) => {
+            if (!isDrawing) e.currentTarget.style.backgroundColor = 'var(--bg-card)';
+          }}
+          onMouseLeave={(e) => {
+            if (!isDrawing) e.currentTarget.style.backgroundColor = 'var(--bg-elevated)';
           }}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -76,12 +96,15 @@ export const MapToolsPanel = ({ isPlacingMarker, isDrawing, onDropPinClick, onDr
           onClick={onFilterClick}
           style={{ 
             width: '54px', height: '48px', 
-            borderRadius: '8px', 
-            backgroundColor: '#1E1E1E', 
-            border: 'none', cursor: 'pointer', 
+            borderRadius: 'var(--border-radius-sm)', 
+            backgroundColor: 'var(--bg-elevated)', 
+            border: '1px solid var(--border-primary)', 
+            cursor: 'pointer', 
             display: 'flex', justifyContent: 'center', alignItems: 'center',
-            transition: 'background-color 0.2s'
+            transition: 'all var(--transition-fast)'
           }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-card)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>

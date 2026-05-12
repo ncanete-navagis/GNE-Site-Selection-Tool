@@ -20,7 +20,7 @@ export const FeaturesPanelForm = ({
   radius
 }) => {
   return (
-    <div style={{ padding: '0 20px 24px 20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+    <div style={{ padding: '0 20px 24px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <InputField
         label="Analysis Radius"
         value={localRadius}
@@ -31,27 +31,35 @@ export const FeaturesPanelForm = ({
         }}
       />
       <InputField
-        label="Population"
+        label="Population Requirement"
         value={population}
-        unit="people"
+        unit="ppl"
         onChange={setPopulation}
       />
       <InputField
-        label="Traffic Speed"
+        label="Traffic Speed Goal"
         value={trafficKmh}
         unit="km/h"
         onChange={setTrafficKmh}
       />
       <InputField
-        label="Lot Area"
+        label="Minimum Lot Area"
         value={lotArea}
-        unit="Square Meters"
+        unit="m²"
         onChange={setLotArea}
       />
 
-      <div style={{ marginBottom: '20px' }}>
-        <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '8px', fontWeight: '500' }}>
-          Business Sector
+      <div style={{ marginBottom: '24px' }}>
+        <label style={{ 
+          display: 'block', 
+          fontSize: '11px', 
+          color: 'var(--text-muted)', 
+          marginBottom: '12px', 
+          fontWeight: '700',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em'
+        }}>
+          Business Sectors
         </label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {sectorOptions.map((sector) => (
@@ -75,23 +83,36 @@ export const FeaturesPanelForm = ({
         onClick={onRunAnalysis}
         disabled={!poi}
         style={{
-          marginTop: '12px',
+          marginTop: '8px',
           width: '100%',
-          backgroundColor: poi ? '#ff2a85' : '#444',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          padding: '14px',
+          backgroundColor: poi ? 'var(--button-primary)' : 'var(--bg-secondary)',
+          color: poi ? 'white' : 'var(--text-muted)',
+          border: poi ? 'none' : '1px solid var(--border-primary)',
+          borderRadius: 'var(--border-radius-md)',
+          padding: '16px',
           fontSize: '15px',
           fontWeight: '700',
           cursor: poi ? 'pointer' : 'not-allowed',
-          transition: 'all 0.2s',
-          boxShadow: poi ? '0 4px 12px rgba(255, 42, 133, 0.3)' : 'none'
+          transition: 'all var(--transition-normal)',
+          boxShadow: poi ? '0 4px 12px var(--accent-soft)' : 'none',
+          letterSpacing: '0.02em'
         }}
-        onMouseEnter={(e) => poi && (e.target.style.backgroundColor = '#e61e75')}
-        onMouseLeave={(e) => poi && (e.target.style.backgroundColor = '#ff2a85')}
+        onMouseEnter={(e) => {
+          if (poi) {
+            e.target.style.backgroundColor = 'var(--button-primary-hover)';
+            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.boxShadow = '0 6px 20px var(--accent-soft)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (poi) {
+            e.target.style.backgroundColor = 'var(--button-primary)';
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 4px 12px var(--accent-soft)';
+          }
+        }}
       >
-        {poi ? 'Run Analysis' : 'Drop a pin to analyze'}
+        {poi ? '🚀 Run Site Analysis' : '📍 Drop a pin to analyze'}
       </button>
     </div>
   );

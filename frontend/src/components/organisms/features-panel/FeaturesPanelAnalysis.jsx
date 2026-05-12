@@ -8,16 +8,16 @@ export const FeaturesPanelAnalysis = ({ poi }) => {
 
   return (
     <div style={{ padding: '0 20px 24px 20px' }}>
-      <div style={{ fontSize: '12px', color: '#888', marginBottom: '12px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '16px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         Scoring Breakdown
       </div>
-      <div style={{ display: 'grid', gap: '12px' }}>
+      <div style={{ display: 'grid', gap: '14px' }}>
         {[
-          { label: 'Overall Score', score: poi.analysis.overall_score, color: '#ff2a85' },
-          { label: 'Foot Traffic', score: poi.analysis.foot_traffic_score, color: '#3291ff' },
-          { label: 'Competition', score: poi.analysis.competing_business_score, color: '#00dc82' },
-          { label: 'Flood Safety', score: poi.analysis.flood_hazard_score, color: '#f39c12' },
-          { label: 'Landslide Safety', score: poi.analysis.landslide_hazard_score, color: '#e74c3c' },
+          { label: 'Overall Score', score: poi.analysis.overall_score, color: 'var(--accent-primary)' },
+          { label: 'Foot Traffic', score: poi.analysis.foot_traffic_score, color: '#3b82f6' },
+          { label: 'Competition', score: poi.analysis.competing_business_score, color: '#10b981' },
+          { label: 'Flood Safety', score: poi.analysis.flood_hazard_score, color: '#f59e0b' },
+          { label: 'Landslide Safety', score: poi.analysis.landslide_hazard_score, color: '#ef4444' },
         ].map((item, idx) => (
           <ScoreBar key={idx} {...item} />
         ))}
@@ -25,10 +25,10 @@ export const FeaturesPanelAnalysis = ({ poi }) => {
 
       {/* Comparison Squares */}
       <div style={{
-        marginTop: '24px',
+        marginTop: '32px',
         display: 'grid',
         gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: '10px'
+        gap: '12px'
       }}>
         <ComparisonSquare
           label="Population"
@@ -55,30 +55,33 @@ export const FeaturesPanelAnalysis = ({ poi }) => {
           label="Lot Area"
           required={poi.analysis.lot_area ?? "N/A"}
           actual={poi.analysis.lot_area ?? 0}
-          unit="Square Meters"
+          unit="m²"
           isMeeting={true}
         />
       </div>
 
       {/* Sector Counts */}
       {poi.analysis.sector_counts && Object.keys(poi.analysis.sector_counts).length > 0 && (
-        <div style={{ marginTop: '24px' }}>
-          <div style={{ fontSize: '12px', color: '#888', marginBottom: '12px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <div style={{ marginTop: '32px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '16px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Nearby Establishments
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
             {Object.entries(poi.analysis.sector_counts).map(([sector, count]) => (
               <div key={sector} style={{
-                background: 'rgba(255,255,255,0.03)',
-                padding: '12px',
-                borderRadius: '12px',
-                border: '1px solid rgba(255,255,255,0.05)',
+                backgroundColor: 'var(--bg-card)',
+                backgroundImage: 'linear-gradient(to bottom right, rgba(255, 255, 255, 0.02), transparent)',
+                padding: '16px',
+                borderRadius: 'var(--border-radius-md)',
+                border: '1px solid var(--border-primary)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '4px'
+                gap: '6px',
+                boxShadow: 'var(--shadow-soft)',
+                transition: 'all var(--transition-fast)'
               }}>
-                <div style={{ fontSize: '10px', color: '#888', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{sector}</div>
-                <div style={{ fontSize: '18px', fontWeight: '800', color: '#FFF' }}>{count}</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{sector}</div>
+                <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>{count}</div>
               </div>
             ))}
           </div>

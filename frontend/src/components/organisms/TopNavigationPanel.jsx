@@ -60,7 +60,7 @@ export const TopNavigationPanel = ({ searchQuery, onSearchChange, onFilterChange
           if (onFilterChange) onFilterChange(opt.label);
         }} 
       />
-      <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
+      <div style={{ width: '1px', height: '24px', background: 'var(--border-primary)' }}></div>
       <DropdownButton 
         iconName="mapPin" 
         label={selectedRegion} 
@@ -70,7 +70,7 @@ export const TopNavigationPanel = ({ searchQuery, onSearchChange, onFilterChange
           if (onRegionChange) onRegionChange(opt.label);
         }} 
       />
-      <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
+      <div style={{ width: '1px', height: '24px', background: 'var(--border-primary)' }}></div>
       <DropdownButton iconName="layers" label={selectedLayer || 'Layers'} options={layerOptions} onSelect={(opt) => {
         const isSame = selectedLayer === opt.label;
         const next = isSame ? null : opt.label;
@@ -78,7 +78,7 @@ export const TopNavigationPanel = ({ searchQuery, onSearchChange, onFilterChange
         const filterValue = next ? (layerFilterMap[next] || 'None') : 'None';
         if (onFilterChange) onFilterChange(filterValue);
       }} />
-      <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
+      <div style={{ width: '1px', height: '24px', background: 'var(--border-primary)' }}></div>
       <SearchField value={searchQuery} onChange={(e) => onSearchChange(e.target.value)} />
     </PillBase>
   );

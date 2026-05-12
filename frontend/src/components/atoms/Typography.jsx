@@ -14,12 +14,12 @@ export const Typography = ({ variant = 'body', children, className = '', color, 
   const Component = tags[variant] || 'p';
 
   const styles = {
-    h1: { fontSize: '24px', fontWeight: 'bold', margin: '0 0 16px 0' },
-    h2: { fontSize: '20px', fontWeight: 'bold', margin: '0 0 12px 0' },
-    h3: { fontSize: '18px', fontWeight: '600', margin: '0 0 8px 0' },
-    body: { fontSize: '14px', margin: '0 0 8px 0' },
-    label: { fontSize: '14px', fontWeight: '500' },
-    small: { fontSize: '12px', color: 'var(--color-text-secondary)' }
+    h1: { fontSize: '32px', fontWeight: '800', margin: '0 0 20px 0', letterSpacing: '-0.025em' },
+    h2: { fontSize: '24px', fontWeight: '700', margin: '0 0 16px 0', letterSpacing: '-0.02em' },
+    h3: { fontSize: '20px', fontWeight: '600', margin: '0 0 12px 0', letterSpacing: '-0.01em' },
+    body: { fontSize: '14px', lineHeight: '1.6', margin: '0' },
+    label: { fontSize: '14px', fontWeight: '600', letterSpacing: '0.01em' },
+    small: { fontSize: '12px', color: 'var(--text-muted)', fontWeight: '500' }
   };
 
   return (

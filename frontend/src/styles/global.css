@@ -1,25 +1,91 @@
 :root {
-  /* V2 Design System Colors */
-  --color-bg-dark: #121212;
-  --color-surface: rgba(247, 247, 247, 0.259);
-  /* Semi-transparent dark grey */
-  --color-surface-hover: rgba(60, 60, 65, 0.9);
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #aaaaaa;
+  /* =========================
+     MAIN BACKGROUND COLORS
+     ========================= */
+  
+  /* Main page background */
+  --bg-primary: #111827;
+  
+  /* Secondary sections */
+  --bg-secondary: #1f2937;
+  
+  /* Card backgrounds */
+  --bg-card: #243041;
+  
+  /* Elevated surfaces / modals */
+  --bg-elevated: #2d3748;
 
-  --color-accent-blue: #3291ff;
-  /* Bright cyan/blue */
-  --color-accent-pink: #ff2a85;
-  /* Vibrant pink */
+  /* =========================
+     TEXT COLORS
+     ========================= */
+  
+  /* Main text */
+  --text-primary: #f3f4f6;
+  
+  /* Secondary text */
+  --text-secondary: #cbd5e1;
+  
+  /* Muted text */
+  --text-muted: #94a3b8;
 
-  --shadow-glow-blue: 0 0 15px rgba(50, 145, 255, 0.6);
-  --shadow-glow-pink: 0 0 15px rgba(255, 42, 133, 0.6);
-  --shadow-floating: 0 10px 30px rgba(0, 0, 0, 0.5);
+  /* =========================
+     BORDER COLORS
+     ========================= */
+  
+  /* Default borders */
+  --border-primary: #374151;
+  
+  /* Subtle borders */
+  --border-subtle: #4b5563;
 
-  --blur-intensity: 12px;
-  --border-radius-pill: 9999px;
+  /* =========================
+     ACCENT COLORS
+     ========================= */
+  
+  /* Main brand/accent */
+  --accent-primary: #60a5fa;
+  
+  /* Hover accent */
+  --accent-hover: #93c5fd;
+  
+  /* Accent glow */
+  --accent-soft: rgba(96, 165, 250, 0.15);
+
+  /* =========================
+     BUTTON COLORS
+     ========================= */
+  
+  /* Primary button */
+  --button-primary: #3b82f6;
+  
+  /* Primary button hover */
+  --button-primary-hover: #60a5fa;
+  
+  /* Secondary button */
+  --button-secondary: #374151;
+
+  /* =========================
+     SHADOWS
+     ========================= */
+  
+  /* Soft card shadow */
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.25);
+  
+  /* Elevated shadow */
+  --shadow-elevated: 0 10px 30px rgba(0, 0, 0, 0.35);
+
+  /* =========================
+     MISC
+     ========================= */
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
   --border-radius-lg: 16px;
-  --transition-fast: 0.2s ease;
+  --border-radius-pill: 9999px;
+  
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  --blur-intensity: 12px;
 }
 
 body,
@@ -31,8 +97,10 @@ html,
   width: 100%;
   overflow: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: var(--color-bg-dark);
-  color: var(--color-text-primary);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {

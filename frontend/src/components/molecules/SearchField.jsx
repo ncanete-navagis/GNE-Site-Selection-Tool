@@ -19,7 +19,7 @@ export const SearchField = ({ value, onChange, placeholder = "Search for a place
         onChange={onChange}
         placeholder={placeholder}
       />
-      <Icon name="search" color="var(--color-text-secondary)" className="ml-2" />
+      <Icon name="search" color="var(--text-muted)" style={{ marginLeft: '12px', marginRight: '8px', opacity: 0.7 }} />
     </div>
   );
 };

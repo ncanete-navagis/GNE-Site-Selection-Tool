@@ -8,7 +8,7 @@ export const FeaturesPanelMapControls = ({
   setIsHeatMapOn
 }) => {
   return (
-    <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+    <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-primary)', backgroundColor: 'var(--bg-secondary)' }}>
       <ToggleSwitch
         label="Choropleth Map"
         isOn={isChoroplethOn}

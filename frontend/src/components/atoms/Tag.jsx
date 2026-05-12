@@ -20,27 +20,30 @@ export const Tag = React.memo(({
 }) => {
   const baseStyle = {
     fontSize: '12px',
-    padding: '4px 10px',
-    borderRadius: '6px',
+    padding: '4px 12px',
+    borderRadius: 'var(--border-radius-sm)',
     border: '1px solid',
     display: 'inline-block',
-    transition: 'all 0.2s',
-    cursor: onClick ? 'pointer' : 'default'
+    transition: 'all var(--transition-fast)',
+    cursor: onClick ? 'pointer' : 'default',
+    letterSpacing: '0.02em'
   };
 
   const dynamicStyle = isSelected !== undefined
     ? {
-      padding: '8px 16px',
-      borderRadius: '20px',
-      border: isSelected ? `1px solid ${color || '#ff2a85'}` : '1px solid #444',
-      backgroundColor: isSelected ? (backgroundColor || 'rgba(255, 42, 133, 0.1)') : 'transparent',
-      color: isSelected ? (color || '#ff2a85') : '#BBB',
-      fontWeight: '600',
+      padding: '10px 18px',
+      borderRadius: 'var(--border-radius-pill)',
+      border: isSelected ? `1px solid ${color || 'var(--accent-primary)'}` : '1px solid var(--border-primary)',
+      backgroundColor: isSelected ? (backgroundColor || 'var(--accent-soft)') : 'var(--bg-elevated)',
+      color: isSelected ? (color || 'var(--accent-primary)') : 'var(--text-secondary)',
+      fontWeight: '700',
+      boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none'
     }
     : {
-      background: backgroundColor || 'rgba(255, 255, 255, 0.1)',
-      color: color || '#FFF',
-      borderColor: borderColor || 'rgba(255, 255, 255, 0.2)',
+      background: backgroundColor || 'var(--bg-card)',
+      color: color || 'var(--text-primary)',
+      borderColor: borderColor || 'var(--border-primary)',
+      fontWeight: '500'
     };
 
   if (onClick) {

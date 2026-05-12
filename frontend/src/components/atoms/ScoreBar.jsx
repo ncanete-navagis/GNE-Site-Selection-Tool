@@ -9,28 +9,33 @@ import React from 'react';
  */
 export const ScoreBar = React.memo(({ label, score, color }) => (
   <div style={{
-    background: 'rgba(255,255,255,0.03)',
-    padding: '10px 12px',
-    borderRadius: '8px',
-    border: '1px solid rgba(255,255,255,0.05)'
+    backgroundColor: 'var(--bg-card)',
+    backgroundImage: 'linear-gradient(to right, rgba(255, 255, 255, 0.02), transparent)',
+    padding: '12px 16px',
+    borderRadius: 'var(--border-radius-md)',
+    border: '1px solid var(--border-primary)',
+    boxShadow: 'var(--shadow-soft)'
   }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
-      <span style={{ color: '#AAA' }}>{label}</span>
-      <span style={{ color: '#FFF', fontWeight: '600' }}>{(score * 100).toFixed(0)}%</span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '13px' }}>
+      <span style={{ color: 'var(--text-secondary)', fontWeight: '500' }}>{label}</span>
+      <span style={{ color: 'var(--text-primary)', fontWeight: '700' }}>{(score * 100).toFixed(0)}%</span>
     </div>
     <div style={{
       width: '100%',
-      height: '4px',
-      background: 'rgba(255,255,255,0.1)',
-      borderRadius: '2px',
-      overflow: 'hidden'
+      height: '6px',
+      backgroundColor: 'var(--bg-elevated)',
+      borderRadius: 'var(--border-radius-pill)',
+      overflow: 'hidden',
+      border: '1px solid var(--border-primary)'
     }}>
       <div
         style={{
           width: `${score * 100}%`,
           height: '100%',
-          background: color,
-          transition: 'width 1s ease-out'
+          backgroundColor: color,
+          borderRadius: 'var(--border-radius-pill)',
+          transition: 'width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          boxShadow: `0 0 10px ${color}40`
         }}
       />
     </div>

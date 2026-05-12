@@ -14,53 +14,69 @@ export const SidePanel = ({
 }) => {
   const panelStyle = {
     position: 'fixed',
-    top: 0,
-    left: 0,
-    height: '100vh',
-    width: '360px',
-    backgroundColor: '#1E1E1E',
-    boxShadow: '4px 0 24px rgba(0, 0, 0, 0.5)',
+    top: '12px',
+    left: '12px',
+    bottom: '12px',
+    width: '380px',
+    backgroundColor: 'var(--bg-secondary)',
+    backgroundImage: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.02), transparent)',
+    backdropFilter: 'blur(var(--blur-intensity))',
+    border: '1px solid var(--border-primary)',
+    borderRadius: 'var(--border-radius-lg)',
+    boxShadow: 'var(--shadow-elevated)',
     display: 'flex',
     flexDirection: 'column',
-    transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
-    transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+    transform: isOpen ? 'translateX(0)' : 'translateX(calc(-100% - 24px))',
+    transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
     zIndex: 1000,
     pointerEvents: 'auto',
-    color: '#FFF',
+    color: 'var(--text-primary)',
   };
 
   const headerStyle = {
-    padding: '20px',
+    padding: '24px 20px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+    borderBottom: '1px solid var(--border-primary)',
   };
 
   const toggleContainerStyle = {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '12px',
     fontSize: '14px',
     fontWeight: '600',
-    color: '#888',
+    color: 'var(--text-muted)',
     cursor: 'pointer',
+    backgroundColor: 'var(--bg-elevated)',
+    padding: '4px',
+    borderRadius: 'var(--border-radius-pill)',
+    border: '1px solid var(--border-primary)',
   };
 
   const getToggleItemStyle = (active) => ({
-    color: active ? '#FFF' : '#888',
-    transition: 'color 0.2s',
+    color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+    backgroundColor: active ? 'var(--bg-card)' : 'transparent',
+    padding: '6px 16px',
+    borderRadius: 'var(--border-radius-pill)',
+    transition: 'all var(--transition-fast)',
+    boxShadow: active ? 'var(--shadow-soft)' : 'none',
   });
 
   const closeBtnStyle = {
-    background: 'none',
-    border: 'none',
-    color: '#888',
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border-primary)',
+    color: 'var(--text-secondary)',
     cursor: 'pointer',
-    fontSize: '20px',
-    padding: '4px',
-    lineHeight: 1,
-    transition: 'color 0.2s',
+    fontSize: '18px',
+    width: '32px',
+    height: '32px',
+    borderRadius: 'var(--border-radius-pill)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all var(--transition-fast)',
   };
 
   return (
@@ -89,8 +105,14 @@ export const SidePanel = ({
         <button 
           style={closeBtnStyle} 
           onClick={onClose}
-          onMouseEnter={(e) => e.target.style.color = '#FFF'}
-          onMouseLeave={(e) => e.target.style.color = '#888'}
+          onMouseEnter={(e) => {
+            e.target.style.color = 'var(--text-primary)';
+            e.target.style.backgroundColor = 'var(--bg-card)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.color = 'var(--text-secondary)';
+            e.target.style.backgroundColor = 'var(--bg-elevated)';
+          }}
         >
           &times;
         </button>
