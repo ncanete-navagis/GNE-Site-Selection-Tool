@@ -236,11 +236,12 @@ export const SiteSelectionHome = () => {
     }
   };
 
-  const handleMarkerPlaced = async (coords) => {
-    setGeminiMarker(coords);
+  const handleMarkerPlaced = (coords) => {
+    setGeminiMarker({ ...coords, title: 'New Site' });
     setSelectedPropertyPolygon(null);
     setIsPlacingMarker(false);
-    await runLocationAnalysis(coords, 'New Site');
+    setPanelMode('features');
+    setIsPanelOpen(true);
   };
 
   const handlePropertySelect = (property) => {
@@ -249,7 +250,7 @@ export const SiteSelectionHome = () => {
     setIsPanelOpen(false); // Close analysis if property info is open
   };
 
-  const handleChooseLocation = async (property) => {
+  const handleChooseLocation = (property) => {
     setIsPropertyPanelOpen(false);
     const coords = { lat: property.lat, lng: property.long };
     setFocusedLocation({ ...coords, zoom: 18 });
@@ -265,7 +266,9 @@ export const SiteSelectionHome = () => {
       setSelectedPropertyPolygon(null);
     }
 
-    await runLocationAnalysis(coords, property.title);
+    setGeminiMarker({ ...coords, title: property.title });
+    setPanelMode('features');
+    setIsPanelOpen(true);
   };
 
   const handleRunAnalysis = async () => {
@@ -347,6 +350,7 @@ export const SiteSelectionHome = () => {
       onDrawingComplete={handleDrawingComplete}
       finishTrigger={finishDrawingTrigger}
       restaurantMarkers={restaurantMarkers}
+      radius={analysisRadius}
     />
   );
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useMemo, useRef, useEffect } from 'react';
-import { GoogleMap, useJsApiLoader, OverlayView, MarkerF, MarkerClustererF, DrawingManagerF, PolylineF, PolygonF, InfoWindowF } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, OverlayView, MarkerF, MarkerClustererF, DrawingManagerF, PolylineF, PolygonF, InfoWindowF, CircleF } from '@react-google-maps/api';
 import { MapMarker } from '../molecules/MapMarker';
 
 const containerStyle = {
@@ -67,7 +67,8 @@ export const MapCanvas = ({
   isDrawing,
   onDrawingComplete,
   finishTrigger = 0,
-  restaurantMarkers = []
+  restaurantMarkers = [],
+  radius = 1000
 }) => {
 
   const { isLoaded } = useJsApiLoader({
@@ -319,15 +320,30 @@ export const MapCanvas = ({
         </OverlayView>
       ))}
 
-      {/* Gemini marker */}
+      {/* Gemini marker & Analysis Radius Circle */}
       {geminiMarker && (
-        <OverlayView
-          position={geminiMarker}
-          mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-          getPixelPositionOffset={getPixelPositionOffset}
-        >
-          <MapMarker isSelected onClick={() => onMarkerPlaced(geminiMarker)} />
-        </OverlayView>
+        <>
+          <CircleF
+            center={geminiMarker}
+            radius={radius}
+            options={{
+              strokeColor: '#4285F4',
+              strokeOpacity: 0.8,
+              strokeWeight: 2,
+              fillColor: '#4285F4',
+              fillOpacity: 0.15,
+              clickable: false,
+              zIndex: 1
+            }}
+          />
+          <OverlayView
+            position={geminiMarker}
+            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+            getPixelPositionOffset={getPixelPositionOffset}
+          >
+            <MapMarker isSelected onClick={() => onMarkerPlaced(geminiMarker)} />
+          </OverlayView>
+        </>
       )}
 
       {/* Competitor markers (Blue Pins) */}
