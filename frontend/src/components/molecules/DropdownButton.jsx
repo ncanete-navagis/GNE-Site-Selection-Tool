@@ -9,7 +9,7 @@ export const DropdownButton = ({ iconName, label, options = [], onSelect }) => {
   const toggleOpen = () => setIsOpen(!isOpen);
 
   const containerStyle = { position: 'relative' };
-  
+
   const dropdownStyle = {
     position: 'absolute',
     top: 'calc(100% + 12px)',
@@ -27,9 +27,9 @@ export const DropdownButton = ({ iconName, label, options = [], onSelect }) => {
   return (
     <div style={containerStyle}>
       <Button variant="ghost" onClick={toggleOpen} style={{ padding: '8px 16px', display: 'flex', gap: '8px' }}>
-        {iconName && <Icon name={iconName} />}
-        <Typography variant="label">{label}</Typography>
-        <Icon name="chevronDown" color="inherit" />
+        {iconName && <Icon name={iconName} color="#ffffff86" />}
+        <Typography variant="label" color="#ffffff86">{label}</Typography>
+        <Icon name="chevronDown" color="#ffffff86" />
       </Button>
 
       {isOpen && (
@@ -38,11 +38,11 @@ export const DropdownButton = ({ iconName, label, options = [], onSelect }) => {
             <Typography variant="body" color="var(--text-muted)">No options</Typography>
           ) : (
             options.map((opt, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 onClick={() => { onSelect && onSelect(opt); setIsOpen(false); }}
-                style={{ 
-                  padding: '10px 12px', 
+                style={{
+                  padding: '10px 12px',
                   cursor: 'pointer',
                   borderRadius: 'var(--border-radius-sm)',
                   transition: 'all 0.2s ease', // Smooth transition

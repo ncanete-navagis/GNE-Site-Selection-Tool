@@ -87,7 +87,7 @@ export const MapCanvas = ({
 
   const onPolygonComplete = useCallback((polygon) => {
     if (!window.google || !polygon) return;
-    
+
     const path = polygon.getPath();
     const points = [];
     for (let i = 0; i < path.getLength(); i++) {
@@ -111,7 +111,7 @@ export const MapCanvas = ({
   useEffect(() => {
     if (finishTrigger > 0 && currentDrawingPoints.length >= 3) {
       if (!window.google) return;
-      
+
       const path = currentDrawingPoints.map(p => new window.google.maps.LatLng(p.lat, p.lng));
       const area = window.google.maps.geometry.spherical.computeArea(path);
       const perimeter = window.google.maps.geometry.spherical.computeLength(path);
@@ -175,8 +175,8 @@ export const MapCanvas = ({
         const features = map.data.addGeoJson(hazardData);
         features.forEach(f => f.setProperty('dataType', 'hazard'));
       } catch (e) { console.error("Hazard error:", e); }
-    } 
-    
+    }
+
     // 3. Traffic
     if (trafficData && trafficData.features && trafficData.features.length > 0) {
       try {

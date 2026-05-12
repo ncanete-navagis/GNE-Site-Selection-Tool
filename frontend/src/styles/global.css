@@ -1,124 +1,124 @@
 :root {
-  /* =========================
+   /* =========================
      MAIN BACKGROUND COLORS
      ========================= */
-  
-  /* Main page background */
-  --bg-primary: #111827;
-  
-  /* Secondary sections */
-  --bg-secondary: #1f2937;
-  
-  /* Card backgrounds */
-  --bg-card: #243041;
-  
-  /* Elevated surfaces / modals */
-  --bg-elevated: #2d3748;
 
-  /* =========================
+   /* Main page background */
+   --bg-primary: #111827;
+
+   /* Secondary sections */
+   --bg-secondary: #1f2937;
+
+   /* Card backgrounds */
+   --bg-card: #243041;
+
+   /* Elevated surfaces / modals */
+   --bg-elevated: #2d3748;
+
+   /* =========================
      TEXT COLORS
      ========================= */
-  
-  /* Main text */
-  --text-primary: #f3f4f6;
-  
-  /* Secondary text */
-  --text-secondary: #cbd5e1;
-  
-  /* Muted text */
-  --text-muted: #94a3b8;
 
-  /* =========================
+   /* Main text */
+   --text-primary: #f3f4f6;
+
+   /* Secondary text */
+   --text-secondary: #cbd5e1;
+
+   /* Muted text */
+   --text-muted: #94a3b8;
+
+   /* =========================
      BORDER COLORS
      ========================= */
-  
-  /* Default borders */
-  --border-primary: #374151;
-  
-  /* Subtle borders */
-  --border-subtle: #4b5563;
 
-  /* =========================
+   /* Default borders */
+   --border-primary: #374151;
+
+   /* Subtle borders */
+   --border-subtle: #4b5563;
+
+   /* =========================
      ACCENT COLORS
      ========================= */
-  
-  /* Main brand/accent */
-  --accent-primary: #60a5fa;
-  
-  /* Hover accent */
-  --accent-hover: #93c5fd;
-  
-  /* Accent glow */
-  --accent-soft: rgba(96, 165, 250, 0.15);
 
-  /* =========================
+   /* Main brand/accent */
+   --accent-primary: #60a5fa;
+
+   /* Hover accent */
+   --accent-hover: #93c5fd;
+
+   /* Accent glow */
+   --accent-soft: rgba(96, 165, 250, 0.15);
+
+   /* =========================
      BUTTON COLORS
      ========================= */
-  
-  /* Primary button */
-  --button-primary: #3b82f6;
-  
-  /* Primary button hover */
-  --button-primary-hover: #60a5fa;
-  
-  /* Secondary button */
-  --button-secondary: #374151;
 
-  /* =========================
+   /* Primary button */
+   --button-primary: #3b82f6;
+
+   /* Primary button hover */
+   --button-primary-hover: #60a5fa;
+
+   /* Secondary button */
+   --button-secondary: #374151;
+
+   /* =========================
      SHADOWS
      ========================= */
-  
-  /* Soft card shadow */
-  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.25);
-  
-  /* Elevated shadow */
-  --shadow-elevated: 0 10px 30px rgba(0, 0, 0, 0.35);
 
-  /* =========================
+   /* Soft card shadow */
+   --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.25);
+
+   /* Elevated shadow */
+   --shadow-elevated: 0 10px 30px rgba(0, 0, 0, 0.35);
+
+   /* =========================
      MISC
      ========================= */
-  --border-radius-sm: 8px;
-  --border-radius-md: 12px;
-  --border-radius-lg: 16px;
-  --border-radius-pill: 9999px;
-  
-  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  
-  --blur-intensity: 12px;
+   --border-radius-sm: 8px;
+   --border-radius-md: 12px;
+   --border-radius-lg: 16px;
+   --border-radius-pill: 9999px;
+
+   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+   --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+   --blur-intensity: 12px;
 }
 
 body,
 html,
 #root {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+   margin: 0;
+   padding: 0;
+   height: 100%;
+   width: 100%;
+   overflow: hidden;
+   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+   background-color: var(--bg-primary);
+   color: var(--text-primary);
+   -webkit-font-smoothing: antialiased;
+   -moz-osx-font-smoothing: grayscale;
 }
 
 * {
-  box-sizing: border-box;
+   box-sizing: border-box;
 }
 
 button,
 input {
-  font-family: inherit;
-  outline: none;
+   font-family: inherit;
+   outline: none;
 }
 
 .map-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 0;
-  background-color: #1a1a1a;
+   position: absolute;
+   top: 0;
+   left: 0;
+   width: 100vw;
+   height: 100vh;
+   z-index: 0;
+   background-color: #1a1a1a;
 }
