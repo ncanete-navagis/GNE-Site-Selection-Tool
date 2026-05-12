@@ -1,7 +1,7 @@
 import React from 'react';
 import { Typography } from '../atoms/Typography';
 
-export const BrandLogo = () => {
+export const BrandLogo = ({ src }) => {
   const containerStyle = {
     display: 'flex',
     alignItems: 'center',
@@ -11,19 +11,28 @@ export const BrandLogo = () => {
   const iconStyle = {
     width: '36px',
     height: '36px',
-    background: 'linear-gradient(135deg, var(--accent-primary), #4f46e5)',
+    backgroundColor: 'var(--accent-primary)',
     borderRadius: 'var(--border-radius-md)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 15px var(--accent-soft)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    boxShadow: 'var(--shadow-soft)',
+    border: '1px solid var(--border-subtle)',
   };
 
   return (
     <div style={containerStyle}>
       <div style={iconStyle}>
-        <div style={{ width: '18px', height: '18px', border: '3px solid #fff', borderRadius: '4px', opacity: 0.9 }}></div>
+        <img
+          src={src}
+          alt="Navagis Logo"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            borderRadius: 'var(--border-radius-md)',
+          }}
+        />
       </div>
       <Typography variant="h2" style={{ margin: 0, letterSpacing: '0.05em', fontSize: '20px', fontWeight: '900', color: 'var(--text-primary)' }}>NAVAGIS</Typography>
     </div>

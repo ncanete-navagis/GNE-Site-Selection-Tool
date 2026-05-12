@@ -43,10 +43,10 @@ export const Button = ({ children, variant = 'primary', className = '', ...props
   const hoverStyles = {
     ghost: {
       color: '#ffffff',
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      backgroundColor: 'var(--hover-bg)',
     },
     primary: {
-      backgroundColor: 'var(--button-primary-hover)',
+      backgroundColor: 'var(--accent-hover)',
       transform: 'translateY(-1px)',
     }
   };

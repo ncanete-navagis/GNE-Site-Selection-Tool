@@ -32,7 +32,6 @@ export const InputField = React.memo(({ label, unit, value, onChange, onApply })
           style={{
             width: '100%',
             backgroundColor: 'var(--bg-card)',
-            backgroundImage: 'linear-gradient(to bottom right, rgba(255, 255, 255, 0.02), transparent)',
             border: '1px solid var(--border-primary)',
             borderRadius: 'var(--border-radius-md)',
             padding: '12px 16px',
@@ -42,15 +41,12 @@ export const InputField = React.memo(({ label, unit, value, onChange, onApply })
             outline: 'none',
             boxSizing: 'border-box',
             transition: 'all var(--transition-fast)',
-            boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)'
           }}
           onFocus={(e) => {
             e.target.style.borderColor = 'var(--accent-primary)';
-            e.target.style.boxShadow = '0 0 0 2px var(--accent-soft)';
           }}
           onBlur={(e) => {
             e.target.style.borderColor = 'var(--border-primary)';
-            e.target.style.boxShadow = 'inset 0 2px 4px rgba(0, 0, 0, 0.1)';
           }}
         />
         <span style={{
@@ -71,7 +67,7 @@ export const InputField = React.memo(({ label, unit, value, onChange, onApply })
         <button
           onClick={onApply}
           style={{
-            backgroundColor: 'var(--button-primary)',
+            backgroundColor: 'var(--accent-primary)',
             color: 'white',
             border: 'none',
             borderRadius: 'var(--border-radius-md)',
@@ -80,15 +76,13 @@ export const InputField = React.memo(({ label, unit, value, onChange, onApply })
             fontWeight: '700',
             cursor: 'pointer',
             transition: 'all var(--transition-fast)',
-            boxShadow: '0 4px 12px var(--accent-soft)'
+            boxShadow: 'var(--shadow-soft)'
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = 'var(--button-primary-hover)';
-            e.target.style.transform = 'translateY(-1px)';
+            e.target.style.backgroundColor = 'var(--accent-hover)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = 'var(--button-primary)';
-            e.target.style.transform = 'translateY(0)';
+            e.target.style.backgroundColor = 'var(--accent-primary)';
           }}
         >
           Apply

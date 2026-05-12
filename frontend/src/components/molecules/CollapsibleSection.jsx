@@ -87,7 +87,7 @@ export const CollapsibleSection = ({
                   backgroundColor: (value || []).includes(item.label) ? 'var(--bg-card)' : 'transparent',
                 }}
                 onMouseEnter={(e) => {
-                  if (!(value || []).includes(item.label)) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+                  if (!(value || []).includes(item.label)) e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
                 }}
                 onMouseLeave={(e) => {
                   if (!(value || []).includes(item.label)) e.currentTarget.style.backgroundColor = 'transparent';
@@ -121,13 +121,13 @@ export const CollapsibleSection = ({
                           borderRadius: 'var(--border-radius-pill)',
                           border: '1px solid',
                           borderColor: isSelected ? 'var(--accent-primary)' : 'var(--border-primary)',
-                          backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--bg-elevated)',
-                          color: isSelected ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                          backgroundColor: isSelected ? 'var(--accent-primary)' : 'var(--bg-elevated)',
+                          color: isSelected ? '#ffffff' : 'var(--text-secondary)',
                           fontSize: '12px',
                           fontWeight: '600',
                           cursor: 'pointer',
                           transition: 'all var(--transition-fast)',
-                          boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none'
+                          boxShadow: 'var(--shadow-soft)'
                         }}
                         onMouseEnter={(e) => {
                           if (!isSelected) {

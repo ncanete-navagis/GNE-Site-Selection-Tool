@@ -29,12 +29,10 @@ export const MapToolsPanel = ({ isPlacingMarker, isDrawing, onDropPinClick, onDr
         display: 'flex', 
         gap: '12px', 
         backgroundColor: 'var(--bg-secondary)', 
-        backgroundImage: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.03), transparent)',
-        backdropFilter: 'blur(var(--blur-intensity))',
         padding: '8px', 
         borderRadius: 'var(--border-radius-md)',
         border: '1px solid var(--border-primary)',
-        boxShadow: 'var(--shadow-elevated)'
+        boxShadow: 'var(--shadow-soft)'
       }}>
         {/* Drop a pin */}
         <button 
@@ -43,12 +41,11 @@ export const MapToolsPanel = ({ isPlacingMarker, isDrawing, onDropPinClick, onDr
           style={{ 
             width: '54px', height: '48px', 
             borderRadius: 'var(--border-radius-sm)', 
-            backgroundColor: isPlacingMarker ? 'var(--button-primary)' : 'var(--bg-elevated)', 
+            backgroundColor: isPlacingMarker ? 'var(--accent-primary)' : 'var(--bg-elevated)', 
             border: '1px solid var(--border-primary)', 
             cursor: 'pointer', 
             display: 'flex', justifyContent: 'center', alignItems: 'center',
             transition: 'all var(--transition-fast)',
-            boxShadow: isPlacingMarker ? '0 4px 12px var(--accent-soft)' : 'none'
           }}
           onMouseEnter={(e) => {
             if (!isPlacingMarker) e.currentTarget.style.backgroundColor = 'var(--bg-card)';
@@ -57,7 +54,7 @@ export const MapToolsPanel = ({ isPlacingMarker, isDrawing, onDropPinClick, onDr
             if (!isPlacingMarker) e.currentTarget.style.backgroundColor = 'var(--bg-elevated)';
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
             <circle cx="12" cy="10" r="3"></circle>
           </svg>
@@ -70,12 +67,11 @@ export const MapToolsPanel = ({ isPlacingMarker, isDrawing, onDropPinClick, onDr
           style={{ 
             width: '54px', height: '48px', 
             borderRadius: 'var(--border-radius-sm)', 
-            backgroundColor: isDrawing ? 'var(--button-primary)' : 'var(--bg-elevated)', 
+            backgroundColor: isDrawing ? 'var(--accent-primary)' : 'var(--bg-elevated)', 
             border: '1px solid var(--border-primary)', 
             cursor: 'pointer', 
             display: 'flex', justifyContent: 'center', alignItems: 'center',
             transition: 'all var(--transition-fast)',
-            boxShadow: isDrawing ? '0 4px 12px var(--accent-soft)' : 'none'
           }}
           onMouseEnter={(e) => {
             if (!isDrawing) e.currentTarget.style.backgroundColor = 'var(--bg-card)';
@@ -84,13 +80,12 @@ export const MapToolsPanel = ({ isPlacingMarker, isDrawing, onDropPinClick, onDr
             if (!isDrawing) e.currentTarget.style.backgroundColor = 'var(--bg-elevated)';
           }}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
             <path d="M12 20h9"></path>
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
           </svg>
         </button>
 
-        {/* Filter (Plus) */}
         <button 
           title="Filter"
           onClick={onFilterClick}
@@ -106,7 +101,7 @@ export const MapToolsPanel = ({ isPlacingMarker, isDrawing, onDropPinClick, onDr
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-card)'}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>

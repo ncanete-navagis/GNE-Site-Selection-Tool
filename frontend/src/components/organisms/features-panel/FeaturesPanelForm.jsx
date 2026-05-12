@@ -85,7 +85,7 @@ export const FeaturesPanelForm = ({
         style={{
           marginTop: '8px',
           width: '100%',
-          backgroundColor: poi ? 'var(--button-primary)' : 'var(--bg-secondary)',
+          backgroundColor: poi ? 'var(--accent-primary)' : 'var(--bg-secondary)',
           color: poi ? 'white' : 'var(--text-muted)',
           border: poi ? 'none' : '1px solid var(--border-primary)',
           borderRadius: 'var(--border-radius-md)',
@@ -93,22 +93,18 @@ export const FeaturesPanelForm = ({
           fontSize: '15px',
           fontWeight: '700',
           cursor: poi ? 'pointer' : 'not-allowed',
-          transition: 'all var(--transition-normal)',
-          boxShadow: poi ? '0 4px 12px var(--accent-soft)' : 'none',
+          transition: 'all var(--transition-fast)',
+          boxShadow: 'var(--shadow-soft)',
           letterSpacing: '0.02em'
         }}
         onMouseEnter={(e) => {
           if (poi) {
-            e.target.style.backgroundColor = 'var(--button-primary-hover)';
-            e.target.style.transform = 'translateY(-2px)';
-            e.target.style.boxShadow = '0 6px 20px var(--accent-soft)';
+            e.target.style.backgroundColor = 'var(--accent-hover)';
           }
         }}
         onMouseLeave={(e) => {
           if (poi) {
-            e.target.style.backgroundColor = 'var(--button-primary)';
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = '0 4px 12px var(--accent-soft)';
+            e.target.style.backgroundColor = 'var(--accent-primary)';
           }
         }}
       >

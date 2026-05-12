@@ -66,10 +66,10 @@ export const DefaultHUD = ({
         />
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
           <UserAvatar src={avatarImg} />
-          <MapToolsPanel 
-            isPlacingMarker={isPlacingMarker} 
+          <MapToolsPanel
+            isPlacingMarker={isPlacingMarker}
             isDrawing={isDrawing}
-            onDropPinClick={onFabClick} 
+            onDropPinClick={onFabClick}
             onDrawClick={onDrawClick}
             onFinishDrawing={onFinishDrawing}
             onFilterClick={onOpenFeatures}

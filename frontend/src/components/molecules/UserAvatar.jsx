@@ -7,9 +7,8 @@ export const UserAvatar = ({ src }) => {
     display: 'inline-block',
     padding: '3px',
     borderRadius: 'var(--border-radius-pill)',
-    backgroundColor: 'var(--bg-secondary)',
-    backgroundImage: 'linear-gradient(135deg, var(--accent-primary), #4f46e5)',
-    boxShadow: 'var(--shadow-elevated)',
+    backgroundColor: 'var(--bg-elevated)',
+    boxShadow: 'var(--shadow-soft)',
     cursor: 'pointer',
     border: '1px solid var(--border-primary)',
     transition: 'all var(--transition-fast)',
@@ -20,12 +19,10 @@ export const UserAvatar = ({ src }) => {
       style={containerStyle} 
       className="user-avatar-container"
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'scale(1.05)';
-        e.currentTarget.style.boxShadow = '0 0 15px var(--accent-soft)';
+        e.currentTarget.style.backgroundColor = 'var(--bg-card)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'scale(1)';
-        e.currentTarget.style.boxShadow = 'var(--shadow-elevated)';
+        e.currentTarget.style.backgroundColor = 'var(--bg-elevated)';
       }}
     >
       <AvatarImage src={src || "https://i.pravatar.cc/150?img=11"} size={44} />

@@ -69,7 +69,7 @@ export const AIChatPanel = ({ poi }) => {
                       borderRadius: '12px',
                       border: '1px solid rgba(255,255,255,0.15)',
                       background: 'rgba(255,255,255,0.05)',
-                      color: '#fff',
+                      color: '#c8c8c8ff',
                       fontSize: '12px',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease'
@@ -128,17 +128,18 @@ export const AIChatPanel = ({ poi }) => {
 
       <div style={{
         padding: '24px 32px 32px 32px',
-        background: 'linear-gradient(to top, rgba(18, 18, 18, 1) 80%, rgba(18, 18, 18, 0))'
+        backgroundColor: 'var(--bg-sidebar)',
+        borderTop: '1px solid var(--border-primary)'
       }}>
         <form
           style={{
             display: 'flex',
             gap: '10px',
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            padding: '6px',
-            borderRadius: '20px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 10px 20px rgba(0,0,0,0.2)'
+            backgroundColor: 'var(--bg-secondary)',
+            padding: '4px',
+            borderRadius: 'var(--border-radius-md)',
+            border: '1px solid var(--border-primary)',
+            boxShadow: 'var(--shadow-soft)'
           }}
           onSubmit={handleSend}
         >
@@ -159,22 +160,21 @@ export const AIChatPanel = ({ poi }) => {
           />
           <button
             style={{
-              backgroundColor: 'var(--color-accent-pink, #ff2a85)',
+              backgroundColor: 'var(--accent-primary)',
               color: '#FFF',
               border: 'none',
-              borderRadius: '14px',
+              borderRadius: 'var(--border-radius-sm)',
               width: '40px',
               height: '40px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              transition: 'transform 0.2s',
-              boxShadow: '0 4px 12px rgba(255, 42, 133, 0.3)'
+              transition: 'all var(--transition-fast)',
             }}
             type="submit"
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--accent-hover)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--accent-primary)'}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="22" y1="2" x2="11" y2="13"></line>

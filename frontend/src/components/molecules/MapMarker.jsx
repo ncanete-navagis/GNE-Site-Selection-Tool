@@ -1,20 +1,20 @@
 import React from 'react';
 import { Icon } from '../atoms/Icon';
 
-export const MapMarker = ({ isSelected, onClick, color = 'var(--color-accent-pink)' }) => {
+export const MapMarker = ({ isSelected, onClick, color = 'var(--accent-primary)' }) => {
   const pinStyle = {
-    width: '40px',
-    height: '40px',
+    width: '32px',
+    height: '32px',
     backgroundColor: color,
     borderRadius: '50% 50% 50% 0',
     transform: 'rotate(-45deg)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: `0 0 15px ${color}`,
+    boxShadow: 'var(--shadow-soft)',
     cursor: 'pointer',
-    border: isSelected ? '2px solid #fff' : '2px solid transparent',
-    transition: 'var(--transition-fast)',
+    border: isSelected ? '2px solid #fff' : '1px solid rgba(255, 255, 255, 0.2)',
+    transition: 'all var(--transition-fast)',
   };
 
   const iconContainerStyle = {
@@ -25,8 +25,8 @@ export const MapMarker = ({ isSelected, onClick, color = 'var(--color-accent-pin
   };
 
   return (
-    <div 
-      style={{ position: 'relative', top: '-20px', left: '-20px', pointerEvents: 'auto' }} 
+    <div
+      style={{ position: 'relative', top: '-16px', left: '-16px', pointerEvents: 'auto' }}
       onClick={(e) => {
         if (onClick) {
           e.stopPropagation();
@@ -36,7 +36,7 @@ export const MapMarker = ({ isSelected, onClick, color = 'var(--color-accent-pin
     >
       <div style={pinStyle}>
         <div style={iconContainerStyle}>
-           <Icon name="mapPin" color="#fff" />
+          <Icon name="mapPin" color="#fff" />
         </div>
       </div>
     </div>

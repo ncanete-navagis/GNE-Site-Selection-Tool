@@ -4,31 +4,54 @@ import { AccordionItem } from '../atoms/AccordionItem';
 
 export const ChatMessage = ({ role, content }) => {
   const getMessageStyle = (msgRole) => ({
-    padding: '16px 20px',
-    borderRadius: msgRole === 'user' ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
-    maxWidth: '90%',
+    padding: '12px 16px',
+    borderRadius: msgRole === 'user' ? 'var(--border-radius-md) var(--border-radius-md) 4px var(--border-radius-md)' : 'var(--border-radius-md) var(--border-radius-md) var(--border-radius-md) 4px',
+    maxWidth: '85%',
     alignSelf: msgRole === 'user' ? 'flex-end' : 'flex-start',
-    background: msgRole === 'user' 
-      ? 'linear-gradient(135deg, #ff2a85 0%, #ff6b6b 100%)' 
-      : 'rgba(255, 255, 255, 0.05)',
-    color: '#FFF',
-    fontSize: '15px',
-    lineHeight: '1.6',
-    boxShadow: msgRole === 'user' 
-      ? '0 8px 20px rgba(255, 42, 133, 0.2)' 
-      : 'none',
-    border: msgRole === 'model' ? '1px solid rgba(255,255,255,0.08)' : 'none',
-    letterSpacing: '0.1px',
-    position: 'relative',
-    transition: 'all 0.3s ease',
+    background: msgRole === 'user'
+      ? 'var(--accent-primary)'
+      : 'var(--bg-secondary)',
+    color: msgRole === 'user'
+      ? '#ffffff'
+      : '#cfcfcf',
+    fontSize: '14px',
+    lineHeight: '1.5',
+    boxShadow: 'var(--shadow-soft)',
+    border: '1px solid var(--border-primary)',
+    transition: 'all var(--transition-fast)',
+    textAlign: 'justify',
   });
 
   const parseMessage = (text) => {
     if (!text) return [];
 
+    // Try parsing as JSON first for the new compact format
+    try {
+      const data = JSON.parse(text);
+      const jsonBlocks = [];
+      
+      if (data.summary) {
+        jsonBlocks.push({ type: 'paragraph', content: data.summary });
+      }
+      
+      if (data.accordion && Array.isArray(data.accordion)) {
+        jsonBlocks.push({ 
+          type: 'list', 
+          items: data.accordion.map(item => ({ 
+            title: item.title, 
+            desc: item.content 
+          })) 
+        });
+      }
+      
+      if (jsonBlocks.length > 0) return jsonBlocks;
+    } catch (e) {
+      // Not JSON, continue with normal parsing
+    }
+
     const lines = text.split('\n');
     const blocks = [];
-    
+
     let currentSection = null;
     let currentParagraph = [];
 
@@ -69,13 +92,13 @@ export const ChatMessage = ({ role, content }) => {
 
       let cleanLine = line.replace(/\*\*/g, '');
       const listMatch = cleanLine.match(listItemRegex);
-      
+
       if (listMatch) {
         pushParagraph();
         let title = listMatch[1].trim();
         title = title.replace(/[:\-]+$/, '').trim();
         let content = listMatch[2].trim();
-        
+
         if (currentSection) {
           currentSection.items.push({ title, desc: content });
         } else {
@@ -106,10 +129,10 @@ export const ChatMessage = ({ role, content }) => {
       {blocks.map((block, idx) => {
         if (block.type === 'paragraph') {
           return (
-            <p 
-              key={idx} 
-              style={{ 
-                margin: idx === blocks.length - 1 ? '0' : '0 0 8px 0', 
+            <p
+              key={idx}
+              style={{
+                margin: idx === blocks.length - 1 ? '0' : '0 0 8px 0',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word'
               }}
@@ -123,10 +146,10 @@ export const ChatMessage = ({ role, content }) => {
         }
         if (block.type === 'section') {
           return (
-            <AccordionItem 
-              key={idx} 
-              title={block.title} 
-              desc={<AccordionList items={block.items} />} 
+            <AccordionItem
+              key={idx}
+              title={block.title}
+              desc={<AccordionList items={block.items} />}
               isSection={true}
             />
           );

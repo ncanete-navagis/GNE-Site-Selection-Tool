@@ -5,21 +5,20 @@ export const PropertySidePanel = ({ isOpen, onClose, property, onChooseLocation 
 
   const panelStyle = {
     position: 'fixed',
-    top: '12px',
-    right: '12px',
-    bottom: '12px',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    height: '100vh',
     width: '420px',
-    backgroundColor: 'var(--bg-secondary)',
-    backgroundImage: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.02), transparent)',
-    backdropFilter: 'blur(var(--blur-intensity))',
-    border: '1px solid var(--border-primary)',
-    borderRadius: 'var(--border-radius-lg)',
-    boxShadow: 'var(--shadow-elevated)',
+    backgroundColor: 'var(--bg-sidebar)',
+    borderLeft: '1px solid var(--border-primary)',
+    boxShadow: 'none',
+    zIndex: 1100, // Higher than left panel
+    transition: 'transform var(--transition-normal)',
+    transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
     display: 'flex',
     flexDirection: 'column',
-    transform: isOpen ? 'translateX(0)' : 'translateX(calc(100% + 24px))',
-    transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-    zIndex: 1100, // Higher than left panel
+    overflow: 'hidden',
     pointerEvents: 'auto',
     color: 'var(--text-primary)',
   };
@@ -112,8 +111,6 @@ export const PropertySidePanel = ({ isOpen, onClose, property, onChooseLocation 
     padding: '24px',
     borderTop: '1px solid var(--border-primary)',
     backgroundColor: 'var(--bg-elevated)',
-    borderBottomLeftRadius: 'var(--border-radius-lg)',
-    borderBottomRightRadius: 'var(--border-radius-lg)',
   };
 
   const chooseBtnStyle = {

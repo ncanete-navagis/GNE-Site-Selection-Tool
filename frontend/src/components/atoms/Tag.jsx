@@ -33,11 +33,11 @@ export const Tag = React.memo(({
     ? {
       padding: '10px 18px',
       borderRadius: 'var(--border-radius-pill)',
-      border: isSelected ? `1px solid ${color || 'var(--accent-primary)'}` : '1px solid var(--border-primary)',
-      backgroundColor: isSelected ? (backgroundColor || 'var(--accent-soft)') : 'var(--bg-elevated)',
-      color: isSelected ? (color || 'var(--accent-primary)') : 'var(--text-secondary)',
+      border: isSelected ? `1px solid var(--accent-primary)` : '1px solid var(--border-primary)',
+      backgroundColor: isSelected ? 'var(--accent-primary)' : 'var(--bg-elevated)',
+      color: isSelected ? '#ffffff' : 'var(--text-secondary)',
       fontWeight: '700',
-      boxShadow: isSelected ? '0 2px 8px var(--accent-soft)' : 'none'
+      boxShadow: 'var(--shadow-soft)'
     }
     : {
       background: backgroundColor || 'var(--bg-card)',

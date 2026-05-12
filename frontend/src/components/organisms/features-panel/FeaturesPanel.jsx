@@ -37,9 +37,8 @@ export const FeaturesPanel = (props) => {
     <div style={{ 
       display: 'flex', 
       flexDirection: 'column',
-      // Removed fixed height and overflow to allow the parent SidePanel to handle scrolling
       width: '100%',
-      backgroundColor: '#1E1E1E',
+      backgroundColor: 'transparent',
       overflowX: 'hidden'
     }}>
       {/* 1. Header Section */}

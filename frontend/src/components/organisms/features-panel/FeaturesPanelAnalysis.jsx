@@ -70,7 +70,6 @@ export const FeaturesPanelAnalysis = ({ poi }) => {
             {Object.entries(poi.analysis.sector_counts).map(([sector, count]) => (
               <div key={sector} style={{
                 backgroundColor: 'var(--bg-card)',
-                backgroundImage: 'linear-gradient(to bottom right, rgba(255, 255, 255, 0.02), transparent)',
                 padding: '16px',
                 borderRadius: 'var(--border-radius-md)',
                 border: '1px solid var(--border-primary)',
