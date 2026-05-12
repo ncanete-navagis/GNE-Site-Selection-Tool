@@ -18,7 +18,8 @@ export const CollapsibleSection = ({
   value, 
   onChange, 
   isLoading, 
-  emptyText = "No items" 
+  emptyText = "No items",
+  children
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -68,7 +69,9 @@ export const CollapsibleSection = ({
 
       {isOpen && (
         <div style={{ padding: '0 24px 24px 24px' }}>
-          {isLoading ? (
+          {children ? (
+            children
+          ) : isLoading ? (
             <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '12px', padding: '8px 0' }}>Loading...</div>
           ) : items.length === 0 ? (
             <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '12px', padding: '8px 0' }}>{emptyText}</div>

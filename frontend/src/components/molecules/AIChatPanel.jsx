@@ -1,6 +1,59 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGeminiChat } from '../../hooks/useGeminiChat';
 import { ChatMessage } from './ChatMessage';
+import { CollapsibleSection } from './CollapsibleSection';
+import { MiniFAQAccordion } from './MiniFAQAccordion';
+
+// Import modular prompts
+import { footTrafficPrompts } from '../../ai-prompts/footTraffic.prompts';
+import { demographicsPrompts } from '../../ai-prompts/demographics.prompts';
+import { competitionPrompts } from '../../ai-prompts/competition.prompts';
+import { accessibilityPrompts } from '../../ai-prompts/accessibility.prompts';
+import { risksPrompts } from '../../ai-prompts/risks.prompts';
+import { spacePrompts } from '../../ai-prompts/space.prompts';
+import { businessFitPrompts } from '../../ai-prompts/businessFit.prompts';
+
+const FAQDropdown = ({ onSendPrompt }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: 'var(--text-muted)',
+          fontSize: '12px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          padding: '4px 8px',
+          borderRadius: 'var(--border-radius-sm)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          transition: 'all var(--transition-fast)',
+          backgroundColor: isOpen ? 'var(--hover-bg)' : 'transparent'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+      >
+        Quick follow-up questions {isOpen ? '▴' : '▾'}
+      </button>
+      
+      {isOpen && (
+        <div style={{ 
+          width: '100%', 
+          maxWidth: '320px', 
+          marginTop: '8px', 
+          animation: 'fadeIn var(--transition-normal)'
+        }}>
+          <MiniFAQAccordion onSendPrompt={onSendPrompt} />
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const AIChatPanel = ({ poi }) => {
   const { messages, isTyping, error, sendMessage, sendFAQPrompt } = useGeminiChat(poi);
@@ -52,38 +105,10 @@ export const AIChatPanel = ({ poi }) => {
           <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <ChatMessage role={msg.role} content={msg.content} />
 
-            {/* 👇 FAQ Buttons (only appears on first message) */}
-            {msg.faqs && (
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '8px',
-                marginLeft: msg.role === 'model' ? '8px' : '0'
-              }}>
-                {msg.faqs.map((faq, i) => (
-                  <button
-                    key={i}
-                    onClick={() => sendFAQPrompt(faq.prompt, faq.label)}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      background: 'rgba(255,255,255,0.05)',
-                      color: '#c8c8c8ff',
-                      fontSize: '12px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')
-                    }
-                  >
-                    {faq.label}
-                  </button>
-                ))}
+            {/* 👇 Contextual Mini FAQ Dropdown (appears on model messages) */}
+            {(msg.id === 'initial' || msg.showMiniFAQ) && msg.role === 'model' && (
+              <div style={{ marginLeft: '12px', marginTop: '4px' }}>
+                <FAQDropdown onSendPrompt={sendFAQPrompt} />
               </div>
             )}
           </div>

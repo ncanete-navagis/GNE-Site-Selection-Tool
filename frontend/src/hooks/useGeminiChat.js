@@ -5,28 +5,7 @@ export const useGeminiChat = (selectedPOI) => {
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState(null);
 
-  const buildFAQPrompts = (poi) => [
-    {
-      label: "What is the foot traffic here?",
-      prompt: `Analyze the pedestrian and vehicle foot traffic at ${poi.title}.
-        Explain peak hours, nearby establishments contributing to traffic, and whether this is favorable for a restaurant business.`,
-    },
-    {
-      label: "Is it located in a floodzone?",
-      prompt: `Check if ${poi.title} is within a flood-prone area.
-        Explain historical flood data, risk level, and how this may affect a restaurant operation.`,
-    },
-    {
-      label: "Is the community good?",
-      prompt: `Analyze the surrounding community of ${poi.title}.
-        Describe demographics, safety, nearby residential and commercial zones, and if the community is suitable for a restaurant.`,
-    },
-    {
-      label: "What is the total lot area?",
-      prompt: `Provide details about the total lot area of ${poi.title}.
-        Explain if the space is sufficient for a restaurant, parking, and future expansion.`,
-    },
-  ];
+
 
   // Endpoint for the backend proxy
   const BACKEND_URL = 'http://localhost:8000/api/v1/ai/chat';
@@ -34,8 +13,6 @@ export const useGeminiChat = (selectedPOI) => {
   // Reset chat when POI changes
   useEffect(() => {
     if (selectedPOI) {
-      const faqs = buildFAQPrompts(selectedPOI);
-
       setMessages([
         {
           id: 'initial',
@@ -46,7 +23,6 @@ export const useGeminiChat = (selectedPOI) => {
 
   What type of cuisine are you planning for this location?`,
           timestamp: Date.now(),
-          faqs, // 👈 attach FAQs to this message
         }
       ]);
     }
@@ -99,7 +75,8 @@ export const useGeminiChat = (selectedPOI) => {
         id: (Date.now() + 1).toString(),
         role: 'model',
         content: data.response,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        showMiniFAQ: true
       }]);
     } catch (err) {
       console.error("Gemini Proxy Error:", err);
@@ -109,9 +86,11 @@ export const useGeminiChat = (selectedPOI) => {
     }
   }, [messages, selectedPOI]);
 
-  const sendFAQPrompt = useCallback((prompt, label) => {
-    // show only the label as user's message
-    sendMessage(prompt);
+  const sendFAQPrompt = useCallback((questionText, promptFileObject) => {
+    const prompt = promptFileObject[questionText];
+    if (prompt !== undefined) {
+      sendMessage(prompt || questionText); // Use questionText if prompt is empty string
+    }
   }, [sendMessage]);
 
   return {
