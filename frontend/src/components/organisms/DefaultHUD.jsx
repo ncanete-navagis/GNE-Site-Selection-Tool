@@ -52,29 +52,39 @@ export const DefaultHUD = ({
       <div
         style={{
           display: 'flex',
-          justifyContent: 'flex-end',
-          alignItems: 'flex-start',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
           gap: '12px',
-          pointerEvents: 'auto'
+          pointerEvents: 'auto',
         }}
       >
-        <TopNavigationPanel
-          searchQuery={searchQuery}
-          onSearchChange={onSearchChange}
-          onFilterChange={onFilterChange}
-          onRegionChange={onRegionChange}
-        />
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
-          <UserAvatar src={avatarImg} />
-          <MapToolsPanel
-            isPlacingMarker={isPlacingMarker}
-            isDrawing={isDrawing}
-            onDropPinClick={onFabClick}
-            onDrawClick={onDrawClick}
-            onFinishDrawing={onFinishDrawing}
-            onFilterClick={onOpenFeatures}
+        {/* Row 1 */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+          }}
+        >
+          <TopNavigationPanel
+            searchQuery={searchQuery}
+            onSearchChange={onSearchChange}
+            onFilterChange={onFilterChange}
+            onRegionChange={onRegionChange}
           />
+
+          <UserAvatar src={avatarImg} />
         </div>
+
+        {/* Row 2 */}
+        <MapToolsPanel
+          isPlacingMarker={isPlacingMarker}
+          isDrawing={isDrawing}
+          onDropPinClick={onFabClick}
+          onDrawClick={onDrawClick}
+          onFinishDrawing={onFinishDrawing}
+          onFilterClick={onOpenFeatures}
+        />
       </div>
 
       {/* Bottom Section */}
