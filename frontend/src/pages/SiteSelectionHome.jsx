@@ -386,6 +386,28 @@ export const SiteSelectionHome = () => {
     }
   };
 
+  const handleSelectSuggestion = async (suggestion) => {
+    try {
+      const res = await fetch(`http://localhost:8000/search/place-details?place_id=${suggestion.placeId}`);
+      if (!res.ok) throw new Error("Failed to fetch place details");
+      
+      const details = await res.json();
+      const coords = { lat: details.lat, lng: details.lng };
+      
+      // Update map camera
+      setFocusedLocation({ ...coords, zoom: 16 });
+      
+      // Update marker and UI state
+      setGeminiMarker({ ...coords, title: details.name });
+      setSelectedPropertyPolygon(null);
+      setPanelMode('features');
+      setIsPanelOpen(true);
+      
+    } catch (err) {
+      console.error("Error handling suggestion select:", err);
+    }
+  };
+
   const handleMarkerPlaced = (coords) => {
     setGeminiMarker({ ...coords, title: 'New Site' });
     setSelectedPropertyPolygon(null);
@@ -519,6 +541,7 @@ export const SiteSelectionHome = () => {
       geminiMarker={geminiMarker}
       onFilterChange={handleFilterChange}
       onRegionChange={setSelectedRegion}
+      onSelectSuggestion={handleSelectSuggestion}
     />
   );
 

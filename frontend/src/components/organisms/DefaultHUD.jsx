@@ -16,7 +16,8 @@ export const DefaultHUD = ({
   onFinishDrawing,
   onOpenFeatures,
   onFilterChange,
-  onRegionChange
+  onRegionChange,
+  onSelectSuggestion
 }) => {
 
   const containerStyle = {
@@ -71,6 +72,7 @@ export const DefaultHUD = ({
             onSearchChange={onSearchChange}
             onFilterChange={onFilterChange}
             onRegionChange={onRegionChange}
+            onSelectSuggestion={onSelectSuggestion}
           />
 
           <UserAvatar src={avatarImg} />

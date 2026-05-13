@@ -12,50 +12,86 @@ CITIES = {
 
 
 def get_place_autocomplete(query: str, city: str = "cebu"):
-    if city not in CITIES:
-        raise ValueError("City must be either 'cebu' or 'manila'")
+    """
+    Returns autocomplete predictions for search bar biased towards a city.
+    """
+    if not GOOGLE_API_KEY:
+        raise ValueError("GOOGLE_API_KEY not found in environment")
 
-    location = CITIES[city]
+    if city.lower() not in CITIES:
+        # If city is not explicitly handled, we still allow search but maybe without bias or with a generic PH bias
+        location = CITIES["cebu"] # Fallback to Cebu bias
+    else:
+        location = CITIES[city.lower()]
 
     url = "https://places.googleapis.com/v1/places:autocomplete"
 
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": GOOGLE_API_KEY,
-        # Optional but recommended for field filtering
         "X-Goog-FieldMask": "suggestions.placePrediction.text,suggestions.placePrediction.placeId"
     }
 
     body = {
         "input": query,
-
-        # NEW way to bias location
         "locationBias": {
             "circle": {
                 "center": {
                     "latitude": location["lat"],
                     "longitude": location["lng"]
                 },
-                "radius": 30000  # 30km bias around Cebu/Manila
+                "radius": 50000  # 50km bias
             }
         },
-
-        # Optional: restrict results more tightly to PH
         "includedRegionCodes": ["ph"]
     }
 
-    response = requests.post(url, json=body, headers=headers)
+    try:
+        response = requests.post(url, json=body, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
 
-    data = response.json()
+        suggestions = []
+        for item in data.get("suggestions", []):
+            prediction = item.get("placePrediction", {})
+            suggestions.append({
+                "text": prediction.get("text", {}).get("text"),
+                "placeId": prediction.get("placeId")
+            })
+        return suggestions
+    except Exception as e:
+        print(f"Error fetching autocomplete: {e}")
+        return []
 
-    # Normalize output for frontend
-    suggestions = []
 
-    for item in data.get("suggestions", []):
-        prediction = item.get("placePrediction", {})
-        suggestions.append({
-            "text": prediction.get("text", {}).get("text"),
-            "placeId": prediction.get("placeId")
-        })
+def get_place_details(place_id: str):
+    """
+    Retrieves place details (coords, formatted address) using Place ID.
+    Uses Google Places API v1 (New).
+    """
+    if not GOOGLE_API_KEY:
+        raise ValueError("GOOGLE_API_KEY not found in environment")
 
-    return suggestions
+    url = f"https://places.googleapis.com/v1/places/{place_id}"
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": GOOGLE_API_KEY,
+        "X-Goog-FieldMask": "id,location,formattedAddress,displayName"
+    }
+
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        return {
+            "place_id": data.get("id"),
+            "formatted_address": data.get("formattedAddress"),
+            "name": data.get("displayName", {}).get("text"),
+            "lat": data.get("location", {}).get("latitude"),
+            "lng": data.get("location", {}).get("longitude")
+        }
+    except Exception as e:
+        print(f"Error fetching place details: {e}")
+        return None

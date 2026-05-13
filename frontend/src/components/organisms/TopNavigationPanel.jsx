@@ -3,7 +3,7 @@ import { PillBase } from '../atoms/PillBase';
 import { DropdownButton } from '../molecules/DropdownButton';
 import { SearchField } from '../molecules/SearchField';
 
-export const TopNavigationPanel = ({ searchQuery, onSearchChange, onFilterChange, onRegionChange }) => {
+export const TopNavigationPanel = ({ searchQuery, onSearchChange, onFilterChange, onRegionChange, onSelectSuggestion }) => {
   const [selectedFilter, setSelectedFilter] = React.useState('None');
   const [selectedRegion, setSelectedRegion] = React.useState('Cebu');
   const [selectedLayer, setSelectedLayer] = React.useState(null);
@@ -81,7 +81,12 @@ export const TopNavigationPanel = ({ searchQuery, onSearchChange, onFilterChange
         if (onFilterChange) onFilterChange(filterValue);
       }} />
       <div style={{ width: '1px', height: '24px', background: 'var(--border-primary)' }}></div>
-      <SearchField value={searchQuery} onChange={(e) => onSearchChange(e.target.value)} />
+      <SearchField 
+        value={searchQuery} 
+        onChange={(e) => onSearchChange(e.target.value)} 
+        onSelectSuggestion={onSelectSuggestion}
+        city={selectedRegion}
+      />
     </PillBase>
   );
 };
