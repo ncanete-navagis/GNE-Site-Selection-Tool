@@ -178,8 +178,14 @@ export const MapCanvas = ({
     // 2. Hazards
     if (hazardData && hazardData.features && hazardData.features.length > 0) {
       try {
+        console.log("Loading hazardData with features:", hazardData.features.length);
         const features = map.data.addGeoJson(hazardData);
-        features.forEach(f => f.setProperty('dataType', 'hazard'));
+        console.log("Added GeoJson features count:", features.length);
+        features.forEach(f => {
+          if (f.getProperty('dataType') !== 'building') {
+            f.setProperty('dataType', 'hazard');
+          }
+        });
       } catch (e) { console.error("Hazard error:", e); }
     }
 

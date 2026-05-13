@@ -37,7 +37,7 @@ async def get_buildings(
         func.ST_AsGeoJSON(model.geom).label("geojson")
     ).where(
         func.ST_Intersects(model.geom, bbox)
-    ).limit(200)
+    ).limit(2000)
     
     try:
         result = await db.execute(stmt)

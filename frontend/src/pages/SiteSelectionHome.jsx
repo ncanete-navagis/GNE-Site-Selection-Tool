@@ -62,7 +62,8 @@ export const SiteSelectionHome = () => {
     getTraffic, 
     getBuyingProperties,
     searchRestaurants,
-    getPOIs 
+    getPOIs,
+    getBuildings
   } = useBackendAPI();
 
   const [poisByCategory, setPoisByCategory] = useState({});
