@@ -90,12 +90,22 @@ async def chat_with_ai(
         system_prompt += f"\n\nContext: Analyzing {title} ({poi_type}) with rating {rating}."
 
     try:
-        client = genai.Client(api_key=api_key)
-        
+        # Safeguard: google-genai SDK often prioritizes GOOGLE_API_KEY from env 
+        # even if api_key is passed to constructor. We temporarily hide it.
+        g_key_backup = os.environ.get("GOOGLE_API_KEY")
+        if "GOOGLE_API_KEY" in os.environ:
+            del os.environ["GOOGLE_API_KEY"]
+            
+        try:
+            client = genai.Client(api_key=api_key)
+        finally:
+            # Restore GOOGLE_API_KEY for other services (e.g. Places)
+            if g_key_backup:
+                os.environ["GOOGLE_API_KEY"] = g_key_backup
+
         contents = payload.history or []
         contents.append({"role": "user", "parts": [{"text": payload.message}]})
         
-        # We need to restructure contents format depending on SDK expectations, but genai usually handles dicts fine.
         response = client.models.generate_content(
             model="gemini-3-flash-preview",
             contents=contents,

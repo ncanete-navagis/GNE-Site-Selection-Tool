@@ -30,6 +30,7 @@ export const SidePanel = ({
     overflow: 'hidden',
     pointerEvents: 'auto',
     color: 'var(--text-primary)',
+    minHeight: 0, // Ensure flexbox doesn't grow beyond 100vh
   };
 
   const headerStyle = {
@@ -128,9 +129,10 @@ export const SidePanel = ({
 
       <div style={{ 
         flex: 1, 
-        overflowY: 'auto',
+        overflowY: mode === 'features' ? 'auto' : 'hidden', // AIChatPanel handles its own scroll
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        minHeight: 0, // CRITICAL: Allow children to be scrollable
       }}>
         {mode === 'features' ? (
           <FeaturesPanel poi={poi} onFiltersChange={onFiltersChange} {...props} />

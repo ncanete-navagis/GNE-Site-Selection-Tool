@@ -77,7 +77,13 @@ export const AIChatPanel = ({ poi }) => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '100%', 
+      position: 'relative',
+      minHeight: 0 // Bound to parent
+    }}>
       <div style={{
         flex: 1,
         padding: '0 32px 32px 32px',
@@ -85,7 +91,8 @@ export const AIChatPanel = ({ poi }) => {
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
-        scrollbarWidth: 'none'
+        scrollbarWidth: 'thin', // Changed from none to help diagnosis, can revert later
+        minHeight: 0, // CRITICAL: Allow this area to scroll instead of expanding
       }}>
         {messages.length === 0 && !isTyping && (
           <div style={{
