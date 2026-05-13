@@ -96,6 +96,11 @@ export const useBackendAPI = () => {
     return fetchWithState(url);
   }, [fetchWithState]);
 
+  const getChoropleth = useCallback(async (region = 'Cebu') => {
+    const url = `${API_BASE}/choropleth/population?region=${region}`;
+    return fetchWithState(url);
+  }, [fetchWithState]);
+
   return {
     generateRecommendation,
     getHazards,
@@ -105,6 +110,7 @@ export const useBackendAPI = () => {
     searchRestaurants,
     getPOIs,
     getBuildings,
+    getChoropleth,
     isLoading,
     error,
     isAuthenticated: !!idToken,

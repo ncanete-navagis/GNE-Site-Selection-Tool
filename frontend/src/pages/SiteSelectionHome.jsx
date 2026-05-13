@@ -63,8 +63,29 @@ export const SiteSelectionHome = () => {
     getBuyingProperties,
     searchRestaurants,
     getPOIs,
-    getBuildings
+    getBuildings,
+    getChoropleth
   } = useBackendAPI();
+
+  const [isChoroplethOn, setIsChoroplethOn] = useState(false);
+  const [choroplethData, setChoroplethData] = useState(null);
+
+  // Fetch Choropleth Data when enabled or region changes
+  useEffect(() => {
+    const fetchChoropleth = async () => {
+      if (isChoroplethOn) {
+        try {
+          const data = await getChoropleth(selectedRegion);
+          setChoroplethData(data);
+        } catch (err) {
+          console.error("Failed to fetch choropleth data:", err);
+        }
+      } else {
+        setChoroplethData(null);
+      }
+    };
+    fetchChoropleth();
+  }, [isChoroplethOn, selectedRegion, getChoropleth]);
 
   const [poisByCategory, setPoisByCategory] = useState({});
 
@@ -480,6 +501,8 @@ export const SiteSelectionHome = () => {
       finishTrigger={finishDrawingTrigger}
       restaurantMarkers={restaurantMarkers}
       radius={analysisRadius}
+      isChoroplethOn={isChoroplethOn}
+      choroplethData={choroplethData}
     />
   );
 
@@ -529,6 +552,8 @@ export const SiteSelectionHome = () => {
         onFiltersChange={setRestaurantFilters}
         onRunAnalysis={handleRunAnalysis}
         onClose={() => setIsPanelOpen(false)}
+        isChoroplethOn={isChoroplethOn}
+        setIsChoroplethOn={setIsChoroplethOn}
       />
       
       <PropertySidePanel

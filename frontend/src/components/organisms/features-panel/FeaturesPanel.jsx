@@ -17,7 +17,9 @@ export const FeaturesPanel = (props) => {
     poi,
     isAnalyzing,
     onRunAnalysis,
-    onFiltersChange
+    onFiltersChange,
+    isChoroplethOn,
+    setIsChoroplethOn
   } = props;
 
   // Internal UI State
@@ -69,8 +71,8 @@ export const FeaturesPanel = (props) => {
 
       {/* 4. Map Display Controls */}
       <FeaturesPanelMapControls 
-        isChoroplethOn={state.isChoroplethOn}
-        setIsChoroplethOn={state.setIsChoroplethOn}
+        isChoroplethOn={isChoroplethOn}
+        setIsChoroplethOn={setIsChoroplethOn}
         isHeatMapOn={state.isHeatMapOn}
         setIsHeatMapOn={state.setIsHeatMapOn}
       />

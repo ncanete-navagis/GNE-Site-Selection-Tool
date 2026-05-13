@@ -8,7 +8,6 @@ import { useState, useEffect } from 'react';
 export const useFeaturePanelState = (props) => {
   const [localRadius, setLocalRadius] = useState(props.radius);
   const [selectedTypes, setSelectedTypes] = useState([]);
-  const [isChoroplethOn, setIsChoroplethOn] = useState(false);
   const [isHeatMapOn, setIsHeatMapOn] = useState(false);
 
   // Sync local radius if external radius changes
@@ -21,8 +20,6 @@ export const useFeaturePanelState = (props) => {
     setLocalRadius,
     selectedTypes,
     setSelectedTypes,
-    isChoroplethOn,
-    setIsChoroplethOn,
     isHeatMapOn,
     setIsHeatMapOn
   };

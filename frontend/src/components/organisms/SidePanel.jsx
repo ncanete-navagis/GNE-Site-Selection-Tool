@@ -10,7 +10,9 @@ export const SidePanel = ({
   hasAIAccess, 
   poi,
   onFiltersChange,
-  ...props // Pass through all analysis criteria props
+  isChoroplethOn,
+  setIsChoroplethOn,
+  ...props
 }) => {
   const panelStyle = {
     position: 'fixed',
@@ -135,7 +137,13 @@ export const SidePanel = ({
         minHeight: 0, // CRITICAL: Allow children to be scrollable
       }}>
         {mode === 'features' ? (
-          <FeaturesPanel poi={poi} onFiltersChange={onFiltersChange} {...props} />
+          <FeaturesPanel 
+            poi={poi} 
+            onFiltersChange={onFiltersChange} 
+            isChoroplethOn={isChoroplethOn}
+            setIsChoroplethOn={setIsChoroplethOn}
+            {...props} 
+          />
         ) : (
           <AIChatPanel poi={poi} />
         )}

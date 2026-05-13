@@ -73,7 +73,9 @@ export const MapCanvas = ({
   onDrawingComplete,
   finishTrigger = 0,
   restaurantMarkers = [],
-  radius = 1000
+  radius = 1000,
+  isChoroplethOn = false,
+  choroplethData = null
 }) => {
 
   const { isLoaded } = useJsApiLoader({
@@ -155,6 +157,29 @@ export const MapCanvas = ({
     }
   }, [map, focusedLocation]);
 
+  // Color interpolation helper for Choropleth
+  const interpolateColor = (color1, color2, factor) => {
+    const f = Math.max(0, Math.min(1, factor));
+    const hex = (x) => {
+      const s = x.toString(16);
+      return s.length === 1 ? '0' + s : s;
+    };
+
+    const r1 = parseInt(color1.substring(1, 3), 16);
+    const g1 = parseInt(color1.substring(3, 5), 16);
+    const b1 = parseInt(color1.substring(5, 7), 16);
+
+    const r2 = parseInt(color2.substring(1, 3), 16);
+    const g2 = parseInt(color2.substring(3, 5), 16);
+    const b2 = parseInt(color2.substring(5, 7), 16);
+
+    const r = Math.round(r1 + f * (r2 - r1));
+    const g = Math.round(g1 + f * (g2 - g1));
+    const b = Math.round(b1 + f * (b2 - b1));
+
+    return `#${hex(r)}${hex(g)}${hex(b)}`;
+  };
+
   useEffect(() => {
     if (!map) return;
     map.data.forEach((feature) => { map.data.remove(feature); });
@@ -197,6 +222,14 @@ export const MapCanvas = ({
       } catch (e) { console.error("Traffic error:", e); }
     }
 
+    // 4. Choropleth (Population Density)
+    if (isChoroplethOn && choroplethData && choroplethData.features && choroplethData.features.length > 0) {
+      try {
+        const features = map.data.addGeoJson(choroplethData);
+        features.forEach(f => f.setProperty('dataType', 'choropleth'));
+      } catch (e) { console.error("Choropleth error:", e); }
+    }
+
     // Dynamic Styling based on feature property
     map.data.setStyle((feature) => {
       const type = feature.getProperty('dataType');
@@ -236,10 +269,21 @@ export const MapCanvas = ({
           clickable: true
         };
       }
+      if (type === 'choropleth') {
+        const score = feature.getProperty('densityScore') || 0;
+        // Interpolate between Light Blue (#ebf5fb) and Dark Blue (#154360)
+        return {
+          fillColor: interpolateColor("#ebf5fb", "#154360", score),
+          strokeColor: "#ffffff",
+          strokeWeight: 0.5,
+          fillOpacity: 0.7,
+          clickable: true
+        };
+      }
       return {};
     });
 
-  }, [map, hazardData, trafficData, hazardVersion, selectedPropertyPolygon]);
+  }, [map, hazardData, trafficData, hazardVersion, selectedPropertyPolygon, isChoroplethOn, choroplethData]);
 
   const handleMapClick = useCallback((e) => {
     if (isDrawing) {
