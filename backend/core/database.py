@@ -34,7 +34,8 @@ engine = create_async_engine(
     ASYNC_DATABASE_URL,
     pool_size=10,
     max_overflow=20,
-    echo=False,
+    echo=True,
+    connect_args={"prepared_statement_cache_size": 0},
 )
 
 # ---------------------------------------------------------------------------

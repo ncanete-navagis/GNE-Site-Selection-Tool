@@ -46,7 +46,7 @@ from __future__ import annotations
 from typing import Optional
 
 from geoalchemy2.types import Geography
-from sqlalchemy import cast, select, func
+from sqlalchemy import cast, select, func, literal_column
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.barangay import Barangay
@@ -135,7 +135,7 @@ async def get_hazards_near_point(
         A list of dicts; each dict includes "hazard_type" plus the row's columns.
     """
     point_geog = cast(
-        func.ST_SetSRID(func.ST_MakePoint(lon, lat), _SRID),
+        func.ST_SetSRID(func.ST_MakePoint(literal_column(str(lon)), literal_column(str(lat))), _SRID),
         Geography,
     )
 
@@ -154,7 +154,7 @@ async def get_hazards_near_point(
                 func.ST_DWithin(
                     cast(model.geometry, Geography),
                     point_geog,
-                    radius_m,
+                    literal_column(str(radius_m)),
                 )
             )
         )
@@ -195,7 +195,7 @@ async def get_buildings_near_point(
     amenities = amenity_filter if amenity_filter is not None else FOOD_AMENITIES
 
     point_geog = cast(
-        func.ST_SetSRID(func.ST_MakePoint(lon, lat), _SRID),
+        func.ST_SetSRID(func.ST_MakePoint(literal_column(str(lon)), literal_column(str(lat))), _SRID),
         Geography,
     )
 
@@ -207,7 +207,7 @@ async def get_buildings_near_point(
                 func.ST_DWithin(
                     cast(model.geom, Geography),
                     point_geog,
-                    radius_m,
+                    literal_column(str(radius_m)),
                 ),
                 model.amenity.in_(amenities),
             )

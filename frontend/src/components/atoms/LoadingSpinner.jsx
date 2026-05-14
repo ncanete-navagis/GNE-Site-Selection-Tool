@@ -3,10 +3,10 @@ import React from 'react';
 /**
  * LoadingSpinner Atom
  * @param {Object} props
- * @param {string} [props.color='#ff2a85'] - Spinner color
+ * @param {string} [props.color='var(--accent-primary)'] - Spinner color
  * @param {string} [props.size='40px'] - Spinner size
  */
-export const LoadingSpinner = React.memo(({ color = '#ff2a85', size = '40px' }) => (
+export const LoadingSpinner = React.memo(({ color = 'var(--accent-primary, #3b82f6)', size = '40px' }) => (
   <>
     <div className="loading-spinner" style={{
       width: size,

@@ -194,6 +194,15 @@ async def run_analysis(
 
     start_gather = time.perf_counter()
     import httpx
+    
+    async def time_task(name, coro):
+        import time
+        start = time.perf_counter()
+        res = await coro
+        elapsed = (time.perf_counter() - start) * 1000
+        logger.info(f"Task {name} took {elapsed:.2f}ms")
+        return res
+        
     async with httpx.AsyncClient(timeout=15.0) as client:
         (
             hazards,
@@ -206,15 +215,15 @@ async def run_analysis(
             site_context,
             market_analysis,
         ) = await asyncio.gather(
-            geo_queries.get_hazards_near_point(session, lon, lat, radius),
-            geo_queries.get_traffic_near_point(session, lon, lat, radius),
-            geo_queries.get_buildings_near_point(session, lon, lat, radius, amenity_filter=amenity_filter),
-            external_places.get_foot_traffic_proxy(lat, lon, radius, client=client),
-            external_places.reverse_geocode(lat, lon, client=client),
-            external_places.get_traffic_speed_proxy(lat, lon, client=client),
-            external_places.get_sector_counts(lat, lon, radius, business_sectors, client=client),
-            external_places.get_site_context(lat, lon, radius, client=client),
-            external_places.get_market_analysis(lat, lon, radius, client=client),
+            time_task("hazards", geo_queries.get_hazards_near_point(session, lon, lat, radius)),
+            time_task("traffic", geo_queries.get_traffic_near_point(session, lon, lat, radius)),
+            time_task("buildings", geo_queries.get_buildings_near_point(session, lon, lat, radius, amenity_filter=amenity_filter)),
+            time_task("foot_traffic", external_places.get_foot_traffic_proxy(lat, lon, radius, client=client)),
+            time_task("geocode", external_places.reverse_geocode(lat, lon, client=client)),
+            time_task("traffic_speed", external_places.get_traffic_speed_proxy(lat, lon, client=client)),
+            time_task("sector_counts", external_places.get_sector_counts(lat, lon, radius, business_sectors, client=client)),
+            time_task("site_context", external_places.get_site_context(lat, lon, radius, client=client)),
+            time_task("market", external_places.get_market_analysis(lat, lon, radius, client=client)),
         )
     gather_duration = (time.perf_counter() - start_gather) * 1000
     logger.info(f"Parallel analysis gather took {gather_duration:.2f}ms")

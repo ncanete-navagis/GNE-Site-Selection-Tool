@@ -48,10 +48,13 @@ async def _verify_and_upsert(token: str, session: AsyncSession) -> User:
             grequests.Request(),
             settings.GOOGLE_CLIENT_ID,
         )
-    except Exception:
+    except Exception as e:
+        import logging
+        logger = logging.getLogger("gne")
+        logger.error(f"Token verification failed: {str(e)}")
         raise HTTPException(
             status_code=401,
-            detail="Invalid or expired Google token",
+            detail=f"Invalid or expired Google token: {str(e)}",
         )
 
     email: str | None = payload.get("email")
