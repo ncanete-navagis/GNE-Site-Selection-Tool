@@ -48,6 +48,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional, List
 
+from geoalchemy2.shape import to_shape
+
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -289,12 +291,13 @@ async def run_analysis(
         "site_context": site_context,
         "market_analysis": market_analysis,
         # Competitors list (from new branch)
+        # lat/lng are extracted from the geom column (WKB) via geoalchemy2.shape
         "competitors": [
             {
                 "name": b.name or "Unnamed Business",
                 "amenity": b.amenity,
-                "lat": b.lat,
-                "lng": b.lon,
+                "lat": to_shape(b.geom).centroid.y if b.geom is not None else None,
+                "lng": to_shape(b.geom).centroid.x if b.geom is not None else None,
                 "cuisine": getattr(b, "cuisine", None)
             } for b in businesses[:10]  # Limit competitors in JSON
         ]
