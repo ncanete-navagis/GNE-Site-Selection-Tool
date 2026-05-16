@@ -101,6 +101,11 @@ export const useBackendAPI = () => {
     return fetchWithState(url);
   }, [fetchWithState]);
 
+  const getChoroplethRadius = useCallback(async (lat, lng) => {
+    const url = `${API_BASE}/choropleth/radius?lat=${lat}&lng=${lng}`;
+    return fetchWithState(url);
+  }, [fetchWithState]);
+
   return {
     generateRecommendation,
     getHazards,
@@ -111,6 +116,7 @@ export const useBackendAPI = () => {
     getPOIs,
     getBuildings,
     getChoropleth,
+    getChoroplethRadius,
     isLoading,
     error,
     isAuthenticated: !!idToken,

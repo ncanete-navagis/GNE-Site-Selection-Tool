@@ -80,7 +80,7 @@ export const AIChatPanel = ({ poi }) => {
     <div style={{ 
       display: 'flex', 
       flexDirection: 'column', 
-      height: '100%', 
+      flex: 1, 
       position: 'relative',
       minHeight: 0 // Bound to parent
     }}>
@@ -159,6 +159,7 @@ export const AIChatPanel = ({ poi }) => {
       </div>
 
       <div style={{
+        flexShrink: 0,
         padding: '24px 32px 32px 32px',
         backgroundColor: 'var(--bg-sidebar)',
         borderTop: '1px solid var(--border-primary)'

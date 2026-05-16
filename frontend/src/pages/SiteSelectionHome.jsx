@@ -9,7 +9,6 @@ import { DefaultHUD } from '../components/organisms/DefaultHUD';
 import { DrawingResultPopup } from '../components/molecules/DrawingResultPopup';
 import { useBackendAPI } from '../hooks/useBackendAPI';
 import TutorialTour from '../tutorial/TutorialTour';
-import AIChatTutorial from '../tutorial/AIChatTutorial';
 
 export const SiteSelectionHome = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -64,28 +63,40 @@ export const SiteSelectionHome = () => {
     searchRestaurants,
     getPOIs,
     getBuildings,
-    getChoropleth
+    getChoropleth,
+    getChoroplethRadius
   } = useBackendAPI();
 
   const [isChoroplethOn, setIsChoroplethOn] = useState(false);
   const [choroplethData, setChoroplethData] = useState(null);
 
   // Fetch Choropleth Data when enabled or region changes
+  const isDropdownChoropleth = activeHazardFilter === 'Choropleth';
+
   useEffect(() => {
     const fetchChoropleth = async () => {
-      if (isChoroplethOn) {
+      if (isChoroplethOn && geminiMarker) {
+        // Toggle is ON -> Radius mode
+        try {
+          const data = await getChoroplethRadius(geminiMarker.lat, geminiMarker.lng);
+          setChoroplethData(data);
+        } catch (err) {
+          console.error("Failed to fetch radius choropleth data:", err);
+        }
+      } else if (!isChoroplethOn && isDropdownChoropleth) {
+        // Toggle OFF -> Region mode
         try {
           const data = await getChoropleth(selectedRegion);
           setChoroplethData(data);
         } catch (err) {
-          console.error("Failed to fetch choropleth data:", err);
+          console.error("Failed to fetch region choropleth data:", err);
         }
       } else {
         setChoroplethData(null);
       }
     };
     fetchChoropleth();
-  }, [isChoroplethOn, selectedRegion, getChoropleth]);
+  }, [isChoroplethOn, isDropdownChoropleth, geminiMarker, selectedRegion, getChoropleth, getChoroplethRadius]);
 
   const [poisByCategory, setPoisByCategory] = useState({});
 
@@ -207,6 +218,12 @@ export const SiteSelectionHome = () => {
       } catch (err) {
         console.error("Failed to fetch buildings:", err);
       }
+      return;
+    }
+
+    if (filterLabel === 'Choropleth') {
+      setTrafficData(null);
+      setHazardData(null);
       return;
     }
 
@@ -523,7 +540,7 @@ export const SiteSelectionHome = () => {
       finishTrigger={finishDrawingTrigger}
       restaurantMarkers={restaurantMarkers}
       radius={analysisRadius}
-      isChoroplethOn={isChoroplethOn}
+      isChoroplethOn={isChoroplethOn || activeHazardFilter === 'Choropleth'}
       choroplethData={choroplethData}
     />
   );
@@ -596,10 +613,6 @@ export const SiteSelectionHome = () => {
         sidePanelComponent={sidePanelComponent}
       />
       <TutorialTour onSidePanelOpen={() => setIsPanelOpen(true)} />
-      <AIChatTutorial 
-        poi={geminiMarker} 
-        isAIPanelOpen={isPanelOpen && panelMode === 'ai'} 
-      />
     </>
   );
 };

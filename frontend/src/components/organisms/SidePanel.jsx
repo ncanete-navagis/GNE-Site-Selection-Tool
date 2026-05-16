@@ -41,6 +41,7 @@ export const SidePanel = ({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottom: '1px solid var(--border-primary)',
+    flexShrink: 0,
   };
 
   const toggleContainerStyle = {
