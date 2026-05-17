@@ -33,11 +33,6 @@ export const tutorialSteps = [
     target: "#tutorial-choropleth-toggle",
     content: "Toggle the Choropleth view to see regional data distributions on the map.",
     placement: "top"
-  },
-  {
-    target: "#tutorial-heatmap-toggle",
-    content: "Use the Heat Map toggle to visualize high-density areas and hotspots.",
-    placement: "top"
   }
 ];
 

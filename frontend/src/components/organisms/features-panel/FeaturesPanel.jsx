@@ -73,8 +73,6 @@ export const FeaturesPanel = (props) => {
       <FeaturesPanelMapControls 
         isChoroplethOn={isChoroplethOn}
         setIsChoroplethOn={setIsChoroplethOn}
-        isHeatMapOn={state.isHeatMapOn}
-        setIsHeatMapOn={state.setIsHeatMapOn}
       />
     </div>
   );

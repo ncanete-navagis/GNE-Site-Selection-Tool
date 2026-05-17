@@ -16,7 +16,8 @@ export const TopNavigationPanel = ({ searchQuery, onSearchChange, onFilterChange
     'Traffic Layer':            'Traffic',
     'Foot Traffic Layer':       'Traffic',
     'Building Data Layer':      'Building Data',
-    'Choropleth Layer':         'Choropleth'
+    'Choropleth Layer':         'Choropleth',
+    'Restaurant Heat Map':      'Heat Map'
   };
 
   const filterOptions = [
@@ -36,7 +37,8 @@ export const TopNavigationPanel = ({ searchQuery, onSearchChange, onFilterChange
     { label: 'Storm Surge Hazard Layer' },
     { label: 'Earthquake Hazard Layer' },
     { label: 'Building Data Layer' },
-    { label: 'Choropleth Layer' }
+    { label: 'Choropleth Layer' },
+    { label: 'Restaurant Heat Map' }
   ];
 
   const containerStyle = {

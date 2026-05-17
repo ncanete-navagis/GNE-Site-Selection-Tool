@@ -16,7 +16,7 @@ from slowapi import _rate_limit_exceeded_handler
 from core.config import settings
 from utils.logger import log_request
 from core.rate_limit import limiter
-from routers import recommendations, users, ai, location_history, barangays, hazards, traffic, regions, places, properties, buildings, choroplethRouter, search
+from routers import recommendations, users, ai, location_history, barangays, hazards, traffic, regions, places, properties, buildings, choroplethRouter, search, heatmap
 
 app = FastAPI(
     title="GNE Site Selection Tool API",
@@ -97,6 +97,7 @@ app.include_router(properties.router)
 app.include_router(buildings.router)
 app.include_router(choroplethRouter.router)
 app.include_router(search.router)
+app.include_router(heatmap.router)
 
 @app.get("/health")
 def health_check():

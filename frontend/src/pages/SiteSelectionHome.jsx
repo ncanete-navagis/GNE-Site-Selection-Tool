@@ -70,6 +70,8 @@ export const SiteSelectionHome = () => {
   const [isChoroplethOn, setIsChoroplethOn] = useState(false);
   const [choroplethData, setChoroplethData] = useState(null);
 
+  const isHeatMapOn = activeHazardFilter === 'Heat Map';
+
   // Fetch Choropleth Data when enabled or region changes
   const isDropdownChoropleth = activeHazardFilter === 'Choropleth';
 
@@ -221,7 +223,7 @@ export const SiteSelectionHome = () => {
       return;
     }
 
-    if (filterLabel === 'Choropleth') {
+    if (filterLabel === 'Choropleth' || filterLabel === 'Heat Map') {
       setTrafficData(null);
       setHazardData(null);
       return;
@@ -542,6 +544,7 @@ export const SiteSelectionHome = () => {
       radius={analysisRadius}
       isChoroplethOn={isChoroplethOn || activeHazardFilter === 'Choropleth'}
       choroplethData={choroplethData}
+      isHeatMapOn={isHeatMapOn}
     />
   );
 

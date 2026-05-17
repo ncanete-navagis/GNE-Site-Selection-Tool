@@ -16,7 +16,7 @@ const center = {
   lng: 123.8854
 };
 
-const LIBRARIES = ['drawing', 'geometry'];
+const LIBRARIES = ['drawing', 'geometry', 'visualization'];
 
 const darkMapStyle = [
   { elementType: "geometry", stylers: [{ color: "#212121" }] },
@@ -75,7 +75,8 @@ export const MapCanvas = ({
   restaurantMarkers = [],
   radius = 1000,
   isChoroplethOn = false,
-  choroplethData = null
+  choroplethData = null,
+  isHeatMapOn = false
 }) => {
 
   const { isLoaded } = useJsApiLoader({
@@ -90,8 +91,20 @@ export const MapCanvas = ({
   const [activeRestaurant, setActiveRestaurant] = useState(null);
   const isProcessingClick = useRef(false);
 
+  const heatmapLayerRef = useRef(null);
+
   const onLoad = useCallback((mapInstance) => { setMap(mapInstance); }, []);
-  const onUnmount = useCallback(() => { setMap(null); }, []);
+  const onUnmount = useCallback(() => { 
+    if (heatmapLayerRef.current && map) {
+      let indexToRemove = -1;
+      map.overlayMapTypes.forEach((overlay, index) => {
+        if (overlay === heatmapLayerRef.current) indexToRemove = index;
+      });
+      if (indexToRemove !== -1) map.overlayMapTypes.removeAt(indexToRemove);
+      heatmapLayerRef.current = null;
+    }
+    setMap(null); 
+  }, [map]);
 
   const onPolygonComplete = useCallback((polygon) => {
     if (!window.google || !polygon) return;
@@ -156,6 +169,44 @@ export const MapCanvas = ({
       }
     }
   }, [map, focusedLocation]);
+
+  // Handle Heatmap toggling & raster tiles
+  useEffect(() => {
+    if (!map || !window.google) return;
+
+    if (isHeatMapOn) {
+      if (!heatmapLayerRef.current) {
+        heatmapLayerRef.current = new window.google.maps.ImageMapType({
+          getTileUrl: (coord, zoom) => {
+            if (zoom < 10 || zoom > 18) return null;
+            return `/assets/MapTiles/${zoom}/${coord.x}/${coord.y}.png`;
+          },
+          tileSize: new window.google.maps.Size(256, 256),
+          opacity: 0.6,
+          name: 'Restaurant Density'
+        });
+      }
+      
+      let exists = false;
+      map.overlayMapTypes.forEach((overlay) => {
+        if (overlay === heatmapLayerRef.current) exists = true;
+      });
+      
+      if (!exists) {
+        map.overlayMapTypes.insertAt(0, heatmapLayerRef.current);
+      }
+    } else {
+      if (heatmapLayerRef.current) {
+        let indexToRemove = -1;
+        map.overlayMapTypes.forEach((overlay, index) => {
+          if (overlay === heatmapLayerRef.current) indexToRemove = index;
+        });
+        if (indexToRemove !== -1) {
+          map.overlayMapTypes.removeAt(indexToRemove);
+        }
+      }
+    }
+  }, [isHeatMapOn, map]);
 
   // Color interpolation helper for Choropleth
   const interpolateColor = (color1, color2, factor) => {
