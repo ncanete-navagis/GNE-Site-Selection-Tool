@@ -85,8 +85,14 @@ export const useBackendAPI = () => {
     return fetchWithState(url);
   }, [fetchWithState]);
 
-  const getPOIs = useCallback(async (region = 'Cebu', types = '') => {
-    const url = `${API_BASE}/places/pois?region=${region}&types=${types}`;
+  const getPOIs = useCallback(async (region = 'Cebu', types = '', lat = null, lng = null, radius = null) => {
+    let url = `${API_BASE}/places/pois?region=${region}&types=${types}`;
+    if (lat !== null && lng !== null) {
+      url += `&lat=${lat}&lng=${lng}`;
+    }
+    if (radius !== null) {
+      url += `&radius=${radius}`;
+    }
     return fetchWithState(url);
   }, [fetchWithState]);
 

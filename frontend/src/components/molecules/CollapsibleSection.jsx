@@ -107,7 +107,7 @@ export const CollapsibleSection = ({
                       cursor: 'pointer'
                     }}
                   />
-                  <span style={{ fontSize: '14px', fontWeight: (value || []).includes(item.label) ? '600' : '400' }}>{item.label}</span>
+                  <span style={{ fontSize: '14px', fontWeight: (value || []).includes(item.label) ? '600' : '400' }}>{item.displayText || item.label}</span>
                 </label>
               ))}
 
@@ -145,7 +145,7 @@ export const CollapsibleSection = ({
                           }
                         }}
                       >
-                        {item.label}
+                        {item.displayText || item.label}
                       </button>
                     );
                   })}

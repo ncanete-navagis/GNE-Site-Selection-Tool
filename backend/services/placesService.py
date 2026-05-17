@@ -244,9 +244,10 @@ def discoverRestaurants(region, filters=""):
     return restaurants
 
 
-def discoverPOIs(region, types_list):
+def discoverPOIs(region, types_list, lat=None, lng=None, radius=None):
     """
     Returns a list of POIs for a given region and a list of Google Place types.
+    Can be optionally restricted to a specific circle using lat, lng, and radius.
     """
     normalizedRegion = (
         region[0].upper() + region[1:].lower()
@@ -262,10 +263,15 @@ def discoverPOIs(region, types_list):
     if isinstance(types_list, str):
         types_list = [t.strip() for t in types_list.split(",") if t.strip()]
 
+    # If lat/lng/radius are provided, use them! Otherwise fall back to region defaults
+    search_lat = lat if lat is not None else config["lat"]
+    search_lng = lng if lng is not None else config["lng"]
+    search_radius = radius if radius is not None else config["radius"]
+
     places = fetchNearbyPlaces(
-        config["lat"],
-        config["lng"],
-        config["radius"],
+        search_lat,
+        search_lng,
+        search_radius,
         includedTypes=types_list
     )
 

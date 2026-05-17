@@ -92,9 +92,16 @@ def search_restaurants(region: Optional[str] = Query("Cebu"), filters: Optional[
 
 
 @router.get("/pois")
-def search_pois(region: Optional[str] = Query("Cebu"), types: Optional[str] = Query("")):
+def search_pois(
+    region: Optional[str] = Query("Cebu"),
+    types: Optional[str] = Query(""),
+    lat: Optional[float] = Query(None),
+    lng: Optional[float] = Query(None),
+    radius: Optional[float] = Query(None)
+):
     """
     Returns a list of POIs for a given region and types.
     Types should be a comma-separated string of Google Place types.
+    Can be optionally restricted to a specific circle using lat, lng, and radius.
     """
-    return placesService.discoverPOIs(region, types)
+    return placesService.discoverPOIs(region, types, lat=lat, lng=lng, radius=radius)

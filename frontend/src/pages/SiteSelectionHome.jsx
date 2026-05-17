@@ -280,7 +280,12 @@ export const SiteSelectionHome = () => {
       const newPoisMap = {};
       for (const type of requiredTypes) {
         try {
-          const data = await getPOIs(selectedRegion, type);
+          let data;
+          if (geminiMarker) {
+            data = await getPOIs(selectedRegion, type, geminiMarker.lat, geminiMarker.lng, analysisRadius);
+          } else {
+            data = await getPOIs(selectedRegion, type);
+          }
           newPoisMap[type] = data || [];
         } catch (err) {
           console.error(`Failed to fetch POIs for ${type}:`, err);
@@ -290,7 +295,7 @@ export const SiteSelectionHome = () => {
     };
 
     fetchAllRequiredPOIs();
-  }, [selectedRegion, selectedSectors, restaurantFilters, getPOIs]);
+  }, [selectedRegion, selectedSectors, restaurantFilters, getPOIs, geminiMarker, analysisRadius]);
 
   // Derived state: Filtered Buying Properties based on 2km proximity
   const filteredBuyingProperties = React.useMemo(() => {
@@ -339,14 +344,21 @@ export const SiteSelectionHome = () => {
       }
 
       pois.forEach(p => {
-        markers.push({ ...p, pinColor: color, pinStroke: stroke });
+        if (geminiMarker) {
+          const dist = calculateDistance(geminiMarker.lat, geminiMarker.lng, p.lat, p.lng);
+          if (dist <= analysisRadius) {
+            markers.push({ ...p, pinColor: color, pinStroke: stroke });
+          }
+        } else {
+          markers.push({ ...p, pinColor: color, pinStroke: stroke });
+        }
       });
     });
 
     // De-duplicate by POI ID
     const uniquePois = Array.from(new Map(markers.map(p => [p.id, p])).values());
     setRestaurantMarkers(uniquePois);
-  }, [poisByCategory]);
+  }, [poisByCategory, geminiMarker, analysisRadius]);
 
 
   // Fetch Restaurant Markers when Region or Filters change (for Red Pins)
@@ -641,6 +653,7 @@ export const SiteSelectionHome = () => {
         onClose={() => setIsPanelOpen(false)}
         isChoroplethOn={isChoroplethOn}
         setIsChoroplethOn={setIsChoroplethOn}
+        poisByCategory={poisByCategory}
       />
       
       <PropertySidePanel

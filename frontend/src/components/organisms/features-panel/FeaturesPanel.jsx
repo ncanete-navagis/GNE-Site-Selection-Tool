@@ -67,6 +67,7 @@ export const FeaturesPanel = (props) => {
         isLoadingTypes={isLoadingTypes}
         selectedTypes={state.selectedTypes}
         setSelectedTypes={state.setSelectedTypes}
+        poisByCategory={props.poisByCategory}
       />
 
       {/* 4. Map Display Controls */}
