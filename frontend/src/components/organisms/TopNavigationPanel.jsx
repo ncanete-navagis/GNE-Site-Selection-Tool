@@ -10,11 +10,6 @@ export const TopNavigationPanel = ({ searchQuery, onSearchChange, onFilterChange
 
   // Map layer option labels to filter values the parent understands
   const layerFilterMap = {
-    'Flood Hazard Layer':       'Flood',
-    'Storm Surge Hazard Layer': 'Storm Surge 2',
-    'Earthquake Hazard Layer':  'Landslide',
-    'Traffic Layer':            'Traffic',
-    'Foot Traffic Layer':       'Traffic',
     'Building Data Layer':      'Building Data',
     'Choropleth Layer':         'Choropleth',
     'Restaurant Heat Map':      'Heat Map'
@@ -31,11 +26,7 @@ export const TopNavigationPanel = ({ searchQuery, onSearchChange, onFilterChange
   ];
 
   const layerOptions = [
-    { label: 'Traffic Layer' },
-    { label: 'Foot Traffic Layer' },
-    { label: 'Flood Hazard Layer' },
-    { label: 'Storm Surge Hazard Layer' },
-    { label: 'Earthquake Hazard Layer' },
+    { label: 'None' },
     { label: 'Building Data Layer' },
     { label: 'Choropleth Layer' },
     { label: 'Restaurant Heat Map' }
@@ -78,8 +69,9 @@ export const TopNavigationPanel = ({ searchQuery, onSearchChange, onFilterChange
       />
       <div style={{ width: '1px', height: '24px', background: 'var(--border-primary)' }}></div>
       <DropdownButton iconName="layers" label={selectedLayer || 'Layers'} options={layerOptions} onSelect={(opt) => {
+        const isNone = opt.label === 'None';
         const isSame = selectedLayer === opt.label;
-        const next = isSame ? null : opt.label;
+        const next = isNone ? null : (isSame ? null : opt.label);
         setSelectedLayer(next);
         const filterValue = next ? (layerFilterMap[next] || 'None') : 'None';
         if (onFilterChange) onFilterChange(filterValue);

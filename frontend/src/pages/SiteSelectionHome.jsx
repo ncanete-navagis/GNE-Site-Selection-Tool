@@ -39,6 +39,11 @@ export const SiteSelectionHome = () => {
   const [targetLotArea, setTargetLotArea] = useState(500);
   const [selectedSectors, setSelectedSectors] = useState([]);
 
+  // Reset selected business sectors whenever the pin is moved, placed, or removed
+  useEffect(() => {
+    setSelectedSectors([]);
+  }, [geminiMarker?.lat, geminiMarker?.lng]);
+
   const [hazardData, setHazardData] = useState(null);
   const [hazardVersion, setHazardVersion] = useState(0);
   const [trafficData, setTrafficData] = useState(null);
@@ -370,6 +375,8 @@ export const SiteSelectionHome = () => {
       setGeminiMarker(null);
       setSelectedPropertyPolygon(null);
       setIsPanelOpen(false);
+      setSelectedSectors([]);
+      setRestaurantFilters([]);
       return;
     }
     
@@ -438,6 +445,8 @@ export const SiteSelectionHome = () => {
       setSelectedPropertyPolygon(null);
       setPanelMode('features');
       setIsPanelOpen(true);
+      setSelectedSectors([]);
+      setRestaurantFilters([]);
       
     } catch (err) {
       console.error("Error handling suggestion select:", err);
@@ -451,6 +460,8 @@ export const SiteSelectionHome = () => {
     setIsPlacingMarker(false);
     setPanelMode('features');
     setIsPanelOpen(true);
+    setSelectedSectors([]);
+    setRestaurantFilters([]);
 
     // Reverse geocode to get Place ID and Address
     if (window.google && window.google.maps && window.google.maps.Geocoder) {
@@ -516,6 +527,8 @@ export const SiteSelectionHome = () => {
     setGeminiMarker({ ...coords, title: property.title });
     setPanelMode('features');
     setIsPanelOpen(true);
+    setSelectedSectors([]);
+    setRestaurantFilters([]);
   };
 
   const handleRunAnalysis = async () => {

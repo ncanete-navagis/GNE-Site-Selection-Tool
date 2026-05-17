@@ -14,6 +14,11 @@ export const useFeaturePanelState = (props) => {
     setLocalRadius(props.radius);
   }, [props.radius]);
 
+  // Reset selected types if POI changes (either to a new location or to null)
+  useEffect(() => {
+    setSelectedTypes([]);
+  }, [props.poi?.lat, props.poi?.lng]);
+
   return {
     localRadius,
     setLocalRadius,

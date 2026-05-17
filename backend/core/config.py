@@ -38,7 +38,7 @@ class Settings:
     """
 
     def __init__(self) -> None:
-        self.GOOGLE_CLIENT_ID: str = os.environ.get("GOOGLE_CLIENT_ID", "")
+        self.GOOGLE_CLIENT_ID: str = os.environ.get("GOOGLE_CLIENT_ID") or os.environ.get("VITE_GOOGLE_CLIENT_ID", "")
         self.GOOGLE_API_KEY: str = os.environ.get("GOOGLE_API_KEY", "")
         self.GEMINI_API_KEY: str = os.environ.get("GEMINI_API_KEY", "")
         self.ASYNC_DATABASE_URL: str = os.environ.get(

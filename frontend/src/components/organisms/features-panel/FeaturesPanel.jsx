@@ -1,11 +1,9 @@
 import React from 'react';
 import { useFeaturePanelState } from './hooks/useFeaturePanelState';
-import { useRestaurantTypes } from './hooks/useRestaurantTypes';
 import FeaturesPanelHeader from './FeaturesPanelHeader';
 import FeaturesPanelLoading from './FeaturesPanelLoading';
 import FeaturesPanelAnalysis from './FeaturesPanelAnalysis';
 import FeaturesPanelForm from './FeaturesPanelForm';
-import FeaturesPanelFilters from './FeaturesPanelFilters';
 import FeaturesPanelMapControls from './FeaturesPanelMapControls';
 
 /**
@@ -17,23 +15,12 @@ export const FeaturesPanel = (props) => {
     poi,
     isAnalyzing,
     onRunAnalysis,
-    onFiltersChange,
     isChoroplethOn,
     setIsChoroplethOn
   } = props;
 
   // Internal UI State
   const state = useFeaturePanelState(props);
-
-  // Notify parent of filter changes
-  React.useEffect(() => {
-    if (onFiltersChange) {
-      onFiltersChange(state.selectedTypes);
-    }
-  }, [state.selectedTypes, onFiltersChange]);
-  
-  // Data Fetching
-  const { restaurantTypes, isLoadingTypes } = useRestaurantTypes();
 
   return (
     <div style={{ 
@@ -61,16 +48,7 @@ export const FeaturesPanel = (props) => {
         )}
       </div>
 
-      {/* 3. Filterable Sections */}
-      <FeaturesPanelFilters 
-        restaurantTypes={restaurantTypes}
-        isLoadingTypes={isLoadingTypes}
-        selectedTypes={state.selectedTypes}
-        setSelectedTypes={state.setSelectedTypes}
-        poisByCategory={props.poisByCategory}
-      />
-
-      {/* 4. Map Display Controls */}
+      {/* 3. Map Display Controls */}
       <FeaturesPanelMapControls 
         isChoroplethOn={isChoroplethOn}
         setIsChoroplethOn={setIsChoroplethOn}

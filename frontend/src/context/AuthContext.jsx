@@ -115,8 +115,10 @@ export const AuthProvider = ({ children }) => {
       setUser(dbUser);
       console.log('[Auth] User saved to DB:', dbUser.email, '— DB id:', dbUser.id);
     } else {
-      // Fallback: use client-side decoded payload if backend is unreachable
+      // Fallback: use client-side decoded payload if backend is unreachable, but clear bad token
       console.warn('[Auth] Using client-side profile fallback (backend unreachable).');
+      localStorage.removeItem('gne_id_token');
+      setIdToken(null);
       setUser({
         name: payload.name || payload.email || 'User',
         email: payload.email,
