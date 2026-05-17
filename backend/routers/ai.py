@@ -87,7 +87,14 @@ async def chat_with_ai(
         title = payload.poiContext.get('title', 'Unknown')
         poi_type = payload.poiContext.get('type', 'Unknown')
         rating = payload.poiContext.get('rating', 'N/A')
-        system_prompt += f"\n\nContext: Analyzing {title} ({poi_type}) with rating {rating}."
+        place_id = payload.poiContext.get('placeId')
+        address = payload.poiContext.get('address')
+        
+        system_prompt += f"\n\nContext: The user is analyzing a location named {title} ({poi_type}) with rating {rating}."
+        if place_id:
+            system_prompt += f"\nGoogle Place ID: {place_id}"
+        if address:
+            system_prompt += f"\nAddress: {address}"
 
     try:
         # Safeguard: google-genai SDK often prioritizes GOOGLE_API_KEY from env 

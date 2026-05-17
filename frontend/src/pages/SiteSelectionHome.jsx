@@ -417,7 +417,12 @@ export const SiteSelectionHome = () => {
       setFocusedLocation({ ...coords, zoom: 16 });
       
       // Update marker and UI state
-      setGeminiMarker({ ...coords, title: details.name });
+      setGeminiMarker({ 
+        ...coords, 
+        title: details.name,
+        placeId: suggestion.placeId,
+        address: details.address
+      });
       setSelectedPropertyPolygon(null);
       setPanelMode('features');
       setIsPanelOpen(true);
@@ -427,12 +432,51 @@ export const SiteSelectionHome = () => {
     }
   };
 
-  const handleMarkerPlaced = (coords) => {
+  const handleMarkerPlaced = async (coords) => {
+    // Initial optimistic update
     setGeminiMarker({ ...coords, title: 'New Site' });
     setSelectedPropertyPolygon(null);
     setIsPlacingMarker(false);
     setPanelMode('features');
     setIsPanelOpen(true);
+
+    // Reverse geocode to get Place ID and Address
+    if (window.google && window.google.maps && window.google.maps.Geocoder) {
+      const geocoder = new window.google.maps.Geocoder();
+      try {
+        const result = await new Promise((resolve, reject) => {
+          geocoder.geocode({ location: coords }, (results, status) => {
+            if (status === 'OK' && results[0]) resolve(results[0]);
+            else reject(status);
+          });
+        });
+        
+        let title = 'New Site';
+        let address = result.formatted_address;
+        
+        // Find a shorter name from address_components (e.g. route or neighborhood)
+        const nameComponent = result.address_components.find(c => 
+          c.types.includes('route') || c.types.includes('neighborhood') || c.types.includes('point_of_interest') || c.types.includes('premise')
+        );
+        if (nameComponent) {
+          title = nameComponent.long_name
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        }
+
+        // Update the marker with fetched context
+        setGeminiMarker(prev => ({
+          ...prev,
+          title: title,
+          address: address,
+          placeId: result.place_id
+        }));
+      } catch (e) {
+        console.error("Reverse geocode failed:", e);
+      }
+    }
   };
 
   const handlePropertySelect = (property) => {

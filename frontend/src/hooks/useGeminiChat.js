@@ -60,7 +60,9 @@ export const useGeminiChat = (selectedPOI) => {
           poiContext: {
             title: selectedPOI.title,
             type: selectedPOI.type,
-            rating: selectedPOI.rating
+            rating: selectedPOI.rating,
+            placeId: selectedPOI.placeId,
+            address: selectedPOI.address
           }
         }),
       });
