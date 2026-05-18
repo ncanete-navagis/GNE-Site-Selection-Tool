@@ -1,0 +1,96 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# GNE Site Selection Tool — Docker Compose
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# BEFORE FIRST RUN:
+#   1. cp .env.example .env
+#   2. Fill in POSTGRES_PASSWORD (and PGADMIN_PASSWORD if desired) in .env
+#   3. Ensure backend/.env has matching POSTGRES_USER / PASSWORD / DB values
+#   4. docker compose up --build
+#
+# SERVICES:
+#   db        → PostgreSQL 15 + PostGIS  (port 5432)
+#   backend   → FastAPI + Uvicorn        (port 8000, live-reload)
+#   frontend  → React + Vite dev server  (port 5173, HMR)
+#   pgadmin   → pgAdmin 4 web UI         (port 5050)
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL 15 + PostGIS ───────────────────────────────────────────────
+  db:
+    image: postgis/postgis:15-3.4
+    container_name: gne_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       ${POSTGRES_DB:-gne_db}
+    ports:
+      - "5432:5432"   # Exposed so pgAdmin on the host can connect to localhost:5432
+    volumes:
+      - gne_pgdata:/var/lib/postgresql/data   # Persists DB across restarts
+    networks:
+      - gne-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-gne_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI Backend ───────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gne_backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env          # Loads all secrets (API keys, etc.)
+    environment:
+      # Override localhost → Docker service name so backend can reach db
+      ASYNC_DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-gne_db}"
+      DATABASE_URL:       "postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-gne_db}"
+      LOG_DIR: "/app/logs"
+      ALLOWED_ORIGINS: '["http://localhost:5173", "http://127.0.0.1:5173"]'
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app          # Live-mount source for --reload
+      - gne_backend_logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - gne-network
+
+  # ── React + Vite (Dev Mode) ───────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gne_frontend
+    restart: unless-stopped
+    env_file:
+      - ./frontend/.env
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app         # Live-mount source for HMR
+      - /app/node_modules       # Keep container's node_modules (not host's)
+    depends_on:
+      - backend
+    networks:
+      - gne-network
+
+
+
+# ── Named Volumes ─────────────────────────────────────────────────────────────
+volumes:
+  gne_pgdata:         # PostgreSQL data — survives container restarts
+  gne_backend_logs:   # Backend log files
+
+# ── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  gne-network:
+    driver: bridge

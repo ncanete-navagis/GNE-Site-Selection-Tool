@@ -1,0 +1,22 @@
+# ── Dependencies ──────────────────────────────────────────────
+node_modules/
+
+# ── Build Output ──────────────────────────────────────────────
+dist/
+dist-ssr/
+
+# ── Environment & Secrets ─────────────────────────────────────
+.env
+.env.*
+*.local
+
+# ── IDE ───────────────────────────────────────────────────────
+.vscode/
+.idea/
+
+# ── OS ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Design Assets (large, not needed in container) ────────────
+designinspire/
