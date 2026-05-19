@@ -8,7 +8,10 @@ The infrastructure consists of three primary services orchestrated with Docker:
 3. **Database**: PostgreSQL 15 + PostGIS 3.4 running on port `5432` (with a persistent named volume).
 
 Download the DB File Here: https://drive.google.com/drive/folders/1bhAFkSiGNjXtf9SxG_Cld2GDUOP8N0yl
+
 Use gne_db.sql
+
+If the DB is not working follow the instructions in the pgadmin_optimization_sql after setting up the DB in pgAdmin from the Google Drive
 
 ---
 
